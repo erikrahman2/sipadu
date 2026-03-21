@@ -1,0 +1,468 @@
+{
+  "nama": {
+    "DIDI DWI HARDIYANJAYA": {
+      "target": "DIDI DWI HARDIYANTO",
+      "count": 1
+    },
+    "ARDY FASHY A BIAANTARA": {
+      "target": "RANDI FASHYA BIMANTARA",
+      "count": 1
+    },
+    "TD BYAHNANT": {
+      "target": "IBNU SYAHRANI",
+      "count": 1
+    },
+    "ALPIAN RAHMAT SETIADL I": {
+      "target": "ALPIAN RAHMAT SETIADI",
+      "count": 1
+    },
+    "IAKPIAII ET DERA": {
+      "target": "ALPIAN RAHMAT SETIADI",
+      "count": 1
+    },
+    "SBYRA PW ANIA": {
+      "target": "DYKI DWI ANWAR",
+      "count": 1
+    },
+    "AUNAIDI": {
+      "target": "JUNAIDI",
+      "count": 1
+    },
+    "SREDOSY WIUIAAGIAIA": {
+      "target": "M. ROBY WIRAGUNA",
+      "count": 1
+    },
+    "RDR EA ERED A": {
+      "target": "RANDY FASHYA BIMANTARA",
+      "count": 1
+    },
+    "SS AABUPATENTAMPUNG UTA": {
+      "target": "BAGUS SURYA PUTRA",
+      "count": 1
+    },
+    "AGUNG ADE MULYONG": {
+      "target": "AGUNG ADE MULYONO",
+      "count": 1
+    },
+    "I NABILA MEGA AYU KUAMAMEETT": {
+      "target": "NABILA MEGA AYU KURNIAWATI",
+      "count": 1
+    },
+    "NUR HUDA LILMUTADIN": {
+      "target": "NUR HUDA LILMUTAQIN",
+      "count": 1
+    },
+    "IDDARID DD": {
+      "target": "IRA KURNIA WATI",
+      "count": 1
+    },
+    "RDMAN FGAAT": {
+      "target": "RIDWAN HIDAYAT",
+      "count": 1
+    },
+    "SOURNIAWAN LIKA": {
+      "target": "KURNIAWAN LIKA",
+      "count": 1
+    },
+    "ESET BANININ RUM": {
+      "target": "LIANAG NINGRUM",
+      "count": 1
+    },
+    "AGUS WLUHAMAD SUFIYAM": {
+      "target": "AGUS MUHAMAD SUFIYAN",
+      "count": 1
+    },
+    "IDESIA RIDAWANTI": {
+      "target": "LUH DESIA RIDAYANTI",
+      "count": 1
+    },
+    "SARIPUSPA INDAH": {
+      "target": "SARI PUSPITA INDAH",
+      "count": 1
+    },
+    "NEORO ADE IRMASARY TANJUNG": {
+      "target": "ADE IRMASARI TANJUNG",
+      "count": 1
+    },
+    "PUTT ANDAN": {
+      "target": "PUTI ANDAM SARI",
+      "count": 1
+    },
+    "YUSTIEFRIA": {
+      "target": "YUSTI EFRIA",
+      "count": 1
+    },
+    "EONS": {
+      "target": "DONI",
+      "count": 1
+    }
+  },
+  "rt_rw": {
+    "010/008": {
+      "target": "013/001",
+      "count": 1
+    },
+    "020/005": {
+      "target": "002/006",
+      "count": 1
+    },
+    "002/900": {
+      "target": "001/011",
+      "count": 1
+    },
+    "009/002": {
+      "target": "003/002",
+      "count": 1
+    },
+    "003/000": {
+      "target": "003/002",
+      "count": 1
+    },
+    "042/021": {
+      "target": "001/001",
+      "count": 1
+    },
+    "008/012": {
+      "target": "001/012",
+      "count": 1
+    },
+    "077/200": {
+      "target": "012/000",
+      "count": 1
+    },
+    "030/005": {
+      "target": "002/006",
+      "count": 1
+    },
+    "017/011": {
+      "target": "002/002",
+      "count": 1
+    },
+    "005/006": {
+      "target": "001/004",
+      "count": 1
+    },
+    "008/117": {
+      "target": "008/004",
+      "count": 1
+    },
+    "021/012": {
+      "target": "001/002",
+      "count": 1
+    },
+    "005/015": {
+      "target": "023/011",
+      "count": 1
+    },
+    "007/019": {
+      "target": "07/011",
+      "count": 1
+    },
+    "008/024": {
+      "target": "014/018",
+      "count": 1
+    },
+    "006/005": {
+      "target": "028/007",
+      "count": 1
+    },
+    "017/005": {
+      "target": "002/004",
+      "count": 1
+    },
+    "005/005": {
+      "target": "008/007",
+      "count": 2
+    },
+    "008/008": {
+      "target": "000/000",
+      "count": 1
+    },
+    "029/010": {
+      "target": "004/013",
+      "count": 1
+    },
+    "020/550": {
+      "target": "000/000",
+      "count": 1
+    },
+    "029/012": {
+      "target": "012/004",
+      "count": 1
+    }
+  },
+  "tempat_lahir": {
+    "PATARTAEN": {
+      "target": "JAKARTA",
+      "count": 1
+    },
+    "MACETAN": {
+      "target": "MAGETAN",
+      "count": 1
+    },
+    "ESAS": {
+      "target": "BEKASI",
+      "count": 1
+    },
+    "PAEEMBANG": {
+      "target": "PALEMBANG",
+      "count": 1
+    },
+    "KELAPARGS": {
+      "target": "KETAPANG",
+      "count": 1
+    },
+    "IDOARIO": {
+      "target": "SIDOARJO",
+      "count": 1
+    },
+    "DATANG": {
+      "target": "BATANG",
+      "count": 1
+    },
+    "BENGREG": {
+      "target": "BENGKEL",
+      "count": 1
+    }
+  },
+  "tanggal_lahir": {
+    "08-07-1985": {
+      "target": "05-07-1983",
+      "count": 1
+    },
+    "30-05-2008": {
+      "target": "30-05-2006",
+      "count": 1
+    },
+    "30-05-2005": {
+      "target": "30-05-2006",
+      "count": 1
+    },
+    "03-07-1983": {
+      "target": "13-07-1983",
+      "count": 1
+    },
+    "01-07-2016": {
+      "target": "01-07-1977",
+      "count": 1
+    },
+    "14-08-2007": {
+      "target": "14-08-1992",
+      "count": 1
+    },
+    "08-09-2012": {
+      "target": "21-09-1982",
+      "count": 1
+    },
+    "29-12-1900": {
+      "target": "23-12-1990",
+      "count": 1
+    }
+  },
+  "kelurahan": {
+    "SULIANG": {
+      "target": "BULIANG",
+      "count": 1
+    },
+    "SURMAIAYA": {
+      "target": "SUKMAJAYA",
+      "count": 1
+    },
+    "TANGKE": {
+      "target": "ANGKE",
+      "count": 1
+    },
+    "KECAMATAN BANTARGEBANG": {
+      "target": "BANTARGEBANG",
+      "count": 2
+    },
+    "CANTAR": {
+      "target": "BANTARGEBANG",
+      "count": 1
+    },
+    "TALAMEKELAPA": {
+      "target": "TALANG KELAPA",
+      "count": 1
+    },
+    "SUANTAN TENGAH": {
+      "target": "SIANTAN TENGAH",
+      "count": 1
+    },
+    "NONDKAN": {
+      "target": "NUNUKAN TIMUR",
+      "count": 1
+    },
+    "SEUMUA": {
+      "target": "SUKMAJAYA",
+      "count": 1
+    },
+    "KELAPARGS": {
+      "target": "KETAPANG",
+      "count": 1
+    },
+    "EUMU": {
+      "target": "LEBAK BULUS",
+      "count": 1
+    },
+    "GAAUS": {
+      "target": "GABUS",
+      "count": 1
+    },
+    "SEDATIC": {
+      "target": "SEDATIGEDE",
+      "count": 1
+    },
+    "FINCAS": {
+      "target": "CIOMAS",
+      "count": 1
+    },
+    "PLLIT": {
+      "target": "PLUIT",
+      "count": 1
+    },
+    "ANGGAN": {
+      "target": "KETANGGAN",
+      "count": 1
+    },
+    "LOMO": {
+      "target": "SELOMOYO",
+      "count": 1
+    },
+    "SKABUPATEN": {
+      "target": "BUBUNAN",
+      "count": 1
+    },
+    "TRIDAYASAXTE": {
+      "target": "TRIDAYASAKTI",
+      "count": 1
+    },
+    "BADARING": {
+      "target": "BADAR INDAH",
+      "count": 1
+    },
+    "PADEMANGAN": {
+      "target": "PADEMANGAN BARAT",
+      "count": 1
+    },
+    "KEJUFON": {
+      "target": "KEJURON",
+      "count": 1
+    },
+    "BKTUAN": {
+      "target": "BULIANG",
+      "count": 1
+    }
+  },
+  "kecamatan": {
+    "BATU": {
+      "target": "BATU AJI",
+      "count": 1
+    },
+    "SURMAIAYA": {
+      "target": "SUKMAJAYA",
+      "count": 1
+    },
+    "CANTAR": {
+      "target": "BANTARGEBANG",
+      "count": 1
+    },
+    "ALINNGLEBAR": {
+      "target": "ALANG-ALANG LEBAR",
+      "count": 1
+    },
+    "NONDKAN": {
+      "target": "NUNUKAN",
+      "count": 1
+    },
+    "SEUMUA": {
+      "target": "SUKMAJAYA",
+      "count": 1
+    },
+    "ST WATANG SAWTIT": {
+      "target": "WATANG SAWITO",
+      "count": 1
+    },
+    "SAHN": {
+      "target": "SUNGKAI SELATAN",
+      "count": 1
+    },
+    "CANDAK": {
+      "target": "CILANDAK",
+      "count": 1
+    },
+    "GAAUS": {
+      "target": "GABUS",
+      "count": 1
+    },
+    "SEDATIC": {
+      "target": "SEDATI",
+      "count": 1
+    },
+    "SOGORAARAT": {
+      "target": "BOGOR BARAT",
+      "count": 1
+    },
+    "INGSING": {
+      "target": "GRINGSING",
+      "count": 1
+    },
+    "SERGI": {
+      "target": "SERIRIT",
+      "count": 1
+    },
+    "PADANGSIDIMPUAN TENGGARA": {
+      "target": "PADANGSIDIMPUAN TENGGRARA",
+      "count": 1
+    },
+    "SELATAN": {
+      "target": "TAMBUN SELATAN",
+      "count": 1
+    },
+    "SADAR": {
+      "target": "BADAR",
+      "count": 1
+    },
+    "BATAM": {
+      "target": "BATU AJI",
+      "count": 1
+    }
+  },
+  "nik": {
+    "3479040607900005": {
+      "target": "3173040607900005",
+      "count": 1
+    },
+    "1717713275031310": {
+      "target": "217112050783102",
+      "count": 1
+    },
+    "1674043011940005": {
+      "target": "1671041011940009",
+      "count": 1
+    },
+    "1611199860772002": {
+      "target": "1671990707010004",
+      "count": 1
+    },
+    "3474060531970004": {
+      "target": "3174060511970004",
+      "count": 1
+    },
+    "3328116112010001": {
+      "target": "3318116112010001",
+      "count": 1
+    },
+    "3524031706920003": {
+      "target": "35240317031706920003",
+      "count": 1
+    },
+    "0947120849028697": {
+      "target": "0947120849038697",
+      "count": 1
+    },
+    "3234076930900009": {
+      "target": "3216076910900009",
+      "count": 1
+    }
+  }
+}

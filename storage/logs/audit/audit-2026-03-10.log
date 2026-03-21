@@ -1,0 +1,5 @@
+[2026-03-10 09:39:31] local.INFO: AUDIT {"user_id":1,"action":"auth.login","subject":"User:1","ip":"127.0.0.1"} 
+[2026-03-10 09:39:36] local.INFO: AUDIT {"user_id":1,"action":"auth.login","subject":"User:1","ip":"127.0.0.1"} 
+[2026-03-10 09:40:41] local.INFO: AUDIT {"user_id":1,"action":"auth.logout","subject":"User:1","ip":"127.0.0.1"} 
+[2026-03-10 09:41:10] local.INFO: AUDIT {"user_id":3,"action":"auth.login","subject":"User:3","ip":"127.0.0.1"} 
+[2026-03-10 12:42:39] local.INFO: AUDIT {"user_id":5,"action":"auth.login","subject":"User:5","ip":"127.0.0.1"} 

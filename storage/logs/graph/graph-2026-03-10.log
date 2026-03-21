@@ -1,0 +1,683 @@
+[2026-03-10 09:41:26] local.ERROR: GraphService::pathExists failed {"error":"Cannot connect to any server on alias: default with Uris: ('bolt://localhost:7687')","cypher":"MATCH (a:User {mysql_id: $fromId})-[:SUBMITTED]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 
+[2026-03-10 09:41:26] local.ERROR: GraphService::pathExists failed {"error":"Cannot connect to any server on alias: default with Uris: ('')","cypher":"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 
+[2026-03-10 09:47:07] local.ERROR: Cypher error {"error":"Cannot connect to any server on alias: default with Uris: ('bolt://localhost:7687')","cypher":"RETURN 1 AS test"} 
+[2026-03-10 09:52:00] local.DEBUG: Cypher executed {"cypher":"RETURN 1 AS test","params":[]} 
+[2026-03-10 09:52:02] local.DEBUG: Cypher executed {"cypher":"MATCH (n) RETURN count(n) AS total","params":[]} 
+[2026-03-10 09:52:03] local.DEBUG: Cypher executed {"cypher":"
+
+        MATCH (n)
+
+        RETURN labels(n)[0] AS label, count(n) AS count
+
+        ORDER BY count DESC
+
+    ","params":[]} 
+[2026-03-10 09:59:30] local.DEBUG: Cypher executed {"cypher":"RETURN 1 AS test","params":[]} 
+[2026-03-10 09:59:32] local.DEBUG: Cypher executed {"cypher":"CREATE CONSTRAINT user_mysql_id IF NOT EXISTS FOR (u:User) REQUIRE u.mysql_id IS UNIQUE","params":[]} 
+[2026-03-10 09:59:32] local.DEBUG: Cypher executed {"cypher":"CREATE CONSTRAINT institution_mysql_id IF NOT EXISTS FOR (i:Institution) REQUIRE i.mysql_id IS UNIQUE","params":[]} 
+[2026-03-10 09:59:32] local.DEBUG: Cypher executed {"cypher":"CREATE CONSTRAINT case_mysql_id IF NOT EXISTS FOR (c:Case) REQUIRE c.mysql_id IS UNIQUE","params":[]} 
+[2026-03-10 09:59:32] local.DEBUG: Cypher executed {"cypher":"CREATE CONSTRAINT document_mysql_id IF NOT EXISTS FOR (d:Document) REQUIRE d.mysql_id IS UNIQUE","params":[]} 
+[2026-03-10 09:59:32] local.DEBUG: Cypher executed {"cypher":"CREATE INDEX user_email IF NOT EXISTS FOR (u:User) ON (u.email)","params":[]} 
+[2026-03-10 09:59:32] local.DEBUG: Cypher executed {"cypher":"CREATE INDEX case_tracking_token IF NOT EXISTS FOR (c:Case) ON (c.tracking_token)","params":[]} 
+[2026-03-10 09:59:33] local.DEBUG: Cypher executed {"cypher":"CREATE INDEX case_status IF NOT EXISTS FOR (c:Case) ON (c.status)","params":[]} 
+[2026-03-10 09:59:33] local.DEBUG: Cypher executed {"cypher":"CREATE INDEX institution_type IF NOT EXISTS FOR (i:Institution) ON (i.type)","params":[]} 
+[2026-03-10 09:59:33] local.DEBUG: Cypher executed {"cypher":"MATCH (n) RETURN count(n) AS total","params":[]} 
+[2026-03-10 10:00:15] local.DEBUG: Cypher executed {"cypher":"MERGE (i:Institution {mysql_id: $id})
+
+             SET i += {code: $code, name: $name, type: $type}","params":{"id":1,"code":"PA-PAINAN-01","name":"Pengadilan Agama Kota Painan","type":"PA"}} 
+[2026-03-10 10:00:15] local.DEBUG: Cypher executed {"cypher":"MERGE (i:Institution {mysql_id: $id})
+
+             SET i += {code: $code, name: $name, type: $type}","params":{"id":2,"code":"DISC-PESSEL-01","name":"Dinas Kependudukan dan Pencatatan Sipil Kabupaten Pesisir Selatan","type":"DISDUKCAPIL"}} 
+[2026-03-10 10:00:16] local.DEBUG: Cypher executed {"cypher":"MERGE (u:User {mysql_id: $id})
+
+             SET u += {name: $name, email: $email, institution_id: $institution_id}","params":{"id":1,"name":"Administrator","email":"admin@sipadu.go.id","institution_id":"1"}} 
+[2026-03-10 10:00:17] local.DEBUG: Cypher executed {"cypher":"
+
+                MATCH (u:User {mysql_id: $user_id})
+
+                MATCH (i:Institution {mysql_id: $inst_id})
+
+                MERGE (u)-[:WORKS_AT]->(i)
+
+            ","params":{"user_id":1,"inst_id":"1"}} 
+[2026-03-10 10:00:17] local.DEBUG: Cypher executed {"cypher":"MERGE (u:User {mysql_id: $id})
+
+             SET u += {name: $name, email: $email, institution_id: $institution_id}","params":{"id":2,"name":"PA Assistant","email":"asisten@pa-painan.go.id","institution_id":"1"}} 
+[2026-03-10 10:00:17] local.DEBUG: Cypher executed {"cypher":"
+
+                MATCH (u:User {mysql_id: $user_id})
+
+                MATCH (i:Institution {mysql_id: $inst_id})
+
+                MERGE (u)-[:WORKS_AT]->(i)
+
+            ","params":{"user_id":2,"inst_id":"1"}} 
+[2026-03-10 10:00:17] local.DEBUG: Cypher executed {"cypher":"MERGE (u:User {mysql_id: $id})
+
+             SET u += {name: $name, email: $email, institution_id: $institution_id}","params":{"id":3,"name":"PA Management","email":"ketua@pa-painan.go.id","institution_id":"1"}} 
+[2026-03-10 10:00:17] local.DEBUG: Cypher executed {"cypher":"
+
+                MATCH (u:User {mysql_id: $user_id})
+
+                MATCH (i:Institution {mysql_id: $inst_id})
+
+                MERGE (u)-[:WORKS_AT]->(i)
+
+            ","params":{"user_id":3,"inst_id":"1"}} 
+[2026-03-10 10:00:17] local.DEBUG: Cypher executed {"cypher":"MERGE (u:User {mysql_id: $id})
+
+             SET u += {name: $name, email: $email, institution_id: $institution_id}","params":{"id":4,"name":"PA Staff","email":"staf@pa-painan.go.id","institution_id":"1"}} 
+[2026-03-10 10:00:17] local.DEBUG: Cypher executed {"cypher":"
+
+                MATCH (u:User {mysql_id: $user_id})
+
+                MATCH (i:Institution {mysql_id: $inst_id})
+
+                MERGE (u)-[:WORKS_AT]->(i)
+
+            ","params":{"user_id":4,"inst_id":"1"}} 
+[2026-03-10 10:00:17] local.DEBUG: Cypher executed {"cypher":"MERGE (u:User {mysql_id: $id})
+
+             SET u += {name: $name, email: $email, institution_id: $institution_id}","params":{"id":5,"name":"Disdukcapil Staff","email":"petugas@disdukcapil-pessel.go.id","institution_id":"2"}} 
+[2026-03-10 10:00:17] local.DEBUG: Cypher executed {"cypher":"
+
+                MATCH (u:User {mysql_id: $user_id})
+
+                MATCH (i:Institution {mysql_id: $inst_id})
+
+                MERGE (u)-[:WORKS_AT]->(i)
+
+            ","params":{"user_id":5,"inst_id":"2"}} 
+[2026-03-10 10:00:17] local.DEBUG: Cypher executed {"cypher":"MERGE (c:Case {mysql_id: $id})
+
+             SET c += {case_number: $case_number, tracking_token: $tracking_token, status: $status}","params":{"id":5,"case_number":"CASE-20260309-HLTEMAJX","tracking_token":"TRKTAUUWTQXRVCBTZH8TMADHGQAOIVUNFAZ","status":"DRAFT","institution_id":1}} 
+[2026-03-10 10:00:17] local.DEBUG: Cypher executed {"cypher":"
+
+                MATCH (u:User {mysql_id: $user_id})
+
+                MATCH (c:Case {mysql_id: $case_id})
+
+                MERGE (u)-[:SUBMITTED]->(c)
+
+            ","params":{"user_id":2,"case_id":5}} 
+[2026-03-10 10:00:17] local.DEBUG: Cypher executed {"cypher":"
+
+                MATCH (i:Institution {mysql_id: $inst_id})
+
+                MATCH (c:Case {mysql_id: $case_id})
+
+                MERGE (i)-[:ISSUES]->(c)
+
+            ","params":{"inst_id":1,"case_id":5}} 
+[2026-03-10 10:00:17] local.DEBUG: Cypher executed {"cypher":"MERGE (c:Case {mysql_id: $id})
+
+             SET c += {case_number: $case_number, tracking_token: $tracking_token, status: $status}","params":{"id":7,"case_number":"CASE-20260309-RSKUDMPO","tracking_token":"TRKVM3CBSEHK3U38UBH8YNRFQD4ZXYCPH5L","status":"DRAFT","institution_id":1}} 
+[2026-03-10 10:00:17] local.DEBUG: Cypher executed {"cypher":"
+
+                MATCH (u:User {mysql_id: $user_id})
+
+                MATCH (c:Case {mysql_id: $case_id})
+
+                MERGE (u)-[:SUBMITTED]->(c)
+
+            ","params":{"user_id":2,"case_id":7}} 
+[2026-03-10 10:00:17] local.DEBUG: Cypher executed {"cypher":"
+
+                MATCH (i:Institution {mysql_id: $inst_id})
+
+                MATCH (c:Case {mysql_id: $case_id})
+
+                MERGE (i)-[:ISSUES]->(c)
+
+            ","params":{"inst_id":1,"case_id":7}} 
+[2026-03-10 10:00:17] local.DEBUG: Cypher executed {"cypher":"MERGE (c:Case {mysql_id: $id})
+
+             SET c += {case_number: $case_number, tracking_token: $tracking_token, status: $status}","params":{"id":8,"case_number":"CASE-20260309-RMYIWSIO","tracking_token":"TRKNKLDRXMZ2KDVGZL86DYRMMYMRPNFEBZC","status":"SUBMITTED","institution_id":1}} 
+[2026-03-10 10:00:17] local.DEBUG: Cypher executed {"cypher":"
+
+                MATCH (u:User {mysql_id: $user_id})
+
+                MATCH (c:Case {mysql_id: $case_id})
+
+                MERGE (u)-[:SUBMITTED]->(c)
+
+            ","params":{"user_id":2,"case_id":8}} 
+[2026-03-10 10:00:17] local.DEBUG: Cypher executed {"cypher":"
+
+                MATCH (i:Institution {mysql_id: $inst_id})
+
+                MATCH (c:Case {mysql_id: $case_id})
+
+                MERGE (i)-[:ISSUES]->(c)
+
+            ","params":{"inst_id":1,"case_id":8}} 
+[2026-03-10 10:00:18] local.DEBUG: Cypher executed {"cypher":"MERGE (d:Document {mysql_id: $id})
+
+             SET d += {document_type: $document_type, status: $status, case_id: $case_id}","params":{"id":1,"document_type":"KTP","status":"PENDING","case_id":5}} 
+[2026-03-10 10:00:18] local.DEBUG: Cypher executed {"cypher":"
+
+                MATCH (c:Case {mysql_id: $case_id})
+
+                MATCH (d:Document {mysql_id: $doc_id})
+
+                MERGE (c)-[:HAS]->(d)
+
+            ","params":{"case_id":5,"doc_id":1}} 
+[2026-03-10 10:00:18] local.DEBUG: Cypher executed {"cypher":"MERGE (d:Document {mysql_id: $id})
+
+             SET d += {document_type: $document_type, status: $status, case_id: $case_id}","params":{"id":2,"document_type":"KTP","status":"PENDING","case_id":6}} 
+[2026-03-10 10:00:18] local.DEBUG: Cypher executed {"cypher":"
+
+                MATCH (c:Case {mysql_id: $case_id})
+
+                MATCH (d:Document {mysql_id: $doc_id})
+
+                MERGE (c)-[:HAS]->(d)
+
+            ","params":{"case_id":6,"doc_id":2}} 
+[2026-03-10 10:00:18] local.DEBUG: Cypher executed {"cypher":"MERGE (d:Document {mysql_id: $id})
+
+             SET d += {document_type: $document_type, status: $status, case_id: $case_id}","params":{"id":3,"document_type":"KTP","status":"PENDING","case_id":7}} 
+[2026-03-10 10:00:18] local.DEBUG: Cypher executed {"cypher":"
+
+                MATCH (c:Case {mysql_id: $case_id})
+
+                MATCH (d:Document {mysql_id: $doc_id})
+
+                MERGE (c)-[:HAS]->(d)
+
+            ","params":{"case_id":7,"doc_id":3}} 
+[2026-03-10 10:00:18] local.DEBUG: Cypher executed {"cypher":"
+
+        MATCH (n)
+
+        RETURN labels(n)[0] AS label, count(n) AS count
+
+        ORDER BY count DESC
+
+    ","params":[]} 
+[2026-03-10 10:00:18] local.DEBUG: Cypher executed {"cypher":"MATCH ()-[r]->() RETURN count(r) AS count","params":[]} 
+[2026-03-10 10:01:58] local.ERROR: GraphService::pathExists failed {"error":"Neo4j errors detected. First one with code \"Neo.ClientError.Statement.SyntaxError\" and message \"Invalid input '-': expected '(' (line 1, column 49 (offset: 48))
+
+\"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})\"
+
+                                                 ^\"","cypher":"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 
+[2026-03-10 10:01:59] local.ERROR: GraphService::pathExists failed {"error":"Neo4j errors detected. First one with code \"Neo.ClientError.Statement.SyntaxError\" and message \"Invalid input '-': expected '(' (line 1, column 49 (offset: 48))
+
+\"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})\"
+
+                                                 ^\"","cypher":"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 
+[2026-03-10 10:01:59] local.ERROR: GraphService::pathExists failed {"error":"Neo4j errors detected. First one with code \"Neo.ClientError.Statement.SyntaxError\" and message \"Invalid input '-': expected '(' (line 1, column 49 (offset: 48))
+
+\"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})\"
+
+                                                 ^\"","cypher":"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 
+[2026-03-10 10:01:59] local.ERROR: GraphService::pathExists failed {"error":"Neo4j errors detected. First one with code \"Neo.ClientError.Statement.SyntaxError\" and message \"Invalid input '-': expected '(' (line 1, column 49 (offset: 48))
+
+\"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})\"
+
+                                                 ^\"","cypher":"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 
+[2026-03-10 10:01:59] local.ERROR: GraphService::pathExists failed {"error":"Neo4j errors detected. First one with code \"Neo.ClientError.Statement.SyntaxError\" and message \"Invalid input '-': expected '(' (line 1, column 49 (offset: 48))
+
+\"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})\"
+
+                                                 ^\"","cypher":"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 
+[2026-03-10 10:02:01] local.DEBUG: Cypher executed {"cypher":"
+
+    MATCH (u:User {mysql_id: $user_id})-[:WORKS_AT]->(i:Institution)
+
+    RETURN i.name AS institution
+
+","params":{"user_id":1}} 
+[2026-03-10 10:02:27] local.DEBUG: Cypher executed {"cypher":"
+
+    MATCH (u:User {mysql_id: $user_id})-[:WORKS_AT]->(i:Institution)
+
+    RETURN i.name AS institution
+
+","params":{"user_id":1}} 
+[2026-03-10 10:02:27] local.DEBUG: Cypher executed {"cypher":"
+
+    MATCH (u:User {mysql_id: $user_id})-[:SUBMITTED]->(c:Case)
+
+    RETURN c.case_number AS case_number
+
+","params":{"user_id":1}} 
+[2026-03-10 10:02:28] local.DEBUG: Cypher executed {"cypher":"
+
+    MATCH (u:User {mysql_id: $user_id})-[:WORKS_AT]->(i:Institution)-[:ISSUES|VERIFIES]->(c:Case)
+
+    RETURN DISTINCT c.case_number AS case_number
+
+","params":{"user_id":1}} 
+[2026-03-10 10:03:06] local.DEBUG: Cypher executed {"cypher":"
+
+        MATCH (u:User)-[:WORKS_AT]->(i:Institution)-[:ISSUES]->(c:Case)
+
+        WHERE NOT (u)-[:MANAGES]->(c)
+
+        MERGE (u)-[:MANAGES]->(c)
+
+        RETURN count(*) AS created
+
+    ","params":[]} 
+[2026-03-10 10:03:07] local.DEBUG: Cypher executed {"cypher":"
+
+        MATCH ()-[r]->()
+
+        RETURN type(r) AS relationship, count(r) AS count
+
+        ORDER BY count DESC
+
+    ","params":[]} 
+[2026-03-10 10:03:07] local.DEBUG: Cypher executed {"cypher":"
+
+        MATCH path = (u:User)-[*1..3]->(c:Case)
+
+        WHERE u.email <> \"admin@sipadu.go.id\"
+
+        RETURN 
+
+            u.name AS user, 
+
+            [rel IN relationships(path) | type(rel)] AS path_types,
+
+            c.case_number AS case_number
+
+        LIMIT 10
+
+    ","params":[]} 
+[2026-03-10 10:03:26] local.DEBUG: Cypher executed {"cypher":"
+
+        MATCH (u:User)-[:WORKS_AT]->(i:Institution)-[:ISSUES]->(c:Case)
+
+        WHERE NOT (u)-[:MANAGES]->(c)
+
+        MERGE (u)-[:MANAGES]->(c)
+
+        RETURN count(*) AS created
+
+    ","params":[]} 
+[2026-03-10 10:03:26] local.DEBUG: Cypher executed {"cypher":"
+
+        MATCH ()-[r]->()
+
+        RETURN type(r) AS relationship, count(r) AS count
+
+        ORDER BY count DESC
+
+    ","params":[]} 
+[2026-03-10 10:03:26] local.DEBUG: Cypher executed {"cypher":"
+
+        MATCH path = (u:User)-[*1..3]->(c:Case)
+
+        WHERE u.email <> \"admin@sipadu.go.id\"
+
+        RETURN 
+
+            u.name AS user, 
+
+            [rel IN relationships(path) | type(rel)] AS path_types,
+
+            c.case_number AS case_number
+
+        LIMIT 10
+
+    ","params":[]} 
+[2026-03-10 10:03:59] local.DEBUG: Cypher executed {"cypher":"
+
+                MATCH (u:User {mysql_id: $user_id})
+
+                MATCH (i:Institution {mysql_id: $inst_id})
+
+                MERGE (u)-[:WORKS_AT]->(i)
+
+                RETURN u.name AS user_name, i.name AS inst_name
+
+            ","params":{"user_id":1,"inst_id":"1"}} 
+[2026-03-10 10:03:59] local.DEBUG: Cypher executed {"cypher":"
+
+                MATCH (u:User {mysql_id: $user_id})
+
+                MATCH (i:Institution {mysql_id: $inst_id})
+
+                MERGE (u)-[:WORKS_AT]->(i)
+
+                RETURN u.name AS user_name, i.name AS inst_name
+
+            ","params":{"user_id":2,"inst_id":"1"}} 
+[2026-03-10 10:03:59] local.DEBUG: Cypher executed {"cypher":"
+
+                MATCH (u:User {mysql_id: $user_id})
+
+                MATCH (i:Institution {mysql_id: $inst_id})
+
+                MERGE (u)-[:WORKS_AT]->(i)
+
+                RETURN u.name AS user_name, i.name AS inst_name
+
+            ","params":{"user_id":3,"inst_id":"1"}} 
+[2026-03-10 10:03:59] local.DEBUG: Cypher executed {"cypher":"
+
+                MATCH (u:User {mysql_id: $user_id})
+
+                MATCH (i:Institution {mysql_id: $inst_id})
+
+                MERGE (u)-[:WORKS_AT]->(i)
+
+                RETURN u.name AS user_name, i.name AS inst_name
+
+            ","params":{"user_id":4,"inst_id":"1"}} 
+[2026-03-10 10:03:59] local.DEBUG: Cypher executed {"cypher":"
+
+                MATCH (u:User {mysql_id: $user_id})
+
+                MATCH (i:Institution {mysql_id: $inst_id})
+
+                MERGE (u)-[:WORKS_AT]->(i)
+
+                RETURN u.name AS user_name, i.name AS inst_name
+
+            ","params":{"user_id":5,"inst_id":"2"}} 
+[2026-03-10 10:03:59] local.DEBUG: Cypher executed {"cypher":"
+
+        MATCH (u:User)-[:WORKS_AT]->(i:Institution)-[:ISSUES]->(c:Case)
+
+        MERGE (u)-[:MANAGES]->(c)
+
+        RETURN count(*) AS created
+
+    ","params":[]} 
+[2026-03-10 10:03:59] local.DEBUG: Cypher executed {"cypher":"
+
+        MATCH ()-[r]->()
+
+        RETURN type(r) AS relationship, count(r) AS count
+
+        ORDER BY count DESC
+
+    ","params":[]} 
+[2026-03-10 10:03:59] local.DEBUG: Cypher executed {"cypher":"
+
+        MATCH path = (u:User)-[*1..3]->(c:Case)
+
+        WHERE u.email <> \"admin@sipadu.go.id\"
+
+        RETURN 
+
+            u.name AS user,
+
+            [rel IN relationships(path) | type(rel)] AS path_types,
+
+            c.case_number AS case_number
+
+        LIMIT 5
+
+    ","params":[]} 
+[2026-03-10 10:18:29] local.DEBUG: Cypher executed {"cypher":"MATCH (u:User) RETURN u","params":[]} 
+[2026-03-10 10:18:29] local.DEBUG: Cypher executed {"cypher":"MATCH (i:Institution) RETURN i","params":[]} 
+[2026-03-10 10:18:29] local.DEBUG: Cypher executed {"cypher":"MATCH (c:Case) RETURN c LIMIT 3","params":[]} 
+[2026-03-10 10:18:30] local.DEBUG: Cypher executed {"cypher":"MATCH ()-[r]->() RETURN DISTINCT type(r) AS type, count(r) AS count","params":[]} 
+[2026-03-10 10:19:09] local.DEBUG: Cypher executed {"cypher":"MATCH (u:User) RETURN u","params":[]} 
+[2026-03-10 10:19:09] local.DEBUG: Cypher executed {"cypher":"MATCH (i:Institution) RETURN i","params":[]} 
+[2026-03-10 10:19:09] local.DEBUG: Cypher executed {"cypher":"MATCH (c:Case) RETURN c LIMIT 3","params":[]} 
+[2026-03-10 10:19:09] local.DEBUG: Cypher executed {"cypher":"MATCH ()-[r]->() RETURN DISTINCT type(r) AS type, count(r) AS count","params":[]} 
+[2026-03-10 10:22:41] local.DEBUG: Cypher executed {"cypher":"MATCH (n) DETACH DELETE n","params":[]} 
+[2026-03-10 10:22:43] local.DEBUG: Cypher executed {"cypher":"MERGE (u:User {mysql_id: $id})
+
+             SET u.name = $name, u.email = $email, u.institution_id = $institution_id","params":{"id":1,"name":"Administrator","email":"admin@sipadu.go.id","institution_id":"1"}} 
+[2026-03-10 10:22:43] local.DEBUG: Cypher executed {"cypher":"MERGE (u:User {mysql_id: $id})
+
+             SET u.name = $name, u.email = $email, u.institution_id = $institution_id","params":{"id":2,"name":"PA Assistant","email":"asisten@pa-painan.go.id","institution_id":"1"}} 
+[2026-03-10 10:22:43] local.DEBUG: Cypher executed {"cypher":"MERGE (u:User {mysql_id: $id})
+
+             SET u.name = $name, u.email = $email, u.institution_id = $institution_id","params":{"id":3,"name":"PA Management","email":"ketua@pa-painan.go.id","institution_id":"1"}} 
+[2026-03-10 10:22:43] local.DEBUG: Cypher executed {"cypher":"MERGE (u:User {mysql_id: $id})
+
+             SET u.name = $name, u.email = $email, u.institution_id = $institution_id","params":{"id":4,"name":"PA Staff","email":"staf@pa-painan.go.id","institution_id":"1"}} 
+[2026-03-10 10:22:43] local.DEBUG: Cypher executed {"cypher":"MERGE (u:User {mysql_id: $id})
+
+             SET u.name = $name, u.email = $email, u.institution_id = $institution_id","params":{"id":5,"name":"Disdukcapil Staff","email":"petugas@disdukcapil-pessel.go.id","institution_id":"2"}} 
+[2026-03-10 10:22:43] local.DEBUG: Cypher executed {"cypher":"MERGE (i:Institution {mysql_id: $id})
+
+             SET i.code = $code, i.name = $name, i.type = $type","params":{"id":1,"code":"PA-PAINAN-01","name":"Pengadilan Agama Kota Painan","type":"PA"}} 
+[2026-03-10 10:22:43] local.DEBUG: Cypher executed {"cypher":"MERGE (i:Institution {mysql_id: $id})
+
+             SET i.code = $code, i.name = $name, i.type = $type","params":{"id":2,"code":"DISC-PESSEL-01","name":"Dinas Kependudukan dan Pencatatan Sipil Kabupaten Pesisir Selatan","type":"DISDUKCAPIL"}} 
+[2026-03-10 10:22:43] local.DEBUG: Cypher executed {"cypher":"MERGE (c:Case {mysql_id: $id})
+
+             SET c.case_number = $case_number, c.tracking_token = $tracking_token, c.status = $status","params":{"id":5,"case_number":"CASE-20260309-HLTEMAJX","tracking_token":"TRKTAUUWTQXRVCBTZH8TMADHGQAOIVUNFAZ","status":"DRAFT"}} 
+[2026-03-10 10:22:43] local.DEBUG: Cypher executed {"cypher":"MERGE (c:Case {mysql_id: $id})
+
+             SET c.case_number = $case_number, c.tracking_token = $tracking_token, c.status = $status","params":{"id":7,"case_number":"CASE-20260309-RSKUDMPO","tracking_token":"TRKVM3CBSEHK3U38UBH8YNRFQD4ZXYCPH5L","status":"DRAFT"}} 
+[2026-03-10 10:22:43] local.DEBUG: Cypher executed {"cypher":"MERGE (c:Case {mysql_id: $id})
+
+             SET c.case_number = $case_number, c.tracking_token = $tracking_token, c.status = $status","params":{"id":8,"case_number":"CASE-20260309-RMYIWSIO","tracking_token":"TRKNKLDRXMZ2KDVGZL86DYRMMYMRPNFEBZC","status":"SUBMITTED"}} 
+[2026-03-10 10:22:43] local.DEBUG: Cypher executed {"cypher":"MERGE (d:Document {mysql_id: $id})
+
+             SET d.document_type = $document_type, d.status = $status, d.case_id = $case_id","params":{"id":1,"document_type":"KTP","status":"PENDING","case_id":5}} 
+[2026-03-10 10:22:43] local.DEBUG: Cypher executed {"cypher":"MERGE (d:Document {mysql_id: $id})
+
+             SET d.document_type = $document_type, d.status = $status, d.case_id = $case_id","params":{"id":2,"document_type":"KTP","status":"PENDING","case_id":6}} 
+[2026-03-10 10:22:43] local.DEBUG: Cypher executed {"cypher":"MERGE (d:Document {mysql_id: $id})
+
+             SET d.document_type = $document_type, d.status = $status, d.case_id = $case_id","params":{"id":3,"document_type":"KTP","status":"PENDING","case_id":7}} 
+[2026-03-10 10:22:43] local.DEBUG: Cypher executed {"cypher":"MATCH (u:User {mysql_id: $userId}), (i:Institution {mysql_id: $instId})
+
+             MERGE (u)-[:WORKS_AT]->(i)","params":{"userId":1,"instId":1}} 
+[2026-03-10 10:22:43] local.DEBUG: Cypher executed {"cypher":"MATCH (u:User {mysql_id: $userId}), (i:Institution {mysql_id: $instId})
+
+             MERGE (u)-[:WORKS_AT]->(i)","params":{"userId":2,"instId":1}} 
+[2026-03-10 10:22:43] local.DEBUG: Cypher executed {"cypher":"MATCH (u:User {mysql_id: $userId}), (i:Institution {mysql_id: $instId})
+
+             MERGE (u)-[:WORKS_AT]->(i)","params":{"userId":3,"instId":1}} 
+[2026-03-10 10:22:44] local.DEBUG: Cypher executed {"cypher":"MATCH (u:User {mysql_id: $userId}), (i:Institution {mysql_id: $instId})
+
+             MERGE (u)-[:WORKS_AT]->(i)","params":{"userId":4,"instId":1}} 
+[2026-03-10 10:22:44] local.DEBUG: Cypher executed {"cypher":"MATCH (u:User {mysql_id: $userId}), (i:Institution {mysql_id: $instId})
+
+             MERGE (u)-[:WORKS_AT]->(i)","params":{"userId":5,"instId":2}} 
+[2026-03-10 10:22:44] local.DEBUG: Cypher executed {"cypher":"MATCH (i:Institution {mysql_id: $instId}), (c:Case {mysql_id: $caseId})
+
+             MERGE (i)-[:MANAGES]->(c)","params":{"instId":1,"caseId":5}} 
+[2026-03-10 10:22:44] local.DEBUG: Cypher executed {"cypher":"MATCH (i:Institution {mysql_id: $instId}), (c:Case {mysql_id: $caseId})
+
+             MERGE (i)-[:MANAGES]->(c)","params":{"instId":1,"caseId":7}} 
+[2026-03-10 10:22:44] local.DEBUG: Cypher executed {"cypher":"MATCH (i:Institution {mysql_id: $instId}), (c:Case {mysql_id: $caseId})
+
+             MERGE (i)-[:MANAGES]->(c)","params":{"instId":1,"caseId":8}} 
+[2026-03-10 10:22:44] local.DEBUG: Cypher executed {"cypher":"MATCH (u:User {mysql_id: $userId}), (c:Case {mysql_id: $caseId})
+
+             MERGE (u)-[:ISSUES]->(c)","params":{"userId":1,"caseId":5}} 
+[2026-03-10 10:22:44] local.DEBUG: Cypher executed {"cypher":"MATCH (u:User {mysql_id: $userId}), (c:Case {mysql_id: $caseId})
+
+             MERGE (u)-[:ISSUES]->(c)","params":{"userId":1,"caseId":7}} 
+[2026-03-10 10:22:44] local.DEBUG: Cypher executed {"cypher":"MATCH (u:User {mysql_id: $userId}), (c:Case {mysql_id: $caseId})
+
+             MERGE (u)-[:ISSUES]->(c)","params":{"userId":1,"caseId":8}} 
+[2026-03-10 10:22:44] local.DEBUG: Cypher executed {"cypher":"MATCH (c:Case {mysql_id: $caseId}), (d:Document {mysql_id: $docId})
+
+             MERGE (c)-[:HAS]->(d)","params":{"caseId":5,"docId":1}} 
+[2026-03-10 10:22:44] local.DEBUG: Cypher executed {"cypher":"MATCH (c:Case {mysql_id: $caseId}), (d:Document {mysql_id: $docId})
+
+             MERGE (c)-[:HAS]->(d)","params":{"caseId":6,"docId":2}} 
+[2026-03-10 10:22:44] local.DEBUG: Cypher executed {"cypher":"MATCH (c:Case {mysql_id: $caseId}), (d:Document {mysql_id: $docId})
+
+             MERGE (c)-[:HAS]->(d)","params":{"caseId":7,"docId":3}} 
+[2026-03-10 10:22:44] local.DEBUG: Cypher executed {"cypher":"
+
+    MATCH (u:User)
+
+    RETURN u.mysql_id AS id, u.name AS name, u.email AS email
+
+    LIMIT 3
+
+","params":[]} 
+[2026-03-10 10:22:44] local.DEBUG: Cypher executed {"cypher":"
+
+    MATCH ()-[r]->()
+
+    RETURN type(r) AS rel_type, COUNT(r) AS count
+
+","params":[]} 
+[2026-03-10 10:23:02] local.ERROR: GraphService::pathExists failed {"error":"Neo4j errors detected. First one with code \"Neo.ClientError.Statement.SyntaxError\" and message \"Invalid input '-': expected '(' (line 1, column 49 (offset: 48))
+
+\"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})\"
+
+                                                 ^\"","cypher":"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 
+[2026-03-10 10:23:02] local.ERROR: GraphService::pathExists failed {"error":"Neo4j errors detected. First one with code \"Neo.ClientError.Statement.SyntaxError\" and message \"Invalid input '-': expected '(' (line 1, column 49 (offset: 48))
+
+\"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})\"
+
+                                                 ^\"","cypher":"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 
+[2026-03-10 10:23:02] local.ERROR: GraphService::pathExists failed {"error":"Neo4j errors detected. First one with code \"Neo.ClientError.Statement.SyntaxError\" and message \"Invalid input '-': expected '(' (line 1, column 49 (offset: 48))
+
+\"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})\"
+
+                                                 ^\"","cypher":"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 
+[2026-03-10 10:23:02] local.ERROR: GraphService::pathExists failed {"error":"Neo4j errors detected. First one with code \"Neo.ClientError.Statement.SyntaxError\" and message \"Invalid input '-': expected '(' (line 1, column 49 (offset: 48))
+
+\"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})\"
+
+                                                 ^\"","cypher":"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 
+[2026-03-10 10:23:02] local.ERROR: GraphService::pathExists failed {"error":"Neo4j errors detected. First one with code \"Neo.ClientError.Statement.SyntaxError\" and message \"Invalid input '-': expected '(' (line 1, column 49 (offset: 48))
+
+\"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})\"
+
+                                                 ^\"","cypher":"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 
+[2026-03-10 10:23:04] local.DEBUG: Cypher executed {"cypher":"
+
+    MATCH (u:User {mysql_id: $user_id})-[:WORKS_AT]->(i:Institution)
+
+    RETURN i.name AS institution
+
+","params":{"user_id":1}} 
+[2026-03-10 10:23:04] local.DEBUG: Cypher executed {"cypher":"
+
+    MATCH (u:User {mysql_id: $user_id})-[:SUBMITTED]->(c:Case)
+
+    RETURN c.case_number AS case_number
+
+","params":{"user_id":1}} 
+[2026-03-10 10:23:05] local.DEBUG: Cypher executed {"cypher":"
+
+    MATCH (u:User {mysql_id: $user_id})-[:WORKS_AT]->(i:Institution)-[:ISSUES|VERIFIES]->(c:Case)
+
+    RETURN DISTINCT c.case_number AS case_number
+
+","params":{"user_id":1}} 
+[2026-03-10 10:24:39] local.ERROR: GraphService::pathExists failed {"error":"Neo4j errors detected. First one with code \"Neo.ClientError.Statement.SyntaxError\" and message \"Invalid input '-': expected '(' (line 1, column 49 (offset: 48))
+
+\"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})\"
+
+                                                 ^\"","cypher":"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 
+[2026-03-10 10:24:41] local.ERROR: GraphService::pathExists failed {"error":"Neo4j errors detected. First one with code \"Neo.ClientError.Statement.SyntaxError\" and message \"Invalid input '-': expected '(' (line 1, column 49 (offset: 48))
+
+\"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})\"
+
+                                                 ^\"","cypher":"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 
+[2026-03-10 10:24:41] local.ERROR: GraphService::pathExists failed {"error":"Neo4j errors detected. First one with code \"Neo.ClientError.Statement.SyntaxError\" and message \"Invalid input '-': expected '(' (line 1, column 49 (offset: 48))
+
+\"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})\"
+
+                                                 ^\"","cypher":"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 
+[2026-03-10 10:25:22] local.DEBUG: Cypher executed {"cypher":"
+
+    MATCH (u:User {mysql_id: 3})
+
+    RETURN u.mysql_id AS id, u.name AS name, u.email AS email, u.institution_id AS inst_id
+
+","params":[]} 
+[2026-03-10 10:25:22] local.DEBUG: Cypher executed {"cypher":"
+
+    MATCH (i:Institution {mysql_id: 1})
+
+    RETURN i.mysql_id AS id, i.name AS name, i.code AS code
+
+","params":[]} 
+[2026-03-10 10:25:22] local.DEBUG: Cypher executed {"cypher":"
+
+    MATCH (c:Case {mysql_id: 5})
+
+    RETURN c.mysql_id AS id, c.case_number AS number, c.status AS status
+
+","params":[]} 
+[2026-03-10 10:25:22] local.DEBUG: Cypher executed {"cypher":"
+
+    MATCH (u:User {mysql_id: 3})-[:WORKS_AT]->(i:Institution)
+
+    RETURN i.mysql_id AS inst_id, i.name AS inst_name
+
+","params":[]} 
+[2026-03-10 10:25:23] local.DEBUG: Cypher executed {"cypher":"
+
+    MATCH (i:Institution {mysql_id: 1})-[:MANAGES]->(c:Case)
+
+    RETURN c.mysql_id AS case_id, c.case_number AS case_number
+
+","params":[]} 
+[2026-03-10 10:25:23] local.DEBUG: Cypher executed {"cypher":"
+
+    MATCH path = (u:User {mysql_id: 3})-[:WORKS_AT]->(i:Institution)-[:MANAGES]->(c:Case {mysql_id: 5})
+
+    RETURN u.name AS user_name, i.name AS inst_name, c.case_number AS case_number
+
+","params":[]} 
+[2026-03-10 10:25:23] local.DEBUG: Cypher executed {"cypher":"
+
+    MATCH ()-[r]->()
+
+    RETURN type(r) AS rel_type, COUNT(r) AS count
+
+","params":[]} 
+[2026-03-10 10:26:21] local.DEBUG: Cypher executed {"cypher":"
+
+    MATCH (u:User {mysql_id: $user_id})-[:WORKS_AT]->(i:Institution)
+
+    RETURN i.name AS institution
+
+","params":{"user_id":1}} 
+[2026-03-10 10:26:21] local.DEBUG: Cypher executed {"cypher":"
+
+    MATCH (u:User {mysql_id: $user_id})-[:SUBMITTED]->(c:Case)
+
+    RETURN c.case_number AS case_number
+
+","params":{"user_id":1}} 
+[2026-03-10 10:26:22] local.DEBUG: Cypher executed {"cypher":"
+
+    MATCH (u:User {mysql_id: $user_id})-[:WORKS_AT]->(i:Institution)-[:ISSUES|VERIFIES|MANAGES]->(c:Case)
+
+    RETURN DISTINCT c.case_number AS case_number
+
+","params":{"user_id":1}} 

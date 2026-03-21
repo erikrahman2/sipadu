@@ -1,0 +1,24 @@
+[2026-03-09 12:56:06] local.ERROR: GraphService::pathExists failed {"error":"Cannot connect to any server on alias: default with Uris: ('bolt://localhost:7687')","cypher":"MATCH (a:User {mysql_id: $fromId})-[:SUBMITTED]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 
+[2026-03-09 12:56:06] local.ERROR: GraphService::pathExists failed {"error":"Cannot connect to any server on alias: default with Uris: ('')","cypher":"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 
+[2026-03-09 13:48:04] local.ERROR: GraphService::pathExists failed {"error":"Cannot connect to any server on alias: default with Uris: ('bolt://localhost:7687')","cypher":"MATCH (a:User {mysql_id: $fromId})-[:SUBMITTED]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 
+[2026-03-09 13:48:04] local.ERROR: GraphService::pathExists failed {"error":"Cannot connect to any server on alias: default with Uris: ('')","cypher":"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->-[:MANAGES]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 
+[2026-03-09 13:52:15] local.ERROR: Cypher error {"error":"Cannot connect to any server on alias: default with Uris: ('bolt://localhost:7687')","cypher":"MERGE (c:Case {mysql_id: $id})
+
+             SET c += {case_number: $case_number, tracking_token: $tracking_token, status: $status}"} 
+[2026-03-09 13:52:15] local.ERROR: Cypher error {"error":"Cannot connect to any server on alias: default with Uris: ('')","cypher":"MERGE (c:Case {mysql_id: $id})
+
+             SET c += {case_number: $case_number, tracking_token: $tracking_token, status: $status}"} 
+[2026-03-09 13:54:49] local.ERROR: Cypher error {"error":"Cannot connect to any server on alias: default with Uris: ('bolt://localhost:7687')","cypher":"MERGE (c:Case {mysql_id: $id})
+
+             SET c += {case_number: $case_number, tracking_token: $tracking_token, status: $status}"} 
+[2026-03-09 13:58:33] local.ERROR: Cypher error {"error":"Cannot connect to any server on alias: default with Uris: ('bolt://localhost:7687')","cypher":"MERGE (c:Case {mysql_id: $id})
+
+             SET c += {case_number: $case_number, tracking_token: $tracking_token, status: $status}"} 

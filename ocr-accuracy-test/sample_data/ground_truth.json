@@ -1,0 +1,22 @@
+{
+  "ktp_1.jpg": {
+    "nik": "1301051905760001",
+    "nama": "LINDO",
+    "tempat_lahir": "PADANG",
+    "tanggal_lahir": "19-05-1976",
+    "alamat": "JL MERDEKA NO 10",
+    "rt_rw": "001/002",
+    "kelurahan": "PAINAN",
+    "kecamatan": "IV JURAI"
+  },
+  "ktp_2.jpg": {
+    "nik": "3201234567890001",
+    "nama": "AHMAD DAHLAN",
+    "tempat_lahir": "BANDUNG",
+    "tanggal_lahir": "25-03-1980",
+    "alamat": "JL VETERAN NO 15",
+    "rt_rw": "003/005",
+    "kelurahan": "KOTO BARU",
+    "kecamatan": "BATANG KAPAS"
+  }
+}

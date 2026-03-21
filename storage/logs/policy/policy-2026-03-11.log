@@ -1,0 +1,6 @@
+[2026-03-11 00:05:20] local.INFO: ReBAC decision {"user_id":3,"action":"view","resource":"Case:8","decision":"DENY"} 
+[2026-03-11 00:05:20] local.WARNING: ReBAC DENY {"user_id":3,"action":"view","resource":"Case","resource_id":8} 
+[2026-03-11 00:06:21] local.INFO: ReBAC decision {"user_id":3,"action":"view","resource":"Case:5","decision":"DENY"} 
+[2026-03-11 00:06:21] local.WARNING: ReBAC DENY {"user_id":3,"action":"view","resource":"Case","resource_id":5} 
+[2026-03-11 12:47:42] local.INFO: ReBAC decision {"user_id":4,"action":"view","resource":"Case:9","decision":"DENY"} 
+[2026-03-11 12:47:42] local.WARNING: ReBAC DENY {"user_id":4,"action":"view","resource":"Case","resource_id":9} 

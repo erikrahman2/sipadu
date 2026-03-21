@@ -1,0 +1,3 @@
+[2026-03-10 23:29:19] local.INFO: OCR completed {"document_id":4,"overall_confidence":0.0,"ocr_status":"FAILED"} 
+[2026-03-10 23:32:02] local.INFO: OCR completed {"document_id":5,"overall_confidence":0.0,"ocr_status":"FAILED"} 
+[2026-03-10 23:33:08] local.INFO: OCR completed {"document_id":6,"overall_confidence":0.0,"ocr_status":"FAILED"} 

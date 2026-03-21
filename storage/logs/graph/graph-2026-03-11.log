@@ -1,0 +1,12 @@
+[2026-03-11 00:05:20] local.ERROR: GraphService::pathExists failed {"error":"Cannot connect to any server on alias: default with Uris: ('bolt://localhost:7687')","cypher":"MATCH (a:User {mysql_id: $fromId})-[:SUBMITTED]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 
+[2026-03-11 00:05:20] local.ERROR: GraphService::pathExists failed {"error":"Cannot connect to any server on alias: default with Uris: ('')","cypher":"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->()-[:MANAGES]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 
+[2026-03-11 00:06:21] local.ERROR: GraphService::pathExists failed {"error":"Cannot connect to any server on alias: default with Uris: ('bolt://localhost:7687')","cypher":"MATCH (a:User {mysql_id: $fromId})-[:SUBMITTED]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 
+[2026-03-11 00:06:21] local.ERROR: GraphService::pathExists failed {"error":"Cannot connect to any server on alias: default with Uris: ('')","cypher":"MATCH (a:User {mysql_id: $fromId})-[:WORKS_AT]->()-[:MANAGES]->(b:Case {mysql_id: $toId})
+
+                   RETURN COUNT(a) > 0 AS exists"} 

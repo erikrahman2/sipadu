@@ -1,0 +1,11 @@
+[2026-03-09 10:02:13] local.INFO: AUDIT {"user_id":2,"action":"auth.login","subject":"User:2","ip":"127.0.0.1"} 
+[2026-03-09 10:02:55] local.INFO: AUDIT {"user_id":2,"action":"auth.auto_logout_public_page","subject":"User:2","ip":"127.0.0.1"} 
+[2026-03-09 10:15:10] local.INFO: AUDIT {"user_id":2,"action":"auth.login","subject":"User:2","ip":"127.0.0.1"} 
+[2026-03-09 12:53:35] local.INFO: AUDIT {"user_id":2,"action":"auth.auto_logout_public_page","subject":"User:2","ip":"127.0.0.1"} 
+[2026-03-09 12:55:19] local.INFO: AUDIT {"user_id":2,"action":"auth.login","subject":"User:2","ip":"127.0.0.1"} 
+[2026-03-09 13:27:01] local.INFO: AUDIT {"user_id":2,"action":"auth.auto_logout_public_page","subject":"User:2","ip":"127.0.0.1"} 
+[2026-03-09 13:35:33] local.INFO: AUDIT {"user_id":2,"action":"auth.login","subject":"User:2","ip":"127.0.0.1"} 
+[2026-03-09 13:38:48] local.INFO: AUDIT {"user_id":2,"action":"auth.login","subject":"User:2","ip":"127.0.0.1"} 
+[2026-03-09 13:46:17] local.INFO: AUDIT {"user_id":2,"action":"auth.login","subject":"User:2","ip":"127.0.0.1"} 
+[2026-03-09 13:49:41] local.INFO: AUDIT {"user_id":2,"action":"auth.login","subject":"User:2","ip":"127.0.0.1"} 
+[2026-03-09 13:54:13] local.INFO: AUDIT {"user_id":2,"action":"auth.login","subject":"User:2","ip":"127.0.0.1"} 

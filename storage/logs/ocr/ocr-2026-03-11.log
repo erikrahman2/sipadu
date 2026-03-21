@@ -1,0 +1,9 @@
+[2026-03-11 01:01:55] local.INFO: OCR validation created {"validation_id":1,"ocr_result_id":1,"status":"MISMATCH","score":0.0} 
+[2026-03-11 01:01:55] local.INFO: OCR validation created {"validation_id":2,"ocr_result_id":2,"status":"MISMATCH","score":0.0} 
+[2026-03-11 01:01:55] local.INFO: OCR validation created {"validation_id":3,"ocr_result_id":3,"status":"MISMATCH","score":0.0} 
+[2026-03-11 01:06:15] local.INFO: OCR validation created {"validation_id":4,"ocr_result_id":4,"status":"MISMATCH","score":22.22} 
+[2026-03-11 01:06:15] local.INFO: OCR validation created {"validation_id":5,"ocr_result_id":5,"status":"MISMATCH","score":11.11} 
+[2026-03-11 01:06:15] local.INFO: OCR validation created {"validation_id":6,"ocr_result_id":6,"status":"MISMATCH","score":0.0} 
+[2026-03-11 01:16:52] local.INFO: OCR validation created {"validation_id":7,"ocr_result_id":7,"status":"PARTIAL_MATCH","score":88.89} 
+[2026-03-11 01:16:52] local.INFO: OCR validation created {"validation_id":8,"ocr_result_id":8,"status":"MISMATCH","score":55.56} 
+[2026-03-11 01:16:52] local.INFO: OCR validation created {"validation_id":9,"ocr_result_id":9,"status":"MISMATCH","score":0.0} 

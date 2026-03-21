@@ -1,0 +1,42 @@
+{
+  "ktp_synthetic_basic.png": {
+    "nik": "31740101900001",
+    "nama": "ahmad warga",
+    "tempat_lahir": "jakarta",
+    "tanggal_lahir": "01-01-1990",
+    "alamat": "",
+    "rt_rw": "001/002",
+    "kelurahan": "menteng",
+    "kecamatan": "menteng"
+  },
+  "ktp_synthetic_cv2.png": {
+    "nik": "31740101900001",
+    "nama": "ahmad warga",
+    "tempat_lahir": "jakarta",
+    "tanggal_lahir": "01-01-1990",
+    "alamat": "",
+    "rt_rw": "001/002",
+    "kelurahan": "menteng",
+    "kecamatan": "menteng"
+  },
+  "sample (41).jpg": {
+    "nik": "21711205078310",
+    "nama": "doni",
+    "tempat_lahir": "kota batam",
+    "tanggal_lahir": "05-07-1983",
+    "alamat": "",
+    "rt_rw": "008/007",
+    "kelurahan": "buliang",
+    "kecamatan": "batu aji"
+  },
+  "sample (48).jpg": {
+    "nik": "3175031008930005",
+    "nama": "didi dwi hardiyanjaya",
+    "tempat_lahir": "jakarta",
+    "tanggal_lahir": "10-08-1993",
+    "alamat": "",
+    "rt_rw": "013/001",
+    "kelurahan": "cipinang besar selatan",
+    "kecamatan": "jatinegara"
+  }
+}

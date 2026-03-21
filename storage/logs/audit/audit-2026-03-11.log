@@ -1,0 +1,3 @@
+[2026-03-11 00:04:50] local.INFO: AUDIT {"user_id":3,"action":"auth.login","subject":"User:3","ip":"127.0.0.1"} 
+[2026-03-11 12:47:04] local.INFO: AUDIT {"user_id":3,"action":"auth.logout","subject":"User:3","ip":"127.0.0.1"} 
+[2026-03-11 12:47:25] local.INFO: AUDIT {"user_id":4,"action":"auth.login","subject":"User:4","ip":"127.0.0.1"} 
