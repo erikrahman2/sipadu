@@ -1,5 +1,11 @@
-/public/storage
-/storage/*.key
+.env
+.env.*
 /vendor
 /node_modules
-.env
+/public/storage
+/storage/*
+!.gitkeep
+.venv/
+.vscode/
+*.log
+debug_*.php
