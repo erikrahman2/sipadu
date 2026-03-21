@@ -63,9 +63,15 @@ class DashboardController extends Controller
         return view('dashboard.index', compact('user', 'stats', 'recentItems'));
     }
 
-    public function cases(Request $request): View
+    public function cases(Request $request): \Illuminate\Http\RedirectResponse|View
     {
         $user = auth()->user();
+
+        // PA Management should use dedicated OCR review workspace.
+        if ($user->hasRole('pa_management')) {
+            return redirect()->route('dashboard.review.cases');
+        }
+
         $type = $request->query('type', 'all'); // all, cases, public
         $status = $request->query('status');
         
@@ -83,7 +89,7 @@ class DashboardController extends Controller
         $submissionsQuery = PublicSubmission::query()
             ->with('processor:id,name')
             ->whereIn('status', ['PENDING', 'REVIEWING'])
-            ->selectRaw('id, tracking_token, case_number, petitioner_name as applicant_name, status, processed_by, respondent_name as spouse_name, divorce_date, created_at, updated_at, \'public\' as source_type');
+            ->selectRaw('id, tracking_token, NULL as case_number, petitioner_name as applicant_name, status, processed_by, respondent_name as spouse_name, divorce_date, created_at, updated_at, \'public\' as source_type');
         
         if ($status && in_array($status, ['PENDING', 'REVIEWING'])) {
             $submissionsQuery->where('status', $status);
@@ -218,6 +224,33 @@ class DashboardController extends Controller
 
         $user = auth()->user();
 
+        // Normalize legacy/non-enum document keys from form uploads.
+        $documentTypeAliases = [
+            'SURAT_NIKAH' => 'AKTA_NIKAH',
+            'FOTO_DIRI'   => 'OTHER',
+            'LAINNYA'     => 'OTHER',
+        ];
+        $allowedDocumentTypes = [
+            'KTP',
+            'KK',
+            'AKTA_CERAI',
+            'PUTUSAN_PA',
+            'AKTA_NIKAH',
+            'SURAT_PENGANTAR',
+            'OTHER',
+        ];
+
+        if ($request->hasFile('documents')) {
+            foreach (array_keys($request->file('documents')) as $docTypeKey) {
+                $normalizedType = $documentTypeAliases[$docTypeKey] ?? $docTypeKey;
+                if (!in_array($normalizedType, $allowedDocumentTypes, true)) {
+                    return back()->withErrors([
+                        'documents' => "Jenis dokumen {$docTypeKey} tidak didukung.",
+                    ])->withInput();
+                }
+            }
+        }
+
         $case = DB::transaction(function () use ($request, $user, $petitionerNik, $spouseNik) {
             $case = CaseModel::create([
                 'submitter_id'      => $user->id,
@@ -230,7 +263,18 @@ class DashboardController extends Controller
                 'divorce_date'      => $request->divorce_date,
                 'verdict_number'    => $request->verdict_number,
                 'notes'             => $request->notes,
-                'status'            => 'DRAFT',
+                // Auto-submit once data and documents are posted from this form.
+                'status'            => 'SUBMITTED',
+                'submitted_at'      => now(),
+            ]);
+
+            \App\Models\CaseTransition::create([
+                'case_id'         => $case->id,
+                'from_state'      => 'DRAFT',
+                'to_state'        => 'SUBMITTED',
+                'transitioned_by' => $user->id,
+                'reason'          => 'Auto-submit setelah pengajuan dan upload dokumen.',
+                'metadata'        => ['source' => 'dashboard.storeCase'],
             ]);
 
             // Replace data lama dengan NIK yang sama (hanya DRAFT)
@@ -245,7 +289,15 @@ class DashboardController extends Controller
 
             // Handle document uploads
             if ($request->hasFile('documents')) {
+                $documentTypeAliases = [
+                    'SURAT_NIKAH' => 'AKTA_NIKAH',
+                    'FOTO_DIRI'   => 'OTHER',
+                    'LAINNYA'     => 'OTHER',
+                ];
+
                 foreach ($request->file('documents') as $docType => $file) {
+                    $normalizedDocType = $documentTypeAliases[$docType] ?? $docType;
+
                     $storedName = Str::uuid() . '.' . $file->getClientOriginalExtension();
                     $path = $file->storeAs("cases/{$case->id}", $storedName, 'public');
                     $checksum = hash_file('sha256', $file->getPathname());
@@ -259,7 +311,7 @@ class DashboardController extends Controller
                         'path'          => $path,
                         'mime_type'     => $file->getMimeType(),
                         'size_bytes'    => $file->getSize(),
-                        'document_type' => $docType,
+                        'document_type' => $normalizedDocType,
                         'checksum'      => $checksum,
                         // status default: PENDING (from migration)
                     ]);
@@ -302,7 +354,7 @@ class DashboardController extends Controller
             ->with('success', 'Kasus berhasil dibuat dengan tracking token: ' . $case->tracking_token);
     }
 
-    public function showCase(int $id): View
+    public function showCase(int $id): \Illuminate\Http\RedirectResponse|View
     {
         $case = CaseModel::with([
             'submitter:id,name,email',
@@ -318,6 +370,11 @@ class DashboardController extends Controller
         // ReBAC: PA Management dan Super Admin bisa lihat semua case
         if (!auth()->user()->hasAnyRole(['pa_management', 'super_admin'])) {
             $this->rebac->enforce(auth()->user(), 'view', 'Case', $id);
+        }
+
+        // PA Management and Super Admin should use dedicated OCR review page.
+        if (auth()->user()->hasAnyRole(['pa_management', 'super_admin'])) {
+            return redirect()->route('dashboard.review.show', $id);
         }
 
         return view('dashboard.cases.show', compact('case'));

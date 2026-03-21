@@ -62,6 +62,13 @@
     </div>
   @endif
 
+  @if(session('error'))
+    <div class="mb-6 bg-red-50 border border-red-200 text-red-800 px-5 py-3 rounded-xl text-sm">
+      <i class="fas fa-exclamation-triangle mr-1"></i>
+      <strong>{{ session('error') }}</strong>
+    </div>
+  @endif
+
   {{-- Form --}}
   <form id="caseForm" method="POST" action="{{ route('dashboard.cases.store') }}" enctype="multipart/form-data" class="space-y-8">
     @csrf
@@ -240,9 +247,9 @@
               'KK' => 'Kartu Keluarga (KK)',
               'AKTA_CERAI' => 'Akta Perceraian',
               'PUTUSAN_PA' => 'Putusan Pengadilan Agama',
-              'SURAT_NIKAH' => 'Buku Nikah',
-              'FOTO_DIRI' => 'Foto Diri (Selfie KTP)',
-              'LAINNYA' => 'Dokumen Lainnya',
+              'AKTA_NIKAH' => 'Buku/Akta Nikah',
+              'SURAT_PENGANTAR' => 'Surat Pengantar',
+              'OTHER' => 'Dokumen Lainnya',
             ];
           @endphp
           @foreach($docTypes as $key => $label)

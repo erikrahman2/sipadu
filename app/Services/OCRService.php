@@ -136,6 +136,22 @@ class OCRService
         ->attach('file', fopen($filePath, 'r'), basename($filePath), ['Content-Type' => $mimeType])
         ->post("{$this->serviceUrl}/ocr/process");
 
+        if ($response->status() === 401) {
+            $fallbackSecret = (string) config('ocr.fallback_secret_key', 'change_me');
+            if ($fallbackSecret !== '' && $fallbackSecret !== $this->secretKey) {
+                Log::channel('ocr')->warning('Primary OCR secret rejected, retrying with fallback secret', [
+                    'service_url' => $this->serviceUrl,
+                ]);
+
+                $response = Http::withHeaders([
+                    'X-OCR-Secret' => $fallbackSecret,
+                ])
+                ->timeout($this->timeout)
+                ->attach('file', fopen($filePath, 'r'), basename($filePath), ['Content-Type' => $mimeType])
+                ->post("{$this->serviceUrl}/ocr/process");
+            }
+        }
+
         if (!$response->successful()) {
             throw new \RuntimeException(
                 "OCR microservice error [{$response->status()}]: " . $response->body()
@@ -157,22 +173,24 @@ class OCRService
 
         $processingMs = (int) round((microtime(true) - $startTime) * 1000);
 
+        $normalizedGender = $this->normalizeGender($payload['jenis_kelamin'] ?? null);
+
         return OcrResult::updateOrCreate(
             ['document_id' => $document->id],
             [
                 'case_id'           => $document->case_id,
-                'nik'               => $payload['nik']         ?? null,
-                'no_kk'             => $payload['kk']          ?? null,
-                'nama'              => $payload['nama']         ?? null,
-                'tgl_lahir'         => $payload['tgl_lahir']   ?? null,
-                'tempat_lahir'      => $payload['tempat_lahir'] ?? null,
-                'jenis_kelamin'     => $payload['jenis_kelamin'] ?? null,
-                'alamat'            => $payload['alamat']       ?? null,
-                'rt_rw'             => $payload['rt_rw']        ?? null,
-                'kelurahan'         => $payload['kelurahan']    ?? null,
-                'kecamatan'         => $payload['kecamatan']    ?? null,
-                'kabupaten'         => $payload['kabupaten']    ?? null,
-                'provinsi'          => $payload['provinsi']     ?? null,
+            'nik'               => $this->limitString($payload['nik'] ?? null, 16),
+            'no_kk'             => $this->limitString($payload['kk'] ?? null, 16),
+            'nama'              => $this->limitString($payload['nama'] ?? null, 255),
+            'tgl_lahir'         => $this->limitString($payload['tgl_lahir'] ?? null, 20),
+            'tempat_lahir'      => $this->limitString($payload['tempat_lahir'] ?? null, 255),
+            'jenis_kelamin'     => $normalizedGender,
+            'alamat'            => $this->limitString($payload['alamat'] ?? null, 255),
+            'rt_rw'             => $this->limitString($payload['rt_rw'] ?? null, 10),
+            'kelurahan'         => $this->limitString($payload['kelurahan'] ?? null, 255),
+            'kecamatan'         => $this->limitString($payload['kecamatan'] ?? null, 255),
+            'kabupaten'         => $this->limitString($payload['kabupaten'] ?? null, 255),
+            'provinsi'          => $this->limitString($payload['provinsi'] ?? null, 255),
                 'raw_text'          => $payload['raw_text']     ?? [],
                 'confidence_scores' => $confidence,
                 'overall_confidence' => $overall,
@@ -183,6 +201,38 @@ class OCRService
                 'processing_time_ms' => $processingMs,
             ]
         );
+    }
+
+    private function limitString($value, int $maxLength): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        return mb_substr($value, 0, $maxLength);
+    }
+
+    private function normalizeGender($value): ?string
+    {
+        $raw = strtoupper((string) ($value ?? ''));
+        if ($raw === '') {
+            return null;
+        }
+
+        if (str_contains($raw, 'LAKI')) {
+            return 'LAKI-LAKI';
+        }
+
+        if (str_contains($raw, 'PEREMPUAN')) {
+            return 'PEREMPUAN';
+        }
+
+        return $this->limitString($raw, 10);
     }
 
     private function determineOcrStatus(float $overall, array $payload): string

@@ -16,12 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
         // Redirect unauthenticated web users to login
         $middleware->redirectGuestsTo(fn () => route('auth.login'));
 
-        // Exclude auth routes from CSRF verification (temporary fix for browser issues)
-        // TODO: Remove this after debugging browser cookie/session issue
-        $middleware->validateCsrfTokens(except: [
-            'auth/*',
-        ]);
-
         // Global middleware - CSRF sudah included by default di web group
         $middleware->web(append: [
             \App\Http\Middleware\SecurityHeadersMiddleware::class,
@@ -78,6 +72,18 @@ return Application::configure(basePath: dirname(__DIR__))
                     'errors'  => $e->errors(),
                 ], 422);
             }
+        });
+
+        $exceptions->renderable(function (\Illuminate\Session\TokenMismatchException $e, $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Sesi sudah berubah atau kedaluwarsa. Muat ulang halaman lalu kirim ulang form.',
+                ], 419);
+            }
+
+            return redirect()->back()
+                ->withInput($request->except('_token'))
+                ->with('error', 'Sesi form kedaluwarsa. Halaman telah disegarkan, silakan kirim ulang.');
         });
     })
     ->create();

@@ -10,7 +10,9 @@ return [
 
     'service_url'    => env('OCR_SERVICE_URL', 'http://localhost:5001'),
     'secret_key'     => env('OCR_SECRET_KEY', ''),
+    'fallback_secret_key' => env('OCR_FALLBACK_SECRET_KEY', 'change_me'),
     'timeout'        => env('OCR_TIMEOUT', 60),
+    'fast_mode'      => env('OCR_FAST_MODE', true),
 
     /*
     |--------------------------------------------------------------------------

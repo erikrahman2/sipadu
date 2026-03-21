@@ -276,7 +276,7 @@
             <td class="px-4 py-3 text-gray-500 text-xs">{{ $item->updated_at->diffForHumans() }}</td>
             <td class="px-4 py-3">
               @if($item->source_type === 'case')
-                <a href="{{ route('dashboard.cases.show', $item->id) }}"
+                <a href="{{ auth()->user()->hasAnyRole(['pa_management', 'super_admin']) ? route('dashboard.review.show', $item->id) : route('dashboard.cases.show', $item->id) }}"
                    class="text-primary hover:underline text-xs font-medium">
                   <i class="fas fa-eye mr-1"></i>Review
                 </a>

@@ -17,6 +17,25 @@
         </div>
     </div>
 
+    <div class="d-flex gap-2 mb-3">
+        <form method="POST" action="{{ route('dashboard.review.refresh_ocr', $case->id) }}" onsubmit="return confirm('Hapus data OCR lama lalu proses ulang cepat untuk kasus ini?');">
+            @csrf
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-bolt"></i> Proses OCR Cepat + Hapus Data Lama
+            </button>
+        </form>
+    </div>
+
+    <div class="alert alert-primary border-0 shadow-sm mb-4">
+        <div class="d-flex align-items-start">
+            <i class="fas fa-user-shield fa-lg me-2 mt-1"></i>
+            <div>
+                <strong>Mode Review PA Management</strong><br>
+                <small>Halaman ini menampilkan hasil OCR, perbandingan dengan input manual, dan fitur edit hasil OCR langsung sebelum approve/reject.</small>
+            </div>
+        </div>
+    </div>
+
     <!-- Case Info -->
     <div class="row mb-4">
         <div class="col-md-8">
@@ -171,7 +190,18 @@
                                     @php
                                         $inputValue = $validation->{"input_$fieldKey"} ?? '-';
                                         $ocrValue = $validation->{"ocr_$fieldKey"} ?? '-';
-                                        $matchScore = $comparisonResults[$fieldKey] ?? 0;
+                                        
+                                        // Defensive extraction: handle various data structures
+                                        $fieldData = data_get($comparisonResults, $fieldKey, []);
+                                        $similarityRaw = is_array($fieldData) ? ($fieldData['similarity'] ?? 0) : 0;
+                                        
+                                        // Ensure similarity is numeric
+                                        if (is_array($similarityRaw)) {
+                                          $similarityRaw = $similarityRaw[0] ?? 0;
+                                        }
+                                        
+                                        $similarity = (float) $similarityRaw;
+                                        $matchScore = round($similarity * 100, 1);
                                         $isMatch = $matchScore >= 95;
                                         $isPartial = $matchScore >= 80 && $matchScore < 95;
                                         $isMismatch = $matchScore < 80;
@@ -243,6 +273,9 @@
                         @else
                             <!-- Review Actions -->
                             <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editOcrModal{{ $validation->id }}">
+                                    <i class="fas fa-pen"></i> Edit Hasil OCR
+                                </button>
                                 <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approveModal{{ $validation->id }}">
                                     <i class="fas fa-check"></i> Approve
                                 </button>
@@ -252,6 +285,75 @@
                                 <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#correctionModal{{ $validation->id }}">
                                     <i class="fas fa-edit"></i> Request Correction
                                 </button>
+                            </div>
+
+                            <!-- Edit OCR Modal -->
+                            <div class="modal fade" id="editOcrModal{{ $validation->id }}" tabindex="-1">
+                                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                                    <div class="modal-content">
+                                        <form method="POST" action="{{ route('dashboard.review.correct', $case->id) }}">
+                                            @csrf
+                                            <input type="hidden" name="validation_id" value="{{ $validation->id }}">
+                                            <div class="modal-header bg-primary text-white">
+                                                <h5 class="modal-title">
+                                                    <i class="fas fa-pen"></i> Edit Hasil OCR
+                                                </h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p class="text-muted small mb-3">Perbaiki data hasil OCR jika ada salah baca. Sistem akan hitung ulang skor validasi otomatis.</p>
+                                                <div class="row g-3">
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">NIK</label>
+                                                        <input type="text" class="form-control" name="ocr_nik" value="{{ old('ocr_nik', $validation->ocr_nik) }}" maxlength="16">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">No. KK</label>
+                                                        <input type="text" class="form-control" name="ocr_no_kk" value="{{ old('ocr_no_kk', $validation->ocr_no_kk) }}" maxlength="16">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Nama Lengkap</label>
+                                                        <input type="text" class="form-control" name="ocr_nama" value="{{ old('ocr_nama', $validation->ocr_nama) }}">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Tempat Lahir</label>
+                                                        <input type="text" class="form-control" name="ocr_tempat_lahir" value="{{ old('ocr_tempat_lahir', $validation->ocr_tempat_lahir) }}">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Tanggal Lahir</label>
+                                                        <input type="text" class="form-control" name="ocr_tgl_lahir" value="{{ old('ocr_tgl_lahir', $validation->ocr_tgl_lahir) }}" placeholder="Contoh: 1990-01-31 / 31-01-1990">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">RT/RW</label>
+                                                        <input type="text" class="form-control" name="ocr_rt_rw" value="{{ old('ocr_rt_rw', $validation->ocr_rt_rw) }}" maxlength="10">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Kelurahan</label>
+                                                        <input type="text" class="form-control" name="ocr_kelurahan" value="{{ old('ocr_kelurahan', $validation->ocr_kelurahan) }}">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Kecamatan</label>
+                                                        <input type="text" class="form-control" name="ocr_kecamatan" value="{{ old('ocr_kecamatan', $validation->ocr_kecamatan) }}">
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <label class="form-label">Alamat</label>
+                                                        <textarea class="form-control" name="ocr_alamat" rows="3">{{ old('ocr_alamat', $validation->ocr_alamat) }}</textarea>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <label class="form-label">Catatan Koreksi (opsional)</label>
+                                                        <textarea class="form-control" name="correction_notes" rows="2" placeholder="Catatan perubahan OCR">{{ old('correction_notes') }}</textarea>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="fas fa-save"></i> Simpan Koreksi OCR
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Approve Modal -->

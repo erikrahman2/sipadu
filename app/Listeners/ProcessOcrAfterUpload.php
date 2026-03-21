@@ -25,8 +25,8 @@ class ProcessOcrAfterUpload
     {
         $document = $event->document;
         
-        // Hanya proses dokumen identitas (KTP, KK, Akta)
-        $processableTypes = ['KTP', 'KK', 'AKTA_KELAHIRAN', 'AKTA_CERAI'];
+        // Proses semua dokumen identitas yang memang dipakai di alur dashboard.
+        $processableTypes = ['KTP', 'KK', 'AKTA_KELAHIRAN', 'AKTA_CERAI', 'AKTA_NIKAH', 'PUTUSAN_PA'];
         
         if (!in_array($document->document_type, $processableTypes)) {
             Log::channel('ocr')->info('Document type not processable for OCR', [
@@ -36,12 +36,18 @@ class ProcessOcrAfterUpload
             return;
         }
         
-        // Dispatch OCR job ke queue
-        $this->ocrService->dispatch($document);
+        // Fast path: proses sinkron agar hasil OCR langsung muncul di halaman review.
+        if (config('ocr.fast_mode', true) === true) {
+            $this->ocrService->process($document);
+        } else {
+            // Default path: queue async.
+            $this->ocrService->dispatch($document);
+        }
         
         Log::channel('ocr')->info('OCR job dispatched after upload', [
             'document_id' => $document->id,
             'type'        => $document->document_type,
+            'fast_mode'   => config('ocr.fast_mode', true),
         ]);
     }
 }

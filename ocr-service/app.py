@@ -26,6 +26,10 @@ import pytesseract
 from flask import Flask, jsonify, request
 from pdf2image import convert_from_bytes
 from PIL import Image
+from dotenv import load_dotenv
+
+# Load local .env for standalone runs (non-Docker) so secret and paths are consistent.
+load_dotenv(dotenv_path=Path(__file__).with_name('.env'))
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Configuration

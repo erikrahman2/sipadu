@@ -42,6 +42,7 @@ class OcrValidation extends Model
         'fields_total',
         'validation_status',
         'is_reviewed',
+        'review_action',
         'reviewed_by',
         'reviewed_at',
         'review_notes',

@@ -110,6 +110,8 @@ Route::middleware(['auth', 'security.headers', 'access.log'])->prefix('dashboard
          ->group(function () {
              Route::get('/cases',            [\App\Http\Controllers\Web\ReviewController::class, 'index'])->name('cases');
              Route::get('/cases/{id}',       [\App\Http\Controllers\Web\ReviewController::class, 'show'])->name('show');
+                Route::post('/cases/{id}/correct', [\App\Http\Controllers\Web\ReviewController::class, 'correctOcr'])->name('correct');
+                Route::post('/cases/{id}/refresh-ocr', [\App\Http\Controllers\Web\ReviewController::class, 'refreshOcr'])->name('refresh_ocr');
              Route::post('/cases/{id}/validate', [\App\Http\Controllers\Web\ReviewController::class, 'validateOcr'])->name('validate');
              Route::get('/statistics',       [\App\Http\Controllers\Web\ReviewController::class, 'statistics'])->name('statistics');
          });

@@ -156,7 +156,19 @@ return [
     |
     */
 
-    'domain' => env('SESSION_DOMAIN'),
+    'domain' => (static function () {
+        $value = env('SESSION_DOMAIN');
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+        if ($value === '' || strtolower($value) === 'null') {
+            return null;
+        }
+
+        return $value;
+    })(),
 
     /*
     |--------------------------------------------------------------------------
@@ -199,7 +211,19 @@ return [
     |
     */
 
-    'same_site' => env('SESSION_SAME_SITE', 'lax'),
+    'same_site' => (static function () {
+        $value = env('SESSION_SAME_SITE', 'lax');
+        if ($value === null) {
+            return null;
+        }
+
+        $value = strtolower(trim((string) $value));
+        if ($value === '' || $value === 'null') {
+            return null;
+        }
+
+        return $value;
+    })(),
 
     /*
     |--------------------------------------------------------------------------

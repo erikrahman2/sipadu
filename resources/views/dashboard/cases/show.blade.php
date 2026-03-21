@@ -306,7 +306,18 @@
                 @php
                   $inputValue = $validation->{"input_$fieldKey"} ?? null;
                   $ocrValue = $validation->{"ocr_$fieldKey"} ?? null;
-                  $matchScore = $comparisonResults[$fieldKey] ?? 0;
+                  
+                  // Defensive extraction: handle various data structures
+                  $fieldData = data_get($comparisonResults, $fieldKey, []);
+                  $similarityRaw = is_array($fieldData) ? ($fieldData['similarity'] ?? 0) : 0;
+                  
+                  // Ensure similarity is numeric
+                  if (is_array($similarityRaw)) {
+                    $similarityRaw = $similarityRaw[0] ?? 0;
+                  }
+                  
+                  $similarity = (float) $similarityRaw;
+                  $matchScore = round($similarity * 100, 1);
                   $isMatch = $matchScore >= 95;
                   $isMismatch = $matchScore < 80;
                 @endphp
@@ -436,13 +447,10 @@
     <h3 class="font-semibold text-gray-800 text-base mb-4">Tindakan</h3>
 
     <div class="flex flex-col sm:flex-row gap-3">
-      {{-- Submit --}}
-      @if($case->status === 'DRAFT' && auth()->user()->id === $case->submitter_id)
-        <button @click="submitCase()"
-          class="flex-1 py-3 text-sm font-semibold bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition flex items-center justify-center gap-2">
-          <i class="fas fa-paper-plane"></i>
-          <span>Submit Kasus</span>
-        </button>
+      @if(in_array($case->status, ['DRAFT', 'SUBMITTED']))
+        <div class="w-full py-3 px-4 text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-xl">
+          Data dan dokumen sudah dikirim. Kasus diproses otomatis tanpa tombol submit manual.
+        </div>
       @endif
 
       {{-- PA Review --}}
@@ -509,15 +517,6 @@ function caseDetail(caseId) {
     caseId,
     showRejectModal: false,
     rejectReason: '',
-
-    async submitCase() {
-      const res = await this.apiCall('POST', `/api/v1/review/submit/${caseId}`);
-      if (res.ok) {
-        location.reload();
-      } else {
-        alert('Gagal submit kasus');
-      }
-    },
 
     async review(decision) {
       const res = await this.apiCall('POST', '/api/v1/review/pa', { case_id: caseId, decision });

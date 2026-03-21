@@ -114,7 +114,7 @@
           </td>
           <td class="px-4 py-3">
             @if($case->source_type === 'case')
-              <a href="{{ route('dashboard.cases.show', $case->id) }}"
+              <a href="{{ auth()->user()->hasAnyRole(['pa_management', 'super_admin']) ? route('dashboard.review.show', $case->id) : route('dashboard.cases.show', $case->id) }}"
                  class="text-primary hover:underline text-xs font-medium">
                 <i class="fas fa-eye mr-1"></i>Detail
               </a>
