@@ -9,3 +9,8 @@
 .vscode/
 *.log
 debug_*.php
+
+# Python artifacts (OCR tools/services)
+__pycache__/
+*.pyc
+*.pyo
