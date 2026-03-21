@@ -85,18 +85,5 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->withInput($request->except('_token'))
                 ->with('error', 'Sesi form kedaluwarsa. Halaman telah disegarkan, silakan kirim ulang.');
         });
-
-        // Handle fatal errors (timeout, memory) - prevent Ignition retry loop
-        $exceptions->renderable(function (\Symfony\Component\ErrorHandler\Error\FatalError $e, $request) {
-            \Illuminate\Support\Facades\Log::error('Fatal Error: ' . $e->getMessage());
-            
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'message' => 'Processing error occurred. Please try again.',
-                ], 500);
-            }
-
-            return response()->view('errors.500', [], 500);
-        });
     })
     ->create();
