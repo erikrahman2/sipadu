@@ -152,4 +152,52 @@ class OcrValidation extends Model
     {
         return number_format($this->overall_match_score, 1) . '%';
     }
+
+    /**
+     * Get OCR timing information
+     */
+    public function getOcrTimingInfo(): array
+    {
+        $ocrResult = $this->ocrResult;
+        $document = $this->document;
+
+        if (!$ocrResult || !$document) {
+            return [
+                'started_at' => null,
+                'completed_at' => null,
+                'duration_seconds' => null,
+                'duration_human' => 'N/A',
+            ];
+        }
+
+        $startedAt = $document->created_at;
+        $completedAt = $ocrResult->created_at;
+        $duration = $completedAt->diffInSeconds($startedAt);
+
+        return [
+            'started_at' => $startedAt,
+            'completed_at' => $completedAt,
+            'duration_seconds' => $duration,
+            'duration_human' => $this->formatDuration($duration),
+        ];
+    }
+
+    /**
+     * Format duration in human-readable format
+     */
+    private function formatDuration(int $seconds): string
+    {
+        if ($seconds < 60) {
+            return "{$seconds} detik";
+        }
+
+        $minutes = intval($seconds / 60);
+        $secs = $seconds % 60;
+
+        if ($minutes < 2) {
+            return "{$minutes} menit {$secs} detik";
+        }
+
+        return "{$minutes} menit";
+    }
 }

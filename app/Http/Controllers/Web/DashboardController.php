@@ -145,45 +145,69 @@ class DashboardController extends Controller
     public function storeCase(Request $request)
     {
         $request->validate([
-            'nik'            => 'required|digits:16',
-            'petitioner_name'=> 'required|string|max:255',
+            'suami_nik'      => 'required|digits:16',
+            'suami_name'     => 'required|string|max:255',
+            'suami_alamat'   => 'required|string|max:255',
+            'suami_rt_rw'    => ['required', 'string', 'max:10', 'regex:/^\d{3}\/\d{3}$/'],
+            'suami_kelurahan'=> 'required|string|max:255',
+            'suami_kecamatan'=> 'required|string|max:255',
+            'istri_nik'      => 'required|digits:16',
+            'istri_name'     => 'required|string|max:255',
+            'istri_alamat'   => 'required|string|max:255',
+            'istri_rt_rw'    => ['required', 'string', 'max:10', 'regex:/^\d{3}\/\d{3}$/'],
+            'istri_kelurahan'=> 'required|string|max:255',
+            'istri_kecamatan'=> 'required|string|max:255',
             'phone_wa'       => ['required', 'string', 'max:20', 'regex:/^[0-9]{9,15}$/'],
             'institution_id' => 'required|exists:institutions,id',
-            'spouse_nik'     => 'nullable|digits:16',
-            'spouse_name'    => 'nullable|string|max:255',
             'divorce_date'   => 'nullable|date|before_or_equal:today',
             'verdict_number' => 'nullable|string|max:100',
             'notes'          => 'nullable|string|max:1000',
             'agreement'      => 'required|accepted',
             'documents'      => 'nullable|array',
-            'documents.KTP'  => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'documents.KTP_SUAMI' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'documents.KTP_ISTRI' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'documents.*'    => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ], [
-            'nik.required'           => 'NIK pemohon wajib diisi.',
-            'nik.digits'             => 'NIK harus 16 digit angka.',
-            'petitioner_name.required' => 'Nama pemohon wajib diisi.',
+            'suami_nik.required'     => 'NIK suami wajib diisi.',
+            'suami_nik.digits'       => 'NIK suami harus 16 digit angka.',
+            'suami_name.required'    => 'Nama suami wajib diisi.',
+            'suami_alamat.required'  => 'Alamat suami wajib diisi.',
+            'suami_rt_rw.required'   => 'RT/RW suami wajib diisi.',
+            'suami_rt_rw.regex'      => 'Format RT/RW suami harus 000/000.',
+            'suami_kelurahan.required' => 'Kelurahan suami wajib diisi.',
+            'suami_kecamatan.required' => 'Kecamatan suami wajib diisi.',
+            'istri_nik.required'     => 'NIK istri wajib diisi.',
+            'istri_nik.digits'       => 'NIK istri harus 16 digit angka.',
+            'istri_name.required'    => 'Nama istri wajib diisi.',
+            'istri_alamat.required'  => 'Alamat istri wajib diisi.',
+            'istri_rt_rw.required'   => 'RT/RW istri wajib diisi.',
+            'istri_rt_rw.regex'      => 'Format RT/RW istri harus 000/000.',
+            'istri_kelurahan.required' => 'Kelurahan istri wajib diisi.',
+            'istri_kecamatan.required' => 'Kecamatan istri wajib diisi.',
             'phone_wa.required'      => 'Nomor WhatsApp wajib diisi.',
             'phone_wa.regex'         => 'Format nomor WhatsApp tidak valid (gunakan angka saja, 9-15 digit).',
             'institution_id.required' => 'Institusi wajib dipilih.',
-            'spouse_nik.digits'      => 'NIK pasangan harus 16 digit angka.',
             'divorce_date.before_or_equal' => 'Tanggal perceraian tidak boleh di masa depan.',
             'agreement.required'     => 'Anda harus menyetujui pernyataan kebenaran data.',
             'agreement.accepted'     => 'Anda harus menyetujui pernyataan kebenaran data.',
-            'documents.KTP.required' => 'Dokumen KTP Pemohon wajib diunggah.',
-            'documents.KTP.mimes'    => 'Format file KTP harus JPG, PNG, atau PDF.',
-            'documents.KTP.max'      => 'Ukuran file KTP maksimal 5 MB.',
+            'documents.KTP_SUAMI.required' => 'Dokumen KTP suami wajib diunggah.',
+            'documents.KTP_ISTRI.required' => 'Dokumen KTP istri wajib diunggah.',
+            'documents.KTP_SUAMI.mimes' => 'Format file KTP suami harus JPG, PNG, atau PDF.',
+            'documents.KTP_ISTRI.mimes' => 'Format file KTP istri harus JPG, PNG, atau PDF.',
+            'documents.KTP_SUAMI.max' => 'Ukuran file KTP suami maksimal 5 MB.',
+            'documents.KTP_ISTRI.max' => 'Ukuran file KTP istri maksimal 5 MB.',
             'documents.*.mimes'      => 'Format file harus JPG, PNG, atau PDF.',
             'documents.*.max'        => 'Ukuran file maksimal 5 MB.',
         ]);
 
         // === Validasi Business Logic (menggunakan PublicSubmission methods) ===
-        $petitionerNik = $request->nik;
-        $spouseNik = $request->spouse_nik;
+        $petitionerNik = $request->suami_nik;
+        $spouseNik = $request->istri_nik;
 
         // Validasi 1: NIK pemohon ≠ NIK pasangan
         if (\App\Models\PublicSubmission::isSameNik($petitionerNik, $spouseNik)) {
             return back()->withErrors([
-                'spouse_nik' => 'NIK pemohon tidak boleh sama dengan NIK pasangan.',
+                'istri_nik' => 'NIK suami tidak boleh sama dengan NIK istri.',
             ])->withInput();
         }
 
@@ -211,14 +235,14 @@ class DashboardController extends Controller
             $message .= " Harap koordinasi dengan pihak terkait sebelum membuat kasus baru atau pastikan tidak ada duplikasi data.";
 
             return back()->withErrors([
-                'nik' => $message,
+                'suami_nik' => $message,
             ])->withInput();
         }
 
         // Validasi 3: Cek apakah pasangan NIK sudah terdaftar di Disdukcapil
         if ($spouseNik && \App\Models\PublicSubmission::hasCoupleInDisdukcapil($petitionerNik, $spouseNik)) {
             return back()->withErrors([
-                'spouse_nik' => 'Pasangan dengan NIK ini sudah terdaftar dan sedang diproses di Disdukcapil. Tidak dapat membuat kasus baru dengan kombinasi NIK yang sama.',
+                'istri_nik' => 'Pasangan dengan NIK ini sudah terdaftar dan sedang diproses di Disdukcapil. Tidak dapat membuat kasus baru dengan kombinasi NIK yang sama.',
             ])->withInput();
         }
 
@@ -232,6 +256,8 @@ class DashboardController extends Controller
         ];
         $allowedDocumentTypes = [
             'KTP',
+            'KTP_SUAMI',
+            'KTP_ISTRI',
             'KK',
             'AKTA_CERAI',
             'PUTUSAN_PA',
@@ -254,12 +280,20 @@ class DashboardController extends Controller
         $case = DB::transaction(function () use ($request, $user, $petitionerNik, $spouseNik) {
             $case = CaseModel::create([
                 'submitter_id'      => $user->id,
-                'petitioner_nik'    => $request->nik,
-                'petitioner_name'   => $request->petitioner_name,
+                'petitioner_nik'    => $request->suami_nik,
+                'petitioner_name'   => $request->suami_name,
                 'petitioner_phone'  => $request->phone_wa,
+                'petitioner_alamat' => $request->suami_alamat,
+                'petitioner_rt_rw' => $request->suami_rt_rw,
+                'petitioner_kelurahan' => $request->suami_kelurahan,
+                'petitioner_kecamatan' => $request->suami_kecamatan,
                 'institution_id'    => $request->institution_id,
-                'spouse_nik'        => $request->spouse_nik,
-                'spouse_name'       => $request->spouse_name,
+                'spouse_nik'        => $request->istri_nik,
+                'spouse_name'       => $request->istri_name,
+                'spouse_alamat'     => $request->istri_alamat,
+                'spouse_rt_rw'      => $request->istri_rt_rw,
+                'spouse_kelurahan'  => $request->istri_kelurahan,
+                'spouse_kecamatan'  => $request->istri_kecamatan,
                 'divorce_date'      => $request->divorce_date,
                 'verdict_number'    => $request->verdict_number,
                 'notes'             => $request->notes,

@@ -13,42 +13,61 @@ class OCRValidationService
     /**
      * Ambil data input manual dari Case atau PublicSubmission
      */
-    public function getInputData($caseId = null, $publicSubmissionId = null): array
+    public function getInputData($caseId = null, $publicSubmissionId = null, ?string $documentType = null): array
     {
         if ($caseId) {
             $case = CaseModel::with('publicSubmission')->find($caseId);
             if (!$case) {
                 return [];
             }
+
+            $isWifeKtp = $documentType === 'KTP_ISTRI';
             
             // Prioritas: ambil dari public_submission jika ada (lebih lengkap),
             // fallback ke case data (terbatas)
             if ($case->publicSubmission) {
                 $ps = $case->publicSubmission;
+
+                if ($isWifeKtp) {
+                    return [
+                        'nik'           => $ps->respondent_nik ?? $case->spouse_nik,
+                        'nama'          => $ps->respondent_name ?? $case->spouse_name,
+                        'alamat'        => $case->spouse_alamat,
+                        'rt_rw'         => $case->spouse_rt_rw,
+                        'kelurahan'     => $case->spouse_kelurahan,
+                        'kecamatan'     => $case->spouse_kecamatan,
+                    ];
+                }
+
                 return [
                     'nik'           => $ps->nik ?? $case->petitioner_nik,
                     'nama'          => $ps->nama_lengkap ?? $case->petitioner_name,
-                    'tempat_lahir'  => $ps->tempat_lahir ?? null,
-                    'tgl_lahir'     => $ps->tanggal_lahir ?? null,
-                    'alamat'        => $ps->alamat ?? null,
-                    'rt_rw'         => $ps->rt_rw ?? null,
-                    'kelurahan'     => $ps->kelurahan ?? null,
-                    'kecamatan'     => $ps->kecamatan ?? null,
-                    'no_kk'         => $ps->no_kk ?? null,
+                    'alamat'        => $ps->alamat ?? $case->petitioner_alamat,
+                    'rt_rw'         => $ps->rt_rw ?? $case->petitioner_rt_rw,
+                    'kelurahan'     => $ps->kelurahan ?? $case->petitioner_kelurahan,
+                    'kecamatan'     => $ps->kecamatan ?? $case->petitioner_kecamatan,
                 ];
             }
             
             // Data case (terbatas)
+            if ($isWifeKtp) {
+                return [
+                    'nik'           => $case->spouse_nik,
+                    'nama'          => $case->spouse_name,
+                    'alamat'        => $case->spouse_alamat,
+                    'rt_rw'         => $case->spouse_rt_rw,
+                    'kelurahan'     => $case->spouse_kelurahan,
+                    'kecamatan'     => $case->spouse_kecamatan,
+                ];
+            }
+
             return [
                 'nik'           => $case->petitioner_nik,
                 'nama'          => $case->petitioner_name,
-                'tempat_lahir'  => null,
-                'tgl_lahir'     => null,
-                'alamat'        => null,
-                'rt_rw'         => null,
-                'kelurahan'     => null,
-                'kecamatan'     => null,
-                'no_kk'         => null,
+                'alamat'        => $case->petitioner_alamat,
+                'rt_rw'         => $case->petitioner_rt_rw,
+                'kelurahan'     => $case->petitioner_kelurahan,
+                'kecamatan'     => $case->petitioner_kecamatan,
             ];
         }
         
@@ -58,16 +77,24 @@ class OCRValidationService
                 return [];
             }
             
+            if ($documentType === 'KTP_ISTRI') {
+                return [
+                    'nik'           => $submission->respondent_nik,
+                    'nama'          => $submission->respondent_name,
+                    'alamat'        => null,
+                    'rt_rw'         => null,
+                    'kelurahan'     => null,
+                    'kecamatan'     => null,
+                ];
+            }
+
             return [
                 'nik'           => $submission->nik,
-                'nama'          => $submission->nama_lengkap,
-                'tempat_lahir'  => $submission->tempat_lahir ?? null,
-                'tgl_lahir'     => $submission->tanggal_lahir ?? null,
+                'nama'          => $submission->nama_lengkap ?? $submission->petitioner_name,
                 'alamat'        => $submission->alamat ?? null,
                 'rt_rw'         => $submission->rt_rw ?? null,
                 'kelurahan'     => $submission->kelurahan ?? null,
                 'kecamatan'     => $submission->kecamatan ?? null,
-                'no_kk'         => $submission->no_kk ?? null,
             ];
         }
         
@@ -79,16 +106,19 @@ class OCRValidationService
      */
     public function compare(OcrResult $ocrResult): OcrValidation
     {
+        $ocrResult->loadMissing('document');
+        $documentType = optional($ocrResult->document)->document_type;
+
         // Ambil data input original
         $inputData = $this->getInputData(
             $ocrResult->case_id,
-            $ocrResult->public_submission_id
+            $ocrResult->public_submission_id,
+            $documentType
         );
         
         // Fields yang akan dibandingkan
         $fieldsToCompare = [
-            'nik', 'nama', 'tempat_lahir', 'tgl_lahir',
-            'alamat', 'rt_rw', 'kelurahan', 'kecamatan', 'no_kk'
+            'nik', 'nama', 'alamat', 'rt_rw', 'kelurahan', 'kecamatan'
         ];
         
         $comparisonResults = [];
@@ -148,13 +178,13 @@ class OCRValidationService
                 // Snapshot input
                 'input_nik'             => $inputData['nik'] ?? null,
                 'input_nama'            => $inputData['nama'] ?? null,
-                'input_tempat_lahir'    => $inputData['tempat_lahir'] ?? null,
-                'input_tgl_lahir'       => $inputData['tgl_lahir'] ?? null,
+                'input_tempat_lahir'    => null,
+                'input_tgl_lahir'       => null,
                 'input_alamat'          => $inputData['alamat'] ?? null,
                 'input_rt_rw'           => $inputData['rt_rw'] ?? null,
                 'input_kelurahan'       => $inputData['kelurahan'] ?? null,
                 'input_kecamatan'       => $inputData['kecamatan'] ?? null,
-                'input_no_kk'           => $inputData['no_kk'] ?? null,
+                'input_no_kk'           => null,
                 
                 // Snapshot OCR
                 'ocr_nik'               => $ocrResult->nik,

@@ -73,8 +73,23 @@
                                 </tr>
                                 <tr>
                                     <td class="text-muted">Tanggal Submit</td>
-                                    <td>{{ $case->created_at->format('d M Y H:i') }}</td>
+                                    <td>{{ $case->created_at->format('d M Y H:i:s') }}</td>
                                 </tr>
+                                @php
+                                    $latestOcrCompletion = $case->ocrValidations
+                                        ->map(fn($v) => $v->ocrResult?->created_at)
+                                        ->filter()
+                                        ->sort()
+                                        ->last();
+                                @endphp
+                                @if($latestOcrCompletion)
+                                    <tr>
+                                        <td class="text-muted">Waktu OCR Selesai</td>
+                                        <td>
+                                            <span class="badge bg-success">{{ $latestOcrCompletion->format('d M Y H:i:s') }}</span>
+                                        </td>
+                                    </tr>
+                                @endif
                                 <tr>
                                     <td class="text-muted">Total Validasi</td>
                                     <td><strong>{{ $validationStats['total'] }}</strong></td>
@@ -135,7 +150,13 @@
     <!-- Validation Results -->
     @if($case->ocrValidations->isEmpty())
         <div class="alert alert-info">
-            <i class="fas fa-info-circle"></i> Belum ada hasil validasi OCR untuk kasus ini.
+            <div class="d-flex align-items-start">
+                <i class="fas fa-hourglass-half me-2 mt-1"></i>
+                <div>
+                    <strong>OCR Sedang Diproses...</strong>
+                    <p class="mb-0 mt-2">Belum ada hasil validasi OCR untuk kasus ini. Mohon tunggu atau refresh halaman.</p>
+                </div>
+            </div>
         </div>
     @else
         @foreach($case->ocrValidations as $validation)
@@ -146,7 +167,20 @@
                             <h5 class="mb-0">
                                 Validasi OCR - {{ $validation->document ? strtoupper(str_replace('_', ' ', $validation->document->document_type)) : 'Unknown' }}
                             </h5>
-                            <small class="text-muted">{{ $validation->created_at->format('d M Y H:i') }}</small>
+                            @php
+                                $ocrCompletedAt = $validation->ocrResult?->created_at;
+                            @endphp
+                            @if($ocrCompletedAt)
+                                <small class="text-muted">
+                                    <i class="fas fa-check-circle text-success me-1"></i>
+                                    Selesai: <strong>{{ $ocrCompletedAt->format('d M Y H:i:s') }}</strong>
+                                </small>
+                            @else
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Created: {{ $validation->created_at->format('d M Y H:i:s') }}
+                                </small>
+                            @endif
                         </div>
                         <div>
                             <span class="badge {{ $validation->getStatusBadgeClass() }} fs-6">
@@ -175,13 +209,10 @@
                                     $fields = [
                                         'nik' => 'NIK',
                                         'nama' => 'Nama Lengkap',
-                                        'tempat_lahir' => 'Tempat Lahir',
-                                        'tgl_lahir' => 'Tanggal Lahir',
                                         'alamat' => 'Alamat',
                                         'rt_rw' => 'RT/RW',
                                         'kelurahan' => 'Kelurahan',
-                                        'kecamatan' => 'Kecamatan',
-                                        'no_kk' => 'No. KK'
+                                        'kecamatan' => 'Kecamatan'
                                     ];
                                     $comparisonResults = $validation->comparison_results ?? [];
                                 @endphp
@@ -472,11 +503,19 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Highlight mismatched fields
+    // Highlight mismatched fields dengan warning color
     const mismatchedRows = document.querySelectorAll('tr.table-danger');
     mismatchedRows.forEach(row => {
         row.style.transition = 'background-color 0.3s';
     });
+
+    // Auto-refresh halaman jika OCR belum ada hasil (setiap 5 detik)
+    const emptyAlert = document.querySelector('.alert-info');
+    if (emptyAlert && emptyAlert.textContent.includes('Sedang Diproses')) {
+        setInterval(() => {
+            location.reload();
+        }, 5000);
+    }
 });
 </script>
 @endsection

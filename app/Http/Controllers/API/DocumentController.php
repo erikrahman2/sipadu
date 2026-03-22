@@ -33,7 +33,7 @@ class DocumentController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'case_id'       => 'required|exists:cases,id',
-            'document_type' => 'required|in:KTP,KK,AKTA_CERAI,PUTUSAN_PA,AKTA_NIKAH,SURAT_PENGANTAR,OTHER',
+            'document_type' => 'required|in:KTP,KTP_SUAMI,KTP_ISTRI,KK,AKTA_CERAI,PUTUSAN_PA,AKTA_NIKAH,SURAT_PENGANTAR,OTHER',
             'file'          => 'required|file|mimes:jpeg,png,pdf,tiff|max:' . (config('ocr.max_file_size_mb', 10) * 1024),
         ]);
 

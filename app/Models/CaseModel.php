@@ -16,7 +16,9 @@ class CaseModel extends Model
     protected $fillable = [
         'case_number', 'tracking_token', 'submitter_id',
         'petitioner_nik', 'petitioner_name', 'petitioner_phone',
+        'petitioner_alamat', 'petitioner_rt_rw', 'petitioner_kelurahan', 'petitioner_kecamatan',
         'institution_id', 'spouse_nik', 'spouse_name',
+        'spouse_alamat', 'spouse_rt_rw', 'spouse_kelurahan', 'spouse_kecamatan',
         'divorce_date', 'verdict_number', 'status', 'notes',
         'assigned_pa_user_id', 'assigned_disdukcapil_user_id',
         'submitted_at', 'completed_at',

@@ -310,7 +310,7 @@ class ReviewController extends Controller
             ]);
         }
 
-        $processableTypes = ['KTP', 'KK', 'AKTA_KELAHIRAN', 'AKTA_CERAI', 'AKTA_NIKAH', 'PUTUSAN_PA'];
+        $processableTypes = ['KTP', 'KTP_SUAMI', 'KTP_ISTRI'];
         $documents = $case->documents->whereIn('document_type', $processableTypes);
 
         if ($documents->isEmpty()) {
@@ -392,7 +392,7 @@ class ReviewController extends Controller
         ];
         
         // Field-specific statistics
-        $fields = ['nik', 'nama', 'tempat_lahir', 'tgl_lahir', 'alamat', 'rt_rw', 'kelurahan', 'kecamatan', 'no_kk'];
+        $fields = ['nik', 'nama', 'alamat', 'rt_rw', 'kelurahan', 'kecamatan'];
         $stats['by_field'] = [];
         
         foreach ($fields as $field) {

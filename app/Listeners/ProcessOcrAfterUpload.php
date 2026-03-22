@@ -25,8 +25,8 @@ class ProcessOcrAfterUpload
     {
         $document = $event->document;
         
-        // Proses semua dokumen identitas yang memang dipakai di alur dashboard.
-        $processableTypes = ['KTP', 'KK', 'AKTA_KELAHIRAN', 'AKTA_CERAI', 'AKTA_NIKAH', 'PUTUSAN_PA'];
+        // Fokus OCR hanya untuk KTP dengan kategori suami/istri.
+        $processableTypes = ['KTP', 'KTP_SUAMI', 'KTP_ISTRI'];
         
         if (!in_array($document->document_type, $processableTypes)) {
             Log::channel('ocr')->info('Document type not processable for OCR', [
