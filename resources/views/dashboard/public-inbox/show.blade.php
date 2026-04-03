@@ -5,17 +5,6 @@
 @section('content')
 <div class="max-w-5xl mx-auto">
 
-  {{-- Header dengan nama user --}}
-  <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Detail Pengajuan</h1>
-    <div class="flex items-center gap-2">
-      <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
-        {{ substr(auth()->user()->name, 0, 1) }}
-      </div>
-      <span class="text-sm font-medium text-gray-700">{{ auth()->user()->name }}</span>
-    </div>
-  </div>
-
   {{-- Breadcrumb --}}
   <nav class="text-sm text-gray-500 mb-5">
     <span class="text-gray-700">Kotak Masuk</span>
@@ -105,30 +94,68 @@
     </form>
   </div>
 
-  {{-- Data Pemohon --}}
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-5">
-    <div class="bg-gradient-to-r from-blue-50 to-blue-100/50 px-6 py-4 border-b border-blue-200">
-      <h3 class="font-semibold text-gray-800 text-base">Data Pemohon</h3>
+  {{-- Data Pasangan (Grid 2 Kolom) --}}
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+    {{-- Data Suami --}}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="bg-gradient-to-r from-blue-50 to-blue-100/50 px-6 py-4 border-b border-blue-200">
+        <h3 class="font-semibold text-gray-800 text-base">Data Suami</h3>
+      </div>
+      <div class="p-6">
+        <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+          <div>
+            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">NIK</dt>
+            <dd class="font-mono text-base font-semibold text-gray-900">{{ $submission->nik ?? '-' }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Nama Lengkap</dt>
+            <dd class="text-base font-medium text-gray-900">{{ $submission->petitioner_name ?? '-' }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Nomor Telepon</dt>
+            <dd class="font-mono text-base text-gray-900">{{ $submission->phone_wa ?? '-' }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Alamat</dt>
+            <dd class="text-base text-gray-900">{{ $submission->alamat ?? '-' }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">RT/RW</dt>
+            <dd class="font-mono text-base text-gray-900">{{ $submission->rt_rw ?? '-' }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Kelurahan</dt>
+            <dd class="text-base text-gray-900">{{ $submission->kelurahan ?? '-' }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Kecamatan</dt>
+            <dd class="text-base text-gray-900">{{ $submission->kecamatan ?? '-' }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">No. Kartu Keluarga</dt>
+            <dd class="font-mono text-base text-gray-900">{{ $submission->no_kk ?? '-' }}</dd>
+          </div>
+        </dl>
+      </div>
     </div>
-    <div class="p-6">
-      <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
-        <div>
-          <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">NIK</dt>
-          <dd class="font-mono text-base font-semibold text-gray-900">{{ $submission->nik }}</dd>
-        </div>
-        <div>
-          <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Nama Lengkap</dt>
-          <dd class="text-base font-medium text-gray-900">{{ $submission->petitioner_name }}</dd>
-        </div>
-        <div>
-          <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Nomor WA</dt>
-          <dd class="font-mono text-base text-gray-900">{{ $submission->phone_wa }}</dd>
-        </div>
-        <div>
-          <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">IP Address</dt>
-          <dd class="font-mono text-sm text-gray-500">{{ $submission->ip_address ?? '-' }}</dd>
-        </div>
-      </dl>
+
+    {{-- Data Istri --}}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="bg-gradient-to-r from-teal-50 to-teal-100/50 px-6 py-4 border-b border-teal-200">
+        <h3 class="font-semibold text-gray-800 text-base">Data Istri</h3>
+      </div>
+      <div class="p-6">
+        <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+          <div>
+            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">NIK</dt>
+            <dd class="font-mono text-base font-semibold text-gray-900">{{ $submission->respondent_nik ?? '-' }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Nama Lengkap</dt>
+            <dd class="text-base font-medium text-gray-900">{{ $submission->respondent_name ?? '-' }}</dd>
+          </div>
+        </dl>
+      </div>
     </div>
   </div>
 
@@ -139,14 +166,6 @@
     </div>
     <div class="p-6">
       <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
-        <div>
-          <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Nama Mantan Pasangan</dt>
-          <dd class="text-base text-gray-900">{{ $submission->respondent_name ?? '-' }}</dd>
-        </div>
-        <div>
-          <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">NIK Mantan Pasangan</dt>
-          <dd class="font-mono text-base text-gray-900">{{ $submission->respondent_nik ?? '-' }}</dd>
-        </div>
         <div>
           <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Tanggal Cerai</dt>
           <dd class="text-base text-gray-900">{{ $submission->divorce_date?->translatedFormat('d F Y') ?? '-' }}</dd>
@@ -170,32 +189,40 @@
     <div class="bg-gradient-to-r from-emerald-50 to-emerald-100/50 px-6 py-4 border-b border-emerald-200">
       <h3 class="font-semibold text-gray-800 text-base">Dokumen Diunggah ({{ $submission->documents->count() }})</h3>
     </div>
-    <ul class="divide-y divide-gray-100">
+    <div class="p-6">
       @forelse($submission->documents as $doc)
-        <li class="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition">
-          <div class="flex items-center gap-4">
-            <div class="w-10 h-10 rounded-xl {{ str_contains($doc->mime_type, 'pdf') ? 'bg-red-100' : 'bg-blue-100' }} flex items-center justify-center flex-shrink-0">
-              <i class="fas fa-{{ str_contains($doc->mime_type, 'pdf') ? 'file-pdf text-red-500' : 'image text-blue-500' }} text-lg"></i>
-            </div>
-            <div>
-              <div class="text-sm font-semibold text-gray-900 mb-0.5">
-                {{ \App\Models\PublicSubmissionDocument::$typeLabels[$doc->document_type] ?? $doc->document_type }}
+        @if($loop->first)
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @endif
+            <div class="group relative bg-gray-50 rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition">
+              <a href="{{ $doc->file_url }}" target="_blank" class="block aspect-video bg-gray-100 flex items-center justify-center overflow-hidden">
+                @if(str_contains($doc->mime_type, 'image'))
+                  <img src="{{ $doc->file_url }}" alt="{{ $doc->original_filename }}" class="w-full h-full object-cover">
+                @else
+                  <div class="flex flex-col items-center justify-center w-full h-full bg-gradient-to-br from-gray-100 to-gray-200">
+                    <i class="fas fa-file-pdf text-4xl text-red-500 mb-2"></i>
+                    <span class="text-xs text-gray-600">PDF</span>
+                  </div>
+                @endif
+              </a>
+              <div class="p-3 bg-white">
+                <div class="text-xs font-medium text-emerald-700 mb-1">
+                  {{ \App\Models\PublicSubmissionDocument::$typeLabels[$doc->document_type] ?? $doc->document_type }}
+                </div>
+                <div class="text-xs text-gray-700 font-medium mb-1 truncate">{{ $doc->original_filename }}</div>
+                <div class="text-xs text-gray-500">{{ $doc->humanFileSize() }}</div>
               </div>
-              <div class="text-xs text-gray-500">
-                {{ $doc->original_filename }} · 
-                <span class="text-gray-400">{{ $doc->humanFileSize() }}</span>
-              </div>
             </div>
+        @if($loop->last)
           </div>
-          <span class="text-sm text-gray-500">{{ $doc->created_at->translatedFormat('d M Y') }}</span>
-        </li>
+        @endif
       @empty
-        <li class="px-6 py-8 text-center text-gray-400 text-sm">
-          <i class="far fa-folder-open text-3xl mb-2 opacity-30"></i>
-          <div>Tidak ada dokumen</div>
-        </li>
+        <div class="flex flex-col items-center justify-center py-12 text-gray-400">
+          <i class="far fa-folder-open text-4xl mb-3 opacity-30"></i>
+          <div class="text-sm">Tidak ada dokumen</div>
+        </div>
       @endforelse
-    </ul>
+    </div>
   </div>
 
 </div>

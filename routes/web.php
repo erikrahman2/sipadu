@@ -12,6 +12,11 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
+// Load debug routes (remove in production)
+if (config('app.debug')) {
+    require __DIR__ . '/debug.php';
+}
+
 Route::get('/', fn() => view('welcome-new'))->middleware('auto.logout')->name('home');
 Route::redirect('/login', '/auth/login')->name('login');
 
@@ -43,10 +48,11 @@ Route::middleware('auto.logout')->group(function () {
 });
 
 // ── Auth ────────────────────────────────────────────────────────────────────
-Route::prefix('auth')->name('auth.')->group(function () {
+Route::prefix('auth')->name('auth.')->middleware('web')->group(function () {
     Route::get('login',  [AuthController::class, 'showLogin'])->name('login');
     Route::post('login', [AuthController::class, 'login'])->name('login.post');
     Route::post('logout',[AuthController::class, 'logout'])->name('logout')->middleware('auth');
+    Route::get('logout',  [AuthController::class, 'logout'])->name('logout.get')->middleware('auth');
 });
 
 // ── Dashboard (protected) ────────────────────────────────────────────────────
@@ -64,6 +70,11 @@ Route::middleware(['auth', 'security.headers', 'access.log'])->prefix('dashboard
     Route::middleware('role:pa_assistant')->group(function () {
         Route::get('/cases/create', [DashboardController::class, 'createCase'])->name('cases.create');
         Route::post('/cases', [DashboardController::class, 'storeCase'])->name('cases.store');
+        Route::post('/cases/save-draft', [DashboardController::class, 'saveDraftCase'])->name('cases.save-draft');
+        Route::get('/cases/{id}/edit-draft', [DashboardController::class, 'editDraftCase'])->name('cases.edit-draft');
+        Route::patch('/cases/{id}/update-draft', [DashboardController::class, 'updateDraftCase'])->name('cases.update-draft');
+        Route::post('/cases/{id}/submit-draft', [DashboardController::class, 'submitDraftCase'])->name('cases.submit-draft');
+        Route::post('/cases/from-public/{publicSubmission}', [DashboardController::class, 'createFromPublicSubmission'])->name('cases.from-public');
     });
 
     Route::middleware('role:pa_assistant|pa_management|pa_staff|disdukcapil_staff')

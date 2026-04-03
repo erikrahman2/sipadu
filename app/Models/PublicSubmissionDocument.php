@@ -17,13 +17,16 @@ class PublicSubmissionDocument extends Model
 
     /** Label untuk jenis dokumen. */
     public static array $typeLabels = [
-        'KTP'         => 'KTP (Kartu Tanda Penduduk)',
-        'KK'          => 'Kartu Keluarga (KK)',
-        'AKTA_CERAI'  => 'Akta Perceraian',
-        'PUTUSAN_PA'  => 'Putusan Pengadilan Agama',
-        'SURAT_NIKAH' => 'Buku Nikah',
-        'FOTO_DIRI'   => 'Foto Diri (Selfie KTP)',
-        'LAINNYA'     => 'Dokumen Lainnya',
+        'KTP_SUAMI'        => 'KTP Suami',
+        'KTP_ISTRI'        => 'KTP Istri',
+        'KTP'              => 'KTP (Legacy)',
+        'KK'               => 'Kartu Keluarga (KK)',
+        'PUTUSAN_PA'       => 'Berkas Putusan Cerai',
+        'AKTA_NIKAH'       => 'Buku Nikah',
+        'AKTA_CERAI'       => 'Akta Perceraian',
+        'SURAT_PENGANTAR'  => 'Surat Pengantar',
+        'OTHER'            => 'Dokumen Lainnya',
+        'LAINNYA'          => 'Dokumen Lainnya (Legacy)',
     ];
 
     public function submission()

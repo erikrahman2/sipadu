@@ -25,7 +25,7 @@ class ProcessOcrAfterUpload
     {
         $document = $event->document;
         
-        // Fokus OCR hanya untuk KTP dengan kategori suami/istri.
+        // OCR identitas hanya untuk dokumen KTP (suami/istri).
         $processableTypes = ['KTP', 'KTP_SUAMI', 'KTP_ISTRI'];
         
         if (!in_array($document->document_type, $processableTypes)) {

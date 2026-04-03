@@ -14,21 +14,38 @@ class PublicSubmission extends Model
     protected $fillable = [
         'tracking_token',
         'nik',
+        
+        // Data Suami
+        'nik_suami',
+        'nama_suami',
+        'alamat_suami',
+        'rt_rw_suami',
+        'kelurahan_suami',
+        'kecamatan_suami',
+
+        // Data Istri
+        'nik_istri',
+        'nama_istri',
+        'alamat_istri',
+        'rt_rw_istri',
+        'kelurahan_istri',
+        'kecamatan_istri',
+
+        // Petitioner (untuk backward compatibility & database requirement)
         'petitioner_name',
-        'nama_lengkap',        // ← NEW
-        'tempat_lahir',        // ← NEW
-        'tanggal_lahir',       // ← NEW
-        'alamat',              // ← NEW
-        'rt_rw',               // ← NEW
-        'kelurahan',           // ← NEW
-        'kecamatan',           // ← NEW
-        'no_kk',               // ← NEW
+
+        // Kontak & Institusi
         'phone_wa',
+        'institution_id',
+
+        // Data Cerai & Catatan
         'respondent_name',
         'respondent_nik',
         'divorce_date',
         'verdict_number',
         'notes',
+
+        // Status & Tracking
         'status',
         'wa_sent_at',
         'wa_message_id',
@@ -98,7 +115,10 @@ class PublicSubmission extends Model
     public static function countActiveByNik(string $nik): int
     {
         return static::withoutTrashed()
-            ->where('nik', $nik)
+            ->where(function ($query) use ($nik) {
+                $query->where('nik_suami', $nik)
+                      ->orWhere('nik_istri', $nik);
+            })
             ->where('is_active', true)
             ->where('status', '!=', 'REJECTED')
             ->where('created_at', '>=', now()->subDays(static::LIMIT_DAYS))
@@ -125,14 +145,17 @@ class PublicSubmission extends Model
      * Replace data lama dengan data baru untuk NIK yang sama.
      * Data lama akan di-soft delete dan ditandai replaced_by.
      * 
-     * @param string $nik NIK pemohon
+     * @param string $nik NIK pemohon (bisa nik_suami atau nik_istri)
      * @param int $newSubmissionId ID pengajuan baru yang menggantikan
      * @return int Jumlah data lama yang digantikan
      */
     public static function replaceOldSubmissions(string $nik, int $newSubmissionId): int
     {
         $oldSubmissions = static::withoutTrashed()
-            ->where('nik', $nik)
+            ->where(function ($query) use ($nik) {
+                $query->where('nik_suami', $nik)
+                      ->orWhere('nik_istri', $nik);
+            })
             ->where('id', '!=', $newSubmissionId)
             ->where('is_active', true)
             ->get();
@@ -149,29 +172,29 @@ class PublicSubmission extends Model
     }
 
     /**
-     * Validasi: Cek apakah pasangan NIK (petitioner + respondent) sudah ada
+     * Validasi: Cek apakah pasangan NIK (suami + istri) sudah ada
      * di data yang sudah sampai Disdukcapil.
      * 
-     * @param string $petitionerNik NIK pemohon
-     * @param string $respondentNik NIK pasangan
+     * @param string $nikSuami NIK suami
+     * @param string $nikIstri NIK istri
      * @return bool TRUE jika pasangan sudah ada di Disdukcapil (tidak boleh daftar lagi)
      */
-    public static function hasCoupleInDisdukcapil(string $petitionerNik, string $respondentNik): bool
+    public static function hasCoupleInDisdukcapil(string $nikSuami, string $nikIstri): bool
     {
         // Cek apakah pasangan ini (dalam urutan apapun) sudah ada di data Disdukcapil
         return static::withoutTrashed()
             ->active()
             ->reachedDisdukcapil()
-            ->where(function ($query) use ($petitionerNik, $respondentNik) {
-                // Cek kombinasi 1: petitioner=A, respondent=B
-                $query->where(function ($q) use ($petitionerNik, $respondentNik) {
-                    $q->where('nik', $petitionerNik)
-                      ->where('respondent_nik', $respondentNik);
+            ->where(function ($query) use ($nikSuami, $nikIstri) {
+                // Kombinasi 1: suami=A, istri=B
+                $query->where(function ($q) use ($nikSuami, $nikIstri) {
+                    $q->where('nik_suami', $nikSuami)
+                      ->where('nik_istri', $nikIstri);
                 })
-                // Cek kombinasi 2: petitioner=B, respondent=A (kebalikan)
-                ->orWhere(function ($q) use ($petitionerNik, $respondentNik) {
-                    $q->where('nik', $respondentNik)
-                      ->where('respondent_nik', $petitionerNik);
+                // Kombinasi 2: suami=B, istri=A (kebalikan)
+                ->orWhere(function ($q) use ($nikSuami, $nikIstri) {
+                    $q->where('nik_suami', $nikIstri)
+                      ->where('nik_istri', $nikSuami);
                 });
             })
             ->exists();
@@ -196,14 +219,17 @@ class PublicSubmission extends Model
      * Validasi: Cek apakah NIK sedang dibekukan (frozen) karena ada data
      * yang sedang dalam proses PA Management atau Disdukcapil.
      * 
-     * @param string $nik NIK pemohon
+     * @param string $nik NIK pemohon (bisa nik_suami atau nik_istri)
      * @return bool TRUE jika NIK dibekukan (tidak bisa input baru)
      */
     public static function isNikFrozen(string $nik): bool
     {
         // Cek 1: Apakah ada PublicSubmission dengan NIK ini yang statusnya frozen?
         $hasFrozenSubmission = static::withoutTrashed()
-            ->where('nik', $nik)
+            ->where(function ($query) use ($nik) {
+                $query->where('nik_suami', $nik)
+                      ->orWhere('nik_istri', $nik);
+            })
             ->where('is_active', true)
             ->whereIn('status', static::FROZEN_STATUSES)
             ->exists();
@@ -231,7 +257,10 @@ class PublicSubmission extends Model
     {
         // Cek PublicSubmission
         $submission = static::withoutTrashed()
-            ->where('nik', $nik)
+            ->where(function ($query) use ($nik) {
+                $query->where('nik_suami', $nik)
+                      ->orWhere('nik_istri', $nik);
+            })
             ->where('is_active', true)
             ->whereIn('status', static::FROZEN_STATUSES)
             ->first(['status', 'tracking_token']);
@@ -269,9 +298,26 @@ class PublicSubmission extends Model
         return $this->hasMany(PublicSubmissionDocument::class);
     }
 
+    public function institution()
+    {
+        return $this->belongsTo(Institution::class);
+    }
+
+    /**
+     * Get the case created from a previous version of this submission
+     * (from PA/Disdukcapil when they manually created a case).
+     */
     public function case()
     {
         return $this->belongsTo(CaseModel::class, 'case_id');
+    }
+
+    /**
+     * Get the case that was automatically generated from this public submission.
+     */
+    public function generatedCase()
+    {
+        return $this->hasOne(CaseModel::class, 'public_submission_id');
     }
 
     public function processor()

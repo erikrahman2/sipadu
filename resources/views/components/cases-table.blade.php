@@ -5,6 +5,7 @@
       <th class="px-4 py-3 font-semibold">No. Kasus</th>
       <th class="px-4 py-3 font-semibold">Institusi</th>
       <th class="px-4 py-3 font-semibold">Status</th>
+      <th class="px-4 py-3 font-semibold">Sumber</th>
       <th class="px-4 py-3 font-semibold">Tanggal</th>
       <th class="px-4 py-3 font-semibold">Aksi</th>
     </tr>
@@ -16,6 +17,19 @@
       <td class="px-4 py-3 text-xs">{{ $case->institution?->name ?? '-' }}</td>
       <td class="px-4 py-3">
         @include('components.status-badge', ['status' => $case->status])
+      </td>
+      <td class="px-4 py-3">
+        @if($case->source_type === 'public')
+          <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+            <i class="fas fa-globe text-xs"></i>
+            Pengajuan Publik
+          </span>
+        @else
+          <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+            <i class="fas fa-lock text-xs"></i>
+            Internal
+          </span>
+        @endif
       </td>
       <td class="px-4 py-3 text-xs text-gray-400">{{ $case->created_at->format('d/m/Y') }}</td>
       <td class="px-4 py-3">

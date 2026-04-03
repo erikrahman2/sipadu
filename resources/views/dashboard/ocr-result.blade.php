@@ -3,8 +3,10 @@
 @section('title', 'Hasil OCR')
 @section('page-title', 'Hasil OCR')
 
+<!-- DEBUG: File served at {{ now()->timestamp }} - FLEXBOX LAYOUT ACTIVE -->
+
 @section('content')
-<div class="max-w-3xl mx-auto space-y-6">
+<div class="w-full space-y-6">
 
   {{-- Header --}}
   <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex items-center justify-between">
@@ -51,39 +53,47 @@
 
     {{-- Extracted Fields --}}
     <h3 class="font-semibold text-gray-700 mb-4">Data Terekstraksi</h3>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      @foreach([
-        ['label' => 'NIK', 'value' => $ocr->nik, 'conf_key' => 'nik'],
-        ['label' => 'No. KK', 'value' => $ocr->no_kk, 'conf_key' => 'kk'],
-        ['label' => 'Nama', 'value' => $ocr->nama, 'conf_key' => 'nama'],
-        ['label' => 'Tgl Lahir', 'value' => $ocr->tgl_lahir, 'conf_key' => 'tgl_lahir'],
-        ['label' => 'Tempat Lahir', 'value' => $ocr->tempat_lahir, 'conf_key' => null],
-        ['label' => 'Jenis Kelamin', 'value' => $ocr->jenis_kelamin, 'conf_key' => null],
-        ['label' => 'Alamat', 'value' => $ocr->alamat, 'conf_key' => null],
-        ['label' => 'Kelurahan', 'value' => $ocr->kelurahan, 'conf_key' => null],
-        ['label' => 'Kecamatan', 'value' => $ocr->kecamatan, 'conf_key' => null],
-        ['label' => 'Kabupaten', 'value' => $ocr->kabupaten, 'conf_key' => null],
-      ] as $field)
-      <div class="bg-gray-50 rounded-xl p-4">
-        <div class="flex items-center justify-between mb-1">
-          <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">{{ $field['label'] }}</p>
-          @if($field['conf_key'] && isset($ocr->confidence_scores[$field['conf_key']]))
-          @php $conf = $ocr->confidence_scores[$field['conf_key']]; @endphp
-          <span class="text-xs font-bold {{ $conf >= 0.85 ? 'text-green-500' : ($conf >= 0.70 ? 'text-yellow-500' : 'text-red-500') }}">
-            {{ round($conf * 100) }}%
-          </span>
-          @endif
-        </div>
-        <p class="text-sm font-semibold text-gray-800 font-mono">
-          {{ $field['value'] ?? '<span class="text-gray-300 font-sans font-normal">Tidak terdeteksi</span>' }}
-        </p>
-        @if($field['conf_key'] && isset($ocr->validation_errors[$field['conf_key']]))
-        <p class="text-xs text-red-500 mt-1">
-          <i class="fas fa-exclamation-triangle mr-1"></i>{{ $ocr->validation_errors[$field['conf_key']] }}
-        </p>
-        @endif
-      </div>
-      @endforeach
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm border-collapse" style="table-layout: fixed;">
+        <thead>
+          <tr class="bg-gray-100 border-b border-gray-300">
+            <th class="text-left px-3 py-2 font-semibold text-gray-700" style="width: 20%;">Field</th>
+            <th class="text-left px-3 py-2 font-semibold text-gray-700" style="width: 25%;">Manual</th>
+            <th class="text-left px-3 py-2 font-semibold text-gray-700" style="width: 40%;">OCR</th>
+            <th class="text-center px-3 py-2 font-semibold text-gray-700" style="width: 15%;">%</th>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach([
+            ['label' => 'NIK', 'value' => $ocr->nik, 'conf_key' => 'nik'],
+            ['label' => 'No. KK', 'value' => $ocr->no_kk, 'conf_key' => 'kk'],
+            ['label' => 'Nama', 'value' => $ocr->nama, 'conf_key' => 'nama'],
+            ['label' => 'Tgl Lahir', 'value' => $ocr->tgl_lahir, 'conf_key' => 'tgl_lahir'],
+            ['label' => 'Tempat Lahir', 'value' => $ocr->tempat_lahir, 'conf_key' => null],
+            ['label' => 'Jenis Kelamin', 'value' => $ocr->jenis_kelamin, 'conf_key' => null],
+            ['label' => 'Alamat', 'value' => $ocr->alamat, 'conf_key' => null],
+            ['label' => 'RT/RW', 'value' => $ocr->rt_rw, 'conf_key' => null],
+            ['label' => 'Kelurahan', 'value' => $ocr->kelurahan, 'conf_key' => null],
+            ['label' => 'Kecamatan', 'value' => $ocr->kecamatan, 'conf_key' => null],
+            ['label' => 'Kabupaten', 'value' => $ocr->kabupaten, 'conf_key' => null],
+          ] as $field)
+          @php
+            $conf = $field['conf_key'] && isset($ocr->confidence_scores[$field['conf_key']]) 
+              ? $ocr->confidence_scores[$field['conf_key']] 
+              : null;
+            $confText = $conf ? round($conf * 100) . '%' : '—';
+            $confColor = $conf >= 0.85 ? 'text-green-600' : ($conf >= 0.70 ? 'text-yellow-600' : 'text-red-600');
+            $bgColor = $conf ? ($conf >= 0.85 ? 'bg-green-50' : ($conf >= 0.70 ? 'bg-yellow-50' : 'bg-red-50')) : 'bg-gray-50';
+          @endphp
+          <tr class="{{ $bgColor }} border-b border-gray-200">
+            <td class="px-3 py-3 font-medium text-gray-800 break-words">{{ $field['label'] }}</td>
+            <td class="px-3 py-3 text-gray-600 break-words">—</td>
+            <td class="px-3 py-3 font-mono text-gray-800 break-all text-xs">{{ $field['value'] ?? '—' }}</td>
+            <td class="px-3 py-3 text-center font-bold {{ $confColor }}">{{ $confText }}</td>
+          </tr>
+          @endforeach
+        </tbody>
+      </table>
     </div>
   </div>
 

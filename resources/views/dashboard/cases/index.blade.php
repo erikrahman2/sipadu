@@ -37,15 +37,9 @@
       <label class="block text-xs text-gray-500 mb-1">Filter Status</label>
       <select name="status" class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
         <option value="">Semua Status</option>
-        <optgroup label="Kasus Manual">
-          @foreach(config('workflow.states', []) as $key => $label)
-            <option value="{{ $key }}" {{ request('status') === $key ? 'selected' : '' }}>{{ $label }}</option>
-          @endforeach
-        </optgroup>
-        <optgroup label="Pengajuan Publik">
-          <option value="PENDING" {{ request('status') === 'PENDING' ? 'selected' : '' }}>Menunggu Review</option>
-          <option value="REVIEWING" {{ request('status') === 'REVIEWING' ? 'selected' : '' }}>Sedang Ditinjau</option>
-        </optgroup>
+        @foreach(config('workflow.states', []) as $key => $label)
+          <option value="{{ $key }}" {{ request('status') === $key ? 'selected' : '' }}>{{ $label }}</option>
+        @endforeach
       </select>
     </div>
     <button type="submit" class="bg-primary text-white rounded-lg px-4 py-2 text-sm hover:bg-primary-dark transition">
@@ -71,7 +65,7 @@
         @forelse($cases as $case)
         <tr class="hover:bg-blue-50/40 transition">
           <td class="px-4 py-3">
-            @if($case->source_type === 'case')
+            @if($case->source_type === 'internal')
               <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700">
                 <i class="fas fa-briefcase mr-1"></i> Kasus
               </span>
@@ -83,26 +77,19 @@
           </td>
           <td class="px-4 py-3">
             <div class="font-mono text-xs text-primary">
-              {{ $case->source_type === 'case' ? $case->case_number : $case->tracking_token }}
+              {{ $case->case_number }}
             </div>
-            @if($case->source_type === 'public' && $case->case_number)
-              <div class="text-xs text-gray-500 mt-1">{{ $case->case_number }}</div>
+            @if($case->source_type === 'public')
+              <div class="text-xs text-gray-500 mt-1">{{ $case->tracking_token }}</div>
             @endif
           </td>
           <td class="px-4 py-3">
-            @if($case->source_type === 'case')
-              <div>{{ $case->petitioner_name ?? '-' }}</div>
-              @if($case->institution)
-                <div class="text-xs text-gray-500">{{ $case->institution->name }}</div>
-              @endif
-              @if($case->spouse_name)
-                <div class="text-xs text-gray-400">⚭ {{ $case->spouse_name }}</div>
-              @endif
-            @else
-              <div>{{ $case->applicant_name ?? '-' }}</div>
-              @if($case->spouse_name)
-                <div class="text-xs text-gray-400">⚭ {{ $case->spouse_name }}</div>
-              @endif
+            <div>{{ $case->petitioner_name ?? '-' }}</div>
+            @if($case->institution)
+              <div class="text-xs text-gray-500">{{ $case->institution->name }}</div>
+            @endif
+            @if($case->spouse_name)
+              <div class="text-xs text-gray-400">⚭ {{ $case->spouse_name }}</div>
             @endif
           </td>
           <td class="px-4 py-3">
@@ -113,17 +100,10 @@
             <div class="text-gray-400">{{ $case->created_at->diffForHumans() }}</div>
           </td>
           <td class="px-4 py-3">
-            @if($case->source_type === 'case')
-              <a href="{{ auth()->user()->hasAnyRole(['pa_management', 'super_admin']) ? route('dashboard.review.show', $case->id) : route('dashboard.cases.show', $case->id) }}"
-                 class="text-primary hover:underline text-xs font-medium">
-                <i class="fas fa-eye mr-1"></i>Detail
-              </a>
-            @else
-              <a href="{{ route('dashboard.public-inbox.show', $case->id) }}"
-                 class="text-purple-600 hover:underline text-xs font-medium">
-                <i class="fas fa-eye mr-1"></i>Review
-              </a>
-            @endif
+            <a href="{{ auth()->user()->hasAnyRole(['pa_management', 'super_admin']) ? route('dashboard.review.show', $case->id) : route('dashboard.cases.show', $case->id) }}"
+               class="text-primary hover:underline text-xs font-medium">
+              <i class="fas fa-eye mr-1"></i>Detail
+            </a>
           </td>
         </tr>
         @empty

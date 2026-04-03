@@ -67,14 +67,14 @@ class PublicSubmissionStaffController extends Controller
         return view('dashboard.public-inbox.show', compact('submission', 'institutions'));
     }
 
-    // ── Ubah status (PENDING → REVIEWING) ────────────────────────────────────
+    // ── Ubah status (SUBMITTED → REVIEWING) ────────────────────────────────────
 
     public function startReview(int $id)
     {
         $submission = PublicSubmission::findOrFail($id);
 
-        if ($submission->status !== 'PENDING') {
-            return back()->with('error', 'Pengajuan ini sudah tidak dalam status PENDING.');
+        if ($submission->status !== 'SUBMITTED') {
+            return back()->with('error', 'Pengajuan ini bukan status SUBMITTED.');
         }
 
         $submission->update([
@@ -96,7 +96,7 @@ class PublicSubmissionStaffController extends Controller
 
         $submission = PublicSubmission::findOrFail($id);
 
-        if (! in_array($submission->status, ['PENDING', 'REVIEWING', 'WAITING_OCR'])) {
+        if (! in_array($submission->status, ['SUBMITTED', 'REVIEWING'])) {
             return back()->with('error', 'Pengajuan sudah diproses sebelumnya.');
         }
 

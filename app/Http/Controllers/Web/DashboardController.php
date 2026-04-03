@@ -40,27 +40,21 @@ class DashboardController extends Controller
 
         $stats = $this->buildStats($user);
         
-        // Gabungkan cases dan public submissions untuk recent items
-        $recentCases = CaseModel::with('institution:id,name', 'submitter:id,name')
+        // Ambil data grafik untuk PA Assistant (7 bulan terakhir)
+        $chartData = [];
+        if ($user->hasRole('pa_assistant')) {
+            $chartData = $this->buildChartData();
+        }
+        
+        // Gunakan schema yang sama (CaseModel) untuk internal + public, bedanya hanya source_type.
+        $recentItems = CaseModel::with('institution:id,name', 'submitter:id,name')
             ->forUser($user)
-            ->selectRaw('id, case_number, tracking_token, petitioner_name, status, institution_id, submitter_id, created_at, updated_at, \'case\' as source_type')
+            ->selectRaw('id, case_number, tracking_token, petitioner_name, status, institution_id, submitter_id, source_type, created_at, updated_at')
             ->orderByDesc('updated_at')
-            ->limit(10)
+            ->limit(8)
             ->get();
         
-        $recentSubmissions = PublicSubmission::with('processor:id,name')
-            ->whereIn('status', ['PENDING', 'REVIEWING', 'APPROVED'])
-            ->selectRaw('id, tracking_token, petitioner_name as applicant_name, status, processed_by, created_at, updated_at, \'public\' as source_type')
-            ->orderByDesc('updated_at')
-            ->limit(10)
-            ->get();
-        
-        // Merge dan sort by updated_at
-        $recentItems = $recentCases->concat($recentSubmissions)
-            ->sortByDesc('updated_at')
-            ->take(8);
-        
-        return view('dashboard.index', compact('user', 'stats', 'recentItems'));
+        return view('dashboard.index', compact('user', 'stats', 'recentItems', 'chartData'));
     }
 
     public function cases(Request $request): \Illuminate\Http\RedirectResponse|View
@@ -75,62 +69,38 @@ class DashboardController extends Controller
         $type = $request->query('type', 'all'); // all, cases, public
         $status = $request->query('status');
         
-        // Ambil kasus manual
+        // Semua data dashboard mengikuti schema kasus yang sama.
         $casesQuery = CaseModel::query()
             ->with('institution:id,name', 'submitter:id,name')
             ->forUser($user)
-            ->selectRaw('id, case_number, tracking_token, petitioner_name, status, institution_id, submitter_id, spouse_name, divorce_date, created_at, updated_at, \'case\' as source_type');
+            ->selectRaw('id, case_number, tracking_token, petitioner_name, status, institution_id, submitter_id, spouse_name, divorce_date, source_type, created_at, updated_at');
         
         if ($status) {
             $casesQuery->byStatus($status);
         }
         
-        // Ambil pengajuan publik yang belum jadi kasus
-        $submissionsQuery = PublicSubmission::query()
-            ->with('processor:id,name')
-            ->whereIn('status', ['PENDING', 'REVIEWING'])
-            ->selectRaw('id, tracking_token, NULL as case_number, petitioner_name as applicant_name, status, processed_by, respondent_name as spouse_name, divorce_date, created_at, updated_at, \'public\' as source_type');
-        
-        if ($status && in_array($status, ['PENDING', 'REVIEWING'])) {
-            $submissionsQuery->where('status', $status);
-        }
-        
         // Filter by type
         if ($type === 'cases') {
-            $allItems = $casesQuery->orderByDesc('created_at')->paginate(15);
+            $allItems = (clone $casesQuery)
+                ->where('source_type', 'internal')
+                ->orderByDesc('created_at')
+                ->paginate(15);
         } elseif ($type === 'public') {
-            $allItems = $submissionsQuery->orderByDesc('created_at')->paginate(15);
+            $allItems = (clone $casesQuery)
+                ->where('source_type', 'public')
+                ->orderByDesc('created_at')
+                ->paginate(15);
         } else {
-            // Gabungkan keduanya
-            $cases = $casesQuery->get();
-            $submissions = $submissionsQuery->get();
-            
-            $allItems = $cases->concat($submissions)
-                ->sortByDesc('created_at')
-                ->values();
-            
-            // Manual pagination
-            $currentPage = $request->query('page', 1);
-            $perPage = 15;
-            $total = $allItems->count();
-            $items = $allItems->forPage($currentPage, $perPage);
-            
-            $allItems = new \Illuminate\Pagination\LengthAwarePaginator(
-                $items,
-                $total,
-                $perPage,
-                $currentPage,
-                ['path' => $request->url(), 'query' => $request->query()]
-            );
+            $allItems = $casesQuery->orderByDesc('created_at')->paginate(15);
         }
         
         // Count statistics
         $counts = [
-            'all' => CaseModel::forUser($user)->count() + PublicSubmission::whereIn('status', ['PENDING', 'REVIEWING'])->count(),
-            'cases' => CaseModel::forUser($user)->count(),
-            'public' => PublicSubmission::whereIn('status', ['PENDING', 'REVIEWING'])->count(),
-            'pending' => PublicSubmission::where('status', 'PENDING')->count(),
-            'reviewing' => PublicSubmission::where('status', 'REVIEWING')->count(),
+            'all' => CaseModel::forUser($user)->count(),
+            'cases' => CaseModel::forUser($user)->where('source_type', 'internal')->count(),
+            'public' => CaseModel::forUser($user)->where('source_type', 'public')->count(),
+            'submitted' => CaseModel::forUser($user)->where('status', 'SUBMITTED')->count(),
+            'approved' => CaseModel::forUser($user)->where('status', 'OCR_PROCESSED')->count(),
         ];
         
         return view('dashboard.cases.index', ['cases' => $allItems, 'counts' => $counts, 'currentType' => $type]);
@@ -388,6 +358,423 @@ class DashboardController extends Controller
             ->with('success', 'Kasus berhasil dibuat dengan tracking token: ' . $case->tracking_token);
     }
 
+    /**
+     * Create case from public submission
+     * POST /dashboard/cases/from-public/{publicSubmissionId}
+     */
+    public function createFromPublicSubmission(PublicSubmission $submission)
+    {
+        $user = auth()->user();
+
+        // Only PA Assistant and PA Management can create cases from public submissions
+        if (!$user->hasAnyRole(['pa_assistant', 'pa_management'])) {
+            abort(403, 'Unauthorized.');
+        }
+
+        // Check if already converted
+        if ($submission->case_id) {
+            return redirect()->route('dashboard.cases.show', $submission->case_id)
+                ->with('info', 'Pengajuan publik ini sudah dikonversi menjadi kasus.');
+        }
+
+        try {
+            $service = new \App\Services\PublicSubmissionToCaseService();
+            $case = $service->convertToCase($submission, $user->id);
+
+            return redirect()->route('dashboard.cases.show', $case->id)
+                ->with('success', 'Pengajuan publik berhasil dikonversi menjadi kasus dengan nomor: ' . $case->case_number);
+        } catch (\Throwable $e) {
+            \Log::error('Error converting public submission to case', [
+                'submission_id' => $submission->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->with('error', 'Gagal mengkonversi pengajuan publik. Silakan coba lagi atau hubungi administrator.');
+        }
+    }
+
+    /**
+     * Simpan case sebagai DRAFT dengan validasi relaksasi
+     */
+    public function saveDraftCase(Request $request)
+    {
+        // Validasi minimal - lebih relaksasi dari submit
+        $request->validate([
+            'suami_nik'      => 'required|digits:16',
+            'suami_name'     => 'required|string|max:255',
+            'suami_alamat'   => 'required|string|max:255',
+            'suami_rt_rw'    => ['required', 'string', 'max:10', 'regex:/^\d{3}\/\d{3}$/'],
+            'suami_kelurahan'=> 'required|string|max:255',
+            'suami_kecamatan'=> 'required|string|max:255',
+            'istri_nik'      => 'required|digits:16',
+            'istri_name'     => 'required|string|max:255',
+            'istri_alamat'   => 'required|string|max:255',
+            'istri_rt_rw'    => ['required', 'string', 'max:10', 'regex:/^\d{3}\/\d{3}$/'],
+            'istri_kelurahan'=> 'required|string|max:255',
+            'istri_kecamatan'=> 'required|string|max:255',
+            'phone_wa'       => ['required', 'string', 'max:20', 'regex:/^[0-9]{9,15}$/'],
+            'institution_id' => 'required|exists:institutions,id',
+            'divorce_date'   => 'nullable|date|before_or_equal:today',
+            'verdict_number' => 'nullable|string|max:100',
+            'notes'          => 'nullable|string|max:1000',
+            'documents'      => 'nullable|array',
+            'documents.*'    => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
+
+        $petitionerNik = $request->suami_nik;
+        $spouseNik = $request->istri_nik;
+
+        // Validasi: NIK pemohon ≠ NIK pasangan
+        if (\App\Models\PublicSubmission::isSameNik($petitionerNik, $spouseNik)) {
+            return back()->withErrors([
+                'istri_nik' => 'NIK suami tidak boleh sama dengan NIK istri.',
+            ])->withInput();
+        }
+
+        $user = auth()->user();
+
+        // Simpan sebagai DRAFT tanpa auto-submit
+        $case = DB::transaction(function () use ($request, $user, $petitionerNik, $spouseNik) {
+            $case = CaseModel::create([
+                'submitter_id'      => $user->id,
+                'petitioner_nik'    => $request->suami_nik,
+                'petitioner_name'   => $request->suami_name,
+                'petitioner_phone'  => $request->phone_wa,
+                'petitioner_alamat' => $request->suami_alamat,
+                'petitioner_rt_rw' => $request->suami_rt_rw,
+                'petitioner_kelurahan' => $request->suami_kelurahan,
+                'petitioner_kecamatan' => $request->suami_kecamatan,
+                'institution_id'    => $request->institution_id,
+                'spouse_nik'        => $request->istri_nik,
+                'spouse_name'       => $request->istri_name,
+                'spouse_alamat'     => $request->istri_alamat,
+                'spouse_rt_rw'      => $request->istri_rt_rw,
+                'spouse_kelurahan'  => $request->istri_kelurahan,
+                'spouse_kecamatan'  => $request->istri_kecamatan,
+                'divorce_date'      => $request->divorce_date,
+                'verdict_number'    => $request->verdict_number,
+                'notes'             => $request->notes,
+                'status'            => 'DRAFT', // Tetap DRAFT, tidak auto-submit
+            ]);
+
+            // Create transition log
+            \App\Models\CaseTransition::create([
+                'case_id'         => $case->id,
+                'from_state'      => 'NEW',
+                'to_state'        => 'DRAFT',
+                'transitioned_by' => $user->id,
+                'reason'          => 'Draft dibuat dari form PA Assistant',
+                'metadata'        => ['source' => 'dashboard.saveDraftCase'],
+            ]);
+
+            // Handle document uploads jika ada
+            if ($request->hasFile('documents')) {
+                $documentTypeAliases = [
+                    'SURAT_NIKAH' => 'AKTA_NIKAH',
+                    'FOTO_DIRI'   => 'OTHER',
+                    'LAINNYA'     => 'OTHER',
+                ];
+
+                foreach ($request->file('documents') as $docType => $file) {
+                    if (!$file) continue; // Skip jika file tidak ada
+
+                    $normalizedDocType = $documentTypeAliases[$docType] ?? $docType;
+
+                    $storedName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+                    $path = $file->storeAs("cases/{$case->id}", $storedName, 'public');
+                    $checksum = hash_file('sha256', $file->getPathname());
+                    
+                    \App\Models\Document::create([
+                        'case_id'       => $case->id,
+                        'uploaded_by'   => $user->id,
+                        'original_name' => $file->getClientOriginalName(),
+                        'stored_name'   => $storedName,
+                        'disk'          => 'public',
+                        'path'          => $path,
+                        'mime_type'     => $file->getMimeType(),
+                        'size_bytes'    => $file->getSize(),
+                        'document_type' => $normalizedDocType,
+                        'checksum'      => $checksum,
+                        'status'        => 'PENDING', // OCR tidak diproses untuk draft
+                    ]);
+                }
+            }
+
+            return $case;
+        });
+
+        // Sync to Neo4j
+        try {
+            $this->graph->upsertCase([
+                'id'               => $case->id,
+                'case_number'      => $case->case_number,
+                'tracking_token'   => $case->tracking_token,
+                'status'           => $case->status,
+                'submitter_id'     => $case->submitter_id,
+                'institution_id'   => $case->institution_id,
+            ]);
+        } catch (\Exception $e) {
+            \Log::warning('Neo4j sync failed after draft creation', [
+                'case_id' => $case->id,
+                'error'   => $e->getMessage(),
+            ]);
+        }
+
+        return redirect()->route('dashboard.cases.edit-draft', $case->id)
+            ->with('success', 'Draft berhasil disimpan. Silakan lengkapi dan kirim pengajuan Anda kapan saja.');
+    }
+
+    /**
+     * Edit draft case
+     */
+    public function editDraftCase(int $id): View|\Illuminate\Http\RedirectResponse
+    {
+        $case = CaseModel::with('documents')->findOrFail($id);
+        
+        // Hanya submitter atau admin yang bisa edit
+        if ($case->submitter_id !== auth()->id() && !auth()->user()->hasRole('super_admin')) {
+            return back()->withErrors('Anda tidak memiliki akses untuk edit draft ini');
+        }
+
+        // Hanya status DRAFT yang bisa diedit
+        if ($case->status !== 'DRAFT') {
+            return back()->withErrors('Hanya draft yang belum dikirim dapat diedit');
+        }
+
+        $institutions = \App\Models\Institution::active()->get(['id', 'name', 'type']);
+        
+        return view('dashboard.cases.edit-draft', compact('case', 'institutions'));
+    }
+
+    /**
+     * Update draft case
+     */
+    public function updateDraftCase(Request $request, int $id)
+    {
+        $case = CaseModel::with('documents')->findOrFail($id);
+        
+        // Hanya submitter atau admin yang bisa update
+        if ($case->submitter_id !== auth()->id() && !auth()->user()->hasRole('super_admin')) {
+            return back()->withErrors('Anda tidak memiliki akses');
+        }
+
+        // Hanya status DRAFT yang bisa diupdate
+        if ($case->status !== 'DRAFT') {
+            return back()->withErrors('Hanya draft yang belum dikirim dapat diubah');
+        }
+
+        // Validasi yang sama dengan saveDraft
+        $request->validate([
+            'suami_nik'      => 'required|digits:16',
+            'suami_name'     => 'required|string|max:255',
+            'suami_alamat'   => 'required|string|max:255',
+            'suami_rt_rw'    => ['required', 'string', 'max:10', 'regex:/^\d{3}\/\d{3}$/'],
+            'suami_kelurahan'=> 'required|string|max:255',
+            'suami_kecamatan'=> 'required|string|max:255',
+            'istri_nik'      => 'required|digits:16',
+            'istri_name'     => 'required|string|max:255',
+            'istri_alamat'   => 'required|string|max:255',
+            'istri_rt_rw'    => ['required', 'string', 'max:10', 'regex:/^\d{3}\/\d{3}$/'],
+            'istri_kelurahan'=> 'required|string|max:255',
+            'istri_kecamatan'=> 'required|string|max:255',
+            'phone_wa'       => ['required', 'string', 'max:20', 'regex:/^[0-9]{9,15}$/'],
+            'institution_id' => 'required|exists:institutions,id',
+            'divorce_date'   => 'nullable|date|before_or_equal:today',
+            'verdict_number' => 'nullable|string|max:100',
+            'notes'          => 'nullable|string|max:1000',
+            'documents'      => 'nullable|array',
+            'documents.*'    => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'remove_documents' => 'nullable|array',
+            'remove_documents.*' => 'nullable|exists:documents,id',
+        ]);
+
+        $petitionerNik = $request->suami_nik;
+        $spouseNik = $request->istri_nik;
+
+        // Validasi: NIK pemohon ≠ NIK pasangan
+        if (\App\Models\PublicSubmission::isSameNik($petitionerNik, $spouseNik)) {
+            return back()->withErrors([
+                'istri_nik' => 'NIK suami tidak boleh sama dengan NIK istri.',
+            ])->withInput();
+        }
+
+        $user = auth()->user();
+
+        DB::transaction(function () use ($request, $case, $user) {
+            // Update case data
+            $case->update([
+                'petitioner_nik'    => $request->suami_nik,
+                'petitioner_name'   => $request->suami_name,
+                'petitioner_phone'  => $request->phone_wa,
+                'petitioner_alamat' => $request->suami_alamat,
+                'petitioner_rt_rw' => $request->suami_rt_rw,
+                'petitioner_kelurahan' => $request->suami_kelurahan,
+                'petitioner_kecamatan' => $request->suami_kecamatan,
+                'institution_id'    => $request->institution_id,
+                'spouse_nik'        => $request->istri_nik,
+                'spouse_name'       => $request->istri_name,
+                'spouse_alamat'     => $request->istri_alamat,
+                'spouse_rt_rw'      => $request->istri_rt_rw,
+                'spouse_kelurahan'  => $request->istri_kelurahan,
+                'spouse_kecamatan'  => $request->istri_kecamatan,
+                'divorce_date'      => $request->divorce_date,
+                'verdict_number'    => $request->verdict_number,
+                'notes'             => $request->notes,
+            ]);
+
+            // Hapus dokumen yang ditandai untuk dihapus
+            if ($request->filled('remove_documents')) {
+                Document::whereIn('id', $request->remove_documents)
+                    ->where('case_id', $case->id)
+                    ->delete();
+            }
+
+            // Tambah dokumen baru
+            if ($request->hasFile('documents')) {
+                $documentTypeAliases = [
+                    'SURAT_NIKAH' => 'AKTA_NIKAH',
+                    'FOTO_DIRI'   => 'OTHER',
+                    'LAINNYA'     => 'OTHER',
+                ];
+
+                foreach ($request->file('documents') as $docType => $file) {
+                    if (!$file) continue;
+
+                    $normalizedDocType = $documentTypeAliases[$docType] ?? $docType;
+
+                    $storedName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+                    $path = $file->storeAs("cases/{$case->id}", $storedName, 'public');
+                    $checksum = hash_file('sha256', $file->getPathname());
+                    
+                    \App\Models\Document::create([
+                        'case_id'       => $case->id,
+                        'uploaded_by'   => $user->id,
+                        'original_name' => $file->getClientOriginalName(),
+                        'stored_name'   => $storedName,
+                        'disk'          => 'public',
+                        'path'          => $path,
+                        'mime_type'     => $file->getMimeType(),
+                        'size_bytes'    => $file->getSize(),
+                        'document_type' => $normalizedDocType,
+                        'checksum'      => $checksum,
+                        'status'        => 'PENDING',
+                    ]);
+                }
+            }
+
+            // Log update
+            \App\Models\CaseTransition::create([
+                'case_id'         => $case->id,
+                'from_state'      => 'DRAFT',
+                'to_state'        => 'DRAFT',
+                'transitioned_by' => $user->id,
+                'reason'          => 'Draft diperbarui',
+                'metadata'        => ['source' => 'dashboard.updateDraftCase'],
+            ]);
+        });
+
+        // Sync to Neo4j
+        try {
+            $this->graph->upsertCase([
+                'id'               => $case->id,
+                'case_number'      => $case->case_number,
+                'tracking_token'   => $case->tracking_token,
+                'status'           => $case->status,
+                'submitter_id'     => $case->submitter_id,
+                'institution_id'   => $case->institution_id,
+            ]);
+        } catch (\Exception $e) {
+            \Log::warning('Neo4j sync failed after draft update', [
+                'case_id' => $case->id,
+                'error'   => $e->getMessage(),
+            ]);
+        }
+
+        return redirect()->route('dashboard.cases.edit-draft', $case->id)
+            ->with('success', 'Draft berhasil diperbarui');
+    }
+
+    /**
+     * Submit draft case - change status from DRAFT to SUBMITTED
+     */
+    public function submitDraftCase(Request $request, int $id)
+    {
+        $case = CaseModel::with('documents')->findOrFail($id);
+        
+        // Only owner or admin dapat submit
+        if ($case->submitter_id !== auth()->id() && !auth()->user()->hasRole('super_admin')) {
+            return back()->withErrors('Anda tidak memiliki akses');
+        }
+
+        // Only DRAFT status dapat disubmit
+        if ($case->status !== 'DRAFT') {
+            return back()->withErrors('Hanya draft dapat dikirim');
+        }
+
+        // Validasi bahwa dokumen required sudah ada
+        $requiredDocTypes = ['KTP_SUAMI', 'KTP_ISTRI'];
+        $uploadedDocsTypes = $case->documents->pluck('document_type')->toArray();
+        
+        $missingDocs = array_diff($requiredDocTypes, $uploadedDocsTypes);
+        if (!empty($missingDocs)) {
+            return back()->withErrors('Dokumen yang diperlukan belum lengkap: ' . implode(', ', $missingDocs));
+        }
+
+        $user = auth()->user();
+
+        DB::transaction(function () use ($case, $user) {
+            // Update status to SUBMITTED
+            $case->update([
+                'status'       => 'SUBMITTED',
+                'submitted_at' => now(),
+            ]);
+
+            // Log transition
+            \App\Models\CaseTransition::create([
+                'case_id'         => $case->id,
+                'from_state'      => 'DRAFT',
+                'to_state'        => 'SUBMITTED',
+                'transitioned_by' => $user->id,
+                'reason'          => 'Draft disubmit untuk diproses',
+                'metadata'        => ['source' => 'dashboard.submitDraftCase'],
+            ]);
+
+            // Fire DocumentUploaded event untuk setiap dokumen (untuk OCR processing)
+            foreach ($case->documents as $document) {
+                event(new \App\Events\DocumentUploaded($document));
+            }
+
+            // Outbox event
+            \App\Models\IntegrationQueue::create([
+                'aggregate_type' => 'Case',
+                'aggregate_id'   => $case->id,
+                'event_type'     => 'submitted',
+                'payload'        => ['institution_id' => $case->institution_id, 'submitter_id' => $case->submitter_id],
+                'available_at'   => now(),
+            ]);
+        });
+
+        // Sync to Neo4j
+        try {
+            $this->graph->upsertCase([
+                'id'               => $case->id,
+                'case_number'      => $case->case_number,
+                'tracking_token'   => $case->tracking_token,
+                'status'           => $case->status,
+                'submitter_id'     => $case->submitter_id,
+                'institution_id'   => $case->institution_id,
+            ]);
+        } catch (\Exception $e) {
+            \Log::warning('Neo4j sync failed after draft submission', [
+                'case_id' => $case->id,
+                'error'   => $e->getMessage(),
+            ]);
+        }
+
+        return redirect()->route('dashboard.cases.show', $case->id)
+            ->with('success', 'Pengajuan berhasil dikirim! Tracking token: ' . $case->tracking_token);
+    }
+
     public function showCase(int $id): \Illuminate\Http\RedirectResponse|View
     {
         $case = CaseModel::with([
@@ -494,10 +881,91 @@ class DashboardController extends Controller
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
+    private function buildChartData(): array
+    {
+        // Get current PA Assistant user (dari context - untuk filter institution)
+        $user = auth()->user();
+        
+        // Get data for the last 7 months
+        $months = [];
+        $labels = [];
+        $totalData = [];
+        $publicData = [];
+        $internalData = [];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $startOfMonth = $date->clone()->startOfMonth();
+            $endOfMonth = $date->clone()->endOfMonth();
+
+            $months[] = $date;
+            $labels[] = $date->format('M Y');
+
+            // Public submissions (dari pengajuan publik)
+            $publicCount = PublicSubmission::whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
+            $publicData[] = $publicCount;
+
+            // Internal cases = ALL cases for user's institution (matches buildStats logic)
+            $internalCount = CaseModel::forUser($user)
+                ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                ->count();
+            $internalData[] = $internalCount;
+
+            // Total = Public + Internal
+            $totalCount = $publicCount + $internalCount;
+            $totalData[] = $totalCount;
+        }
+
+        $chartData = [
+            'labels' => $labels,
+            'datasets' => [
+                [
+                    'label' => 'Total Inputan',
+                    'data' => $totalData,
+                    'color' => '#3b82f6', // Blue
+                ],
+                [
+                    'label' => 'Inputan Publik',
+                    'data' => $publicData,
+                    'color' => '#a855f7', // Purple
+                ],
+                [
+                    'label' => 'Inputan PA Assistant',
+                    'data' => $internalData,
+                    'color' => '#14b8a6', // Teal
+                ],
+            ],
+        ];
+
+        // Debug log
+        \Log::info('Chart data built', [
+            'labels' => $labels,
+            'totalData' => $totalData,
+            'publicData' => $publicData,
+            'internalData' => $internalData,
+            'user' => $user->name,
+            'institution_id' => $user->institution_id,
+        ]);
+
+        return $chartData;
+    }
+
     private function buildStats(\App\Models\User $user): array
     {
         $q = CaseModel::forUser($user);
-        $publicPending = PublicSubmission::whereIn('status', ['PENDING', 'REVIEWING'])->count();
+        $publicPending = PublicSubmission::whereIn('status', ['SUBMITTED', 'APPROVED'])->count();
+        
+        // Calculate public submissions and internal cases for PA Assistant
+        $publicSubmissionsCount = PublicSubmission::count();
+        $internalCasesCount = (clone $q)->count();
+        
+        // Calculate match/mismatch for PA Management
+        $ocrValidations = \App\Models\OcrValidation::all();
+        $matchCount = $ocrValidations->where('validation_status', 'MATCH')->count();
+        $mismatchCount = $ocrValidations->where('validation_status', 'MISMATCH')->count();
+        
+        // Calculate stats for Disdukcapil Staff
+        $disdukcapilValidation = (clone $q)->byStatus('DISDUKCAPIL_VALIDATION')->count();
         
         return [
             'total'       => (clone $q)->count() + $publicPending,
@@ -505,6 +973,11 @@ class DashboardController extends Controller
             'in_progress' => (clone $q)->whereNotIn('status', ['DRAFT','COMPLETED','ARCHIVED','REJECTED'])->count() + $publicPending,
             'completed'   => (clone $q)->byStatus('COMPLETED')->count(),
             'rejected'    => (clone $q)->byStatus('REJECTED')->count() + PublicSubmission::where('status', 'REJECTED')->count(),
+            'public_submissions' => $publicSubmissionsCount,
+            'internal_cases' => $internalCasesCount,
+            'ocr_match' => $matchCount,
+            'ocr_mismatch' => $mismatchCount,
+            'validation_pending' => $disdukcapilValidation,
         ];
     }
 }

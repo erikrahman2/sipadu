@@ -73,34 +73,6 @@
     {{-- Dashboard (semua role) --}}
     <x-admin-nav-item route="dashboard.index" icon="fa-gauge-high" label="Dashboard" />
 
-    {{-- ── PA Assistant ─────────────────────────────────────── --}}
-    @hasanyrole('pa_assistant')
-      <x-admin-nav-item route="dashboard.cases" icon="fa-folder-open" label="Daftar Kasus" />
-    @endhasanyrole
-
-    {{-- ── PA Management ────────────────────────────────────── --}}
-    @role('pa_management')
-      <div class="pt-3 pb-1 px-3">
-        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Review & Keputusan</p>
-      </div>
-      <x-admin-nav-item route="dashboard.cases" icon="fa-folder-open" label="Daftar Kasus" />
-      @php try { $pendingValidations = \App\Models\OcrValidation::where('is_reviewed', false)->count(); } catch(\Exception $e) { $pendingValidations = 0; } @endphp
-      <a href="{{ route('dashboard.review.cases') }}"
-         class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition
-                {{ request()->routeIs('dashboard.review*')
-                   ? 'bg-sidebar-active text-white font-medium'
-                   : 'text-slate-300 hover:bg-sidebar-hover hover:text-white' }}">
-        <i class="fas fa-microscope w-5 text-center"></i>
-        <span class="flex-1">Validasi OCR</span>
-        @if($pendingValidations > 0)
-          <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-bold bg-yellow-500 text-white">
-            {{ $pendingValidations }}
-          </span>
-        @endif
-      </a>
-      <x-admin-nav-item route="dashboard.review.statistics" icon="fa-chart-bar" label="Statistik OCR" />
-    @endrole
-
     {{-- ── PA Staff ─────────────────────────────────────────── --}}
     @role('pa_staff')
       <div class="pt-3 pb-1 px-3">
@@ -110,25 +82,14 @@
       <x-admin-nav-item route="dashboard.upload" icon="fa-upload" label="Upload Dokumen" />
     @endrole
 
-    {{-- ── Disdukcapil Staff ────────────────────────────────── --}}
-    @role('disdukcapil_staff')
-      <div class="pt-3 pb-1 px-3">
-        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Validasi</p>
-      </div>
-      <x-admin-nav-item route="dashboard.cases" icon="fa-check-double" label="Kasus Validasi" />
-    @endrole
-
-    {{-- ── Pengajuan Publik (semua petugas) ─────────────────── --}}
-    @hasanyrole('pa_assistant|pa_management|disdukcapil_staff|pa_staff')
+    {{-- ── Pengajuan Publik (PA Staff saja) ────── --}}
+    @role('pa_staff')
       <div class="pt-3 pb-1 px-3">
         <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Publik</p>
       </div>
       @php try { $pendingCount = \App\Models\PublicSubmission::where('status','PENDING')->count(); } catch(\Exception $e) { $pendingCount = 0; } @endphp
       <a href="{{ route('dashboard.public-inbox.index') }}"
-         class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition
-                {{ request()->routeIs('dashboard.public-inbox*')
-                   ? 'bg-sidebar-active text-white font-medium'
-                   : 'text-slate-300 hover:bg-sidebar-hover hover:text-white' }}">
+         class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('dashboard.public-inbox*') ? 'bg-sidebar-active text-white font-medium' : 'text-slate-300 hover:bg-sidebar-hover hover:text-white' }}">
         <i class="fas fa-inbox w-5 text-center"></i>
         <span class="flex-1">Pengajuan Publik</span>
         @if($pendingCount > 0)
@@ -137,7 +98,7 @@
           </span>
         @endif
       </a>
-    @endhasanyrole
+    @endrole
 
     {{-- ── Super Admin ─────────────────────────────────────── --}}
     @role('super_admin')
@@ -153,10 +114,7 @@
       </div>
       @php try { $pendingValidations = \App\Models\OcrValidation::where('is_reviewed', false)->count(); } catch(\Exception $e) { $pendingValidations = 0; } @endphp
       <a href="{{ route('dashboard.review.cases') }}"
-         class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition
-                {{ request()->routeIs('dashboard.review*')
-                   ? 'bg-sidebar-active text-white font-medium'
-                   : 'text-slate-300 hover:bg-sidebar-hover hover:text-white' }}">
+         class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('dashboard.review*') ? 'bg-sidebar-active text-white font-medium' : 'text-slate-300 hover:bg-sidebar-hover hover:text-white' }}">
         <i class="fas fa-microscope w-5 text-center"></i>
         <span class="flex-1">Validasi OCR</span>
         @if($pendingValidations > 0)
@@ -184,8 +142,7 @@
     {{-- Logout Button --}}
     <form method="POST" action="{{ route('auth.logout') }}" class="w-full">
       @csrf
-      <button type="submit"
-              class="w-full bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg py-2.5 px-3 transition-all duration-200 flex items-center justify-center gap-2 font-medium text-sm group border border-red-500/20 hover:border-red-500">
+      <button type="submit" class="w-full bg-red-500 bg-opacity-10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg py-2.5 px-3 transition-all duration-200 flex items-center justify-center gap-2 font-medium text-sm group border border-red-500 border-opacity-20 hover:border-red-500">
         <i class="fas fa-arrow-right-from-bracket group-hover:translate-x-0.5 transition-transform"></i>
         <span>Keluar</span>
       </button>
@@ -200,6 +157,7 @@
 <div class="flex-1 flex flex-col min-w-0 overflow-auto">
 
   {{-- ─── TOP HEADER ─────────────────────────────────────────────────── --}}
+  @unless(auth()->user()->hasRole('pa_assistant') || auth()->user()->hasRole('pa_management'))
   <header class="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
     <div class="flex items-center gap-4 px-4 sm:px-6 h-14">
 
@@ -222,7 +180,7 @@
       {{-- Right: notifications + user --}}
       <div class="flex items-center gap-2 flex-shrink-0">
 
-        @hasanyrole('pa_assistant|pa_management|disdukcapil_staff|pa_staff')
+        @hasanyrole('pa_management|disdukcapil_staff|pa_staff')
           @php try { $pendingBadge = \App\Models\PublicSubmission::where('status','PENDING')->count(); } catch(\Exception $e) { $pendingBadge = 0; } @endphp
           <a href="{{ route('dashboard.public-inbox.index') }}"
              class="relative p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition"
@@ -285,6 +243,7 @@
       </div>
     </div>
   </header>
+  @endunless
 
   {{-- ─── FLASH MESSAGES ─────────────────────────────────────────────── --}}
   @if(session('success'))

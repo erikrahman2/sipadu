@@ -15,6 +15,7 @@ class CaseModel extends Model
 
     protected $fillable = [
         'case_number', 'tracking_token', 'submitter_id',
+        'public_submission_id', 'source_type',
         'petitioner_nik', 'petitioner_name', 'petitioner_phone',
         'petitioner_alamat', 'petitioner_rt_rw', 'petitioner_kelurahan', 'petitioner_kecamatan',
         'institution_id', 'spouse_nik', 'spouse_name',
@@ -99,6 +100,15 @@ class CaseModel extends Model
     public function publicSubmission()
     {
         return $this->hasOne(PublicSubmission::class, 'case_id');
+    }
+
+    /**
+     * Get the public submission that generated this case (inverse relationship).
+     * Used when a case is created from a public submission.
+     */
+    public function sourcePublicSubmission()
+    {
+        return $this->belongsTo(PublicSubmission::class, 'public_submission_id');
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

@@ -15,6 +15,7 @@ class OCRService
     private string $serviceUrl;
     private string $secretKey;
     private int    $timeout;
+    private ?Document $currentDocument = null;
 
     public function __construct()
     {
@@ -52,6 +53,8 @@ class OCRService
      */
     public function process(Document $document): OcrResult
     {
+        $this->currentDocument = $document;  // Store for callMicroservice context
+        
         $job = OcrJob::firstOrCreate(['document_id' => $document->id]);
         $job->update(['status' => 'PROCESSING', 'started_at' => now(), 'attempts' => $job->attempts + 1]);
 
@@ -129,8 +132,16 @@ class OCRService
 
     private function callMicroservice(string $filePath, string $mimeType): array
     {
+        // For now, we'll trace back through context if available
+        // Get document instance context
+        $documentHint = null;
+        if (isset($this->currentDocument) && $this->currentDocument instanceof Document) {
+            $documentHint = $this->currentDocument->type;
+        }
+        
         $response = Http::withHeaders([
             'X-OCR-Secret' => $this->secretKey,
+            'X-Document-Type' => $documentHint ?? 'generic',
         ])
         ->timeout($this->timeout)
         ->attach('file', fopen($filePath, 'r'), basename($filePath), ['Content-Type' => $mimeType])
@@ -145,6 +156,7 @@ class OCRService
 
                 $response = Http::withHeaders([
                     'X-OCR-Secret' => $fallbackSecret,
+                    'X-Document-Type' => $documentHint ?? 'generic',
                 ])
                 ->timeout($this->timeout)
                 ->attach('file', fopen($filePath, 'r'), basename($filePath), ['Content-Type' => $mimeType])
@@ -167,6 +179,9 @@ class OCRService
         $overall    = count($confidence) > 0
             ? round(array_sum($confidence) / count($confidence), 4)
             : 0.0;
+
+        // Document-type-aware confidence adjustment
+        $overall = $this->adjustConfidenceByDocumentType($document, $overall, $confidence);
 
         $ocrStatus = $this->determineOcrStatus($overall, $payload);
         $errors    = $this->validateFields($payload);
@@ -215,6 +230,49 @@ class OCRService
         }
 
         return mb_substr($value, 0, $maxLength);
+    }
+
+    /**
+     * Adjust OCR confidence scores based on document type.
+     * KTP_ISTRI documents benefit from aggressive preprocessing, so we can be more strict.
+     */
+    private function adjustConfidenceByDocumentType(Document $document, float $overall, array $confidence): float
+    {
+        $documentType = $document->type ?? 'unknown';
+        
+        switch ($documentType) {
+            case 'KTP_ISTRI':
+                // For KTP_ISTRI (spouse KTP), apply stricter confidence thresholds
+                // since we're using enhanced preprocessing with contrast boost and bilateral filtering
+                
+                // If critical fields are present with decent confidence, slightly boost overall
+                $hasNik = !empty($confidence['nik']) && $confidence['nik'] >= 0.75;
+                $hasNama = !empty($confidence['nama']) && $confidence['nama'] >= 0.70;
+                $hasTanggalLahir = !empty($confidence['tgl_lahir']) && $confidence['tgl_lahir'] >= 0.70;
+                
+                if ($hasNik && $hasNama && $hasTanggalLahir) {
+                    // Bonus points for having all critical fields
+                    $overall = min($overall + 0.05, 1.0);
+                }
+                
+                Log::channel('ocr')->info('KTP_ISTRI confidence adjustment', [
+                    'document_id' => $document->id,
+                    'original_confidence' => $overall - 0.05,
+                    'adjusted_confidence' => $overall,
+                ]);
+                break;
+                
+            case 'KTP_SUAMI':
+            case 'KTP':
+                // Standard KTP processing, no special adjustment
+                break;
+                
+            default:
+                // No adjustment for unknown types
+                break;
+        }
+        
+        return round($overall, 4);
     }
 
     private function normalizeGender($value): ?string

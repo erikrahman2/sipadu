@@ -1,117 +1,372 @@
-﻿
-[2026-03-21 21:03:24] local.ERROR: Maximum execution time of 30 seconds exceeded {"userId":2,"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Maximum execution time of 30 seconds exceeded at D:/ProyekTA/vendor/guzzlehttp/guzzle/src/Handler/CurlFactory.php:695)
-[stacktrace]
-#0 {main}
-"} 
-[2026-03-21 21:05:09] local.ERROR: Maximum execution time of 30 seconds exceeded {"userId":2,"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Maximum execution time of 30 seconds exceeded at D:/ProyekTA/vendor/guzzlehttp/guzzle/src/Handler/CurlFactory.php:695)
-[stacktrace]
-#0 {main}
-"} 
-[2026-03-21 21:14:05] local.ERROR: Class "App\Models\Case" not found {"exception":"[object] (Error(code: 0): Class \"App\\Models\\Case\" not found at D:/ProyekTA/check_recent_documents.php:11)
-[stacktrace]
-#0 {main}
-"} 
-[2026-03-21 21:25:05] local.ERROR: Maximum execution time of 30 seconds exceeded {"userId":2,"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Maximum execution time of 30 seconds exceeded at D:/ProyekTA/vendor/guzzlehttp/guzzle/src/Handler/CurlFactory.php:695)
-[stacktrace]
-#0 {main}
-"} 
-[2026-03-21 21:42:08] local.ERROR: No arguments expected for "optimize:clear" command, got "field". {"exception":"[object] (Symfony\\Component\\Console\\Exception\\RuntimeException(code: 0): No arguments expected for \"optimize:clear\" command, got \"field\". at D:/ProyekTA/vendor/symfony/console/Input/ArgvInput.php:199)
-[stacktrace]
-#0 D:/ProyekTA/vendor/symfony/console/Input/ArgvInput.php(92): Symfony/Component/Console/Input/ArgvInput->parseArgument('field')
-#1 D:/ProyekTA/vendor/symfony/console/Input/ArgvInput.php(77): Symfony/Component/Console/Input/ArgvInput->parseToken('field', true)
-#2 D:/ProyekTA/vendor/symfony/console/Input/Input.php(53): Symfony/Component/Console/Input/ArgvInput->parse()
-#3 D:/ProyekTA/vendor/symfony/console/Command/Command.php(295): Symfony/Component/Console/Input/Input->bind(Object(Symfony/Component/Console/Input/InputDefinition))
-#4 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony/Component/Console/Command/Command->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Illuminate/Console/OutputStyle))
-#5 D:/ProyekTA/vendor/symfony/console/Application.php(1102): Illuminate/Console/Command->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
-#6 D:/ProyekTA/vendor/symfony/console/Application.php(356): Symfony/Component/Console/Application->doRunCommand(Object(Illuminate/Foundation/Console/OptimizeClearCommand), Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
-#7 D:/ProyekTA/vendor/symfony/console/Application.php(195): Symfony/Component/Console/Application->doRun(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
-#8 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony/Component/Console/Application->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
-#9 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1235): Illuminate/Foundation/Console/Kernel->handle(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
-#10 D:/ProyekTA/artisan(16): Illuminate/Foundation/Application->handleCommand(Object(Symfony/Component/Console/Input/ArgvInput))
-#11 {main}
-"} 
-[2026-03-21 21:45:05] local.ERROR: Maximum execution time of 30 seconds exceeded {"userId":2,"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Maximum execution time of 30 seconds exceeded at D:/ProyekTA/vendor/guzzlehttp/guzzle/src/Handler/CurlFactory.php:695)
-[stacktrace]
-#0 {main}
-"} 
-[2026-03-21 22:16:12] local.ERROR: SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it (Connection: mysql, SQL: select * from `cache` where `key` in (pa_disdukcapil_system_cache_illuminate:queue:restart)) {"exception":"[object] (Illuminate\\Database\\QueryException(code: 2002): SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it (Connection: mysql, SQL: select * from `cache` where `key` in (pa_disdukcapil_system_cache_illuminate:queue:restart)) at D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php:825)
-[stacktrace]
-#0 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php(979): Illuminate/Database/Connection->runQueryCallback('select * from `...', Array, Object(Closure))
-#1 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php(958): Illuminate/Database/Connection->tryAgainIfCausedByLostConnection(Object(Illuminate/Database/QueryException), 'select * from `...', Array, Object(Closure))
-#2 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php(781): Illuminate/Database/Connection->handleQueryException(Object(Illuminate/Database/QueryException), 'select * from `...', Array, Object(Closure))
-#3 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php(398): Illuminate/Database/Connection->run('select * from `...', Array, Object(Closure))
-#4 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3106): Illuminate/Database/Connection->select('select * from `...', Array, true)
-#5 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3091): Illuminate/Database/Query/Builder->runSelect()
-#6 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3676): Illuminate/Database/Query/Builder->{closure:Illuminate/Database/Query/Builder::get():3090}()
-#7 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3090): Illuminate/Database/Query/Builder->onceWithColumns(Array, Object(Closure))
-#8 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Cache/DatabaseStore.php(130): Illuminate/Database/Query/Builder->get()
-#9 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Cache/DatabaseStore.php(105): Illuminate/Cache/DatabaseStore->many(Array)
-#10 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Cache/Repository.php(117): Illuminate/Cache/DatabaseStore->get('illuminate:queu...')
-#11 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(714): Illuminate/Cache/Repository->get('illuminate:queu...')
-#12 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(703): Illuminate/Queue/Worker->getTimestampOfLastQueueRestart()
-#13 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(309): Illuminate/Queue/Worker->queueShouldRestart(NULL)
-#14 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(194): Illuminate/Queue/Worker->stopIfNecessary(Object(Illuminate/Queue/WorkerOptions), NULL, 898613.8141661, 5, NULL)
-#15 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Queue/Console/WorkCommand.php(149): Illuminate/Queue/Worker->daemon('database', 'ocr,graph,defau...', Object(Illuminate/Queue/WorkerOptions))
-#16 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Queue/Console/WorkCommand.php(132): Illuminate/Queue/Console/WorkCommand->runWorker('database', 'ocr,graph,defau...')
-#17 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate/Queue/Console/WorkCommand->handle()
-#18 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate/Container/BoundMethod::{closure:Illuminate/Container/BoundMethod::call():35}()
-#19 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate/Container/Util::unwrapIfClosure(Object(Closure))
-#20 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate/Container/BoundMethod::callBoundMethod(Object(Illuminate/Foundation/Application), Array, Object(Closure))
-#21 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate/Container/BoundMethod::call(Object(Illuminate/Foundation/Application), Array, Array, NULL)
-#22 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate/Container/Container->call(Array)
-#23 D:/ProyekTA/vendor/symfony/console/Command/Command.php(341): Illuminate/Console/Command->execute(Object(Symfony/Component/Console/Input/ArgvInput), Object(Illuminate/Console/OutputStyle))
-#24 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony/Component/Console/Command/Command->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Illuminate/Console/OutputStyle))
-#25 D:/ProyekTA/vendor/symfony/console/Application.php(1102): Illuminate/Console/Command->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
-#26 D:/ProyekTA/vendor/symfony/console/Application.php(356): Symfony/Component/Console/Application->doRunCommand(Object(Illuminate/Queue/Console/WorkCommand), Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
-#27 D:/ProyekTA/vendor/symfony/console/Application.php(195): Symfony/Component/Console/Application->doRun(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
-#28 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony/Component/Console/Application->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
-#29 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1235): Illuminate/Foundation/Console/Kernel->handle(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
-#30 D:/ProyekTA/artisan(16): Illuminate/Foundation/Application->handleCommand(Object(Symfony/Component/Console/Input/ArgvInput))
-#31 {main}
+[2026-04-04 01:45:25] local.INFO: [DEBUG] PublicSubmission.store() - About to call service->create() {"nik_suami":"3571011110930001","nik_istri":"3509045912850001"} 
+[2026-04-04 01:45:25] local.INFO: [DEBUG] PublicSubmission.create() started {"nik_suami":"3571011110930001","institution_id":"1","files_count":5} 
+[2026-04-04 01:45:25] local.INFO: [DEBUG] PublicSubmission created {"id":2,"tracking_token":"PUB-MQMQPX8OD0JKTAKKKM8Z"} 
+[2026-04-04 01:45:25] local.INFO: [DEBUG] PublicSubmission.create() completing transaction {"id":2,"tracking_token":"PUB-MQMQPX8OD0JKTAKKKM8Z"} 
+[2026-04-04 01:45:25] local.INFO: [DEBUG] PublicSubmission.store() - Service returned submission {"id":2,"tracking_token":"PUB-MQMQPX8OD0JKTAKKKM8Z"} 
+[2026-04-04 01:45:26] local.INFO: [WA-LOG] Pesan ke 6282281394081 {"message":"Halo, *tri atmadi nugroho*!
 
-[previous exception] [object] (PDOException(code: 2002): SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it at D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php:67)
+
+
+Pengajuan pembaruan dokumen Anda telah *berhasil diterima* oleh *PA-Disdukcapil System*.
+
+
+
+📋 *Token Tracking:* `PUB-MQMQPX8OD0JKTAKKKM8Z`
+
+🔗 Lacak status pengajuan Anda di:
+
+http://127.0.0.1:8000/lacak/PUB-MQMQPX8OD0JKTAKKKM8Z
+
+
+
+Simpan token ini baik-baik. Anda tidak memerlukan password — cukup gunakan token ini untuk memantau status pengajuan.
+
+
+
+_Jika ada pertanyaan, hubungi petugas Disdukcapil setempat._
+
+
+
+Terima kasih 🙏"} 
+[2026-04-04 01:45:50] local.INFO: Chart data built {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"totalData":[0,0,0,0,0,1,2],"publicData":[0,0,0,0,0,0,1],"internalData":[0,0,0,0,0,1,1],"user":"PA Assistant","institution_id":"1"} 
+[2026-04-04 01:45:51] local.INFO: Chart data received successfully {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"datasetCount":3} 
+[2026-04-04 01:45:58] local.INFO: Chart data built {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"totalData":[0,0,0,0,0,1,2],"publicData":[0,0,0,0,0,0,1],"internalData":[0,0,0,0,0,1,1],"user":"PA Assistant","institution_id":"1"} 
+[2026-04-04 01:45:58] local.INFO: Chart data received successfully {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"datasetCount":3} 
+[2026-04-04 01:46:11] local.INFO: Chart data built {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"totalData":[0,0,0,0,0,1,2],"publicData":[0,0,0,0,0,0,1],"internalData":[0,0,0,0,0,1,1],"user":"PA Assistant","institution_id":"1"} 
+[2026-04-04 01:46:11] local.INFO: Chart data received successfully {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"datasetCount":3} 
+[2026-04-04 01:50:09] local.INFO: Chart data built {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"totalData":[0,0,0,0,0,1,2],"publicData":[0,0,0,0,0,0,1],"internalData":[0,0,0,0,0,1,1],"user":"PA Assistant","institution_id":"1"} 
+[2026-04-04 01:50:09] local.INFO: Chart data received successfully {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"datasetCount":3} 
+[2026-04-04 01:52:15] local.INFO: Chart data built {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"totalData":[0,0,0,0,0,1,2],"publicData":[0,0,0,0,0,0,1],"internalData":[0,0,0,0,0,1,1],"user":"PA Assistant","institution_id":"1"} 
+[2026-04-04 01:52:15] local.INFO: Chart data received successfully {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"datasetCount":3} 
+[2026-04-04 01:52:18] local.INFO: Chart data built {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"totalData":[0,0,0,0,0,1,2],"publicData":[0,0,0,0,0,0,1],"internalData":[0,0,0,0,0,1,1],"user":"PA Assistant","institution_id":"1"} 
+[2026-04-04 01:52:18] local.INFO: Chart data received successfully {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"datasetCount":3} 
+[2026-04-04 01:55:04] local.ERROR: PHP Parse error: Syntax error, unexpected T_NS_SEPARATOR on line 2 {"exception":"[object] (Psy\\Exception\\ParseErrorException(code: 0): PHP Parse error: Syntax error, unexpected T_NS_SEPARATOR on line 2 at D:/ProyekTA/vendor/psy/psysh/src/Exception/ParseErrorException.php:44)
 [stacktrace]
-#0 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php(67): PDO::connect('mysql:host=127....', 'root', Object(SensitiveParameterValue), Array)
-#1 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php(85): Illuminate/Database/Connectors/Connector->createPdoConnection('mysql:host=127....', 'root', Object(SensitiveParameterValue), Array)
-#2 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php(48): Illuminate/Database/Connectors/Connector->tryAgainIfCausedByLostConnection(Object(PDOException), 'mysql:host=127....', 'root', Object(SensitiveParameterValue), Array)
-#3 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connectors/MySqlConnector.php(24): Illuminate/Database/Connectors/Connector->createConnection('mysql:host=127....', Array, Array)
-#4 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connectors/ConnectionFactory.php(185): Illuminate/Database/Connectors/MySqlConnector->connect(Array)
-#5 [internal function]: Illuminate/Database/Connectors/ConnectionFactory->{closure:Illuminate/Database/Connectors/ConnectionFactory::createPdoResolverWithHosts():180}()
-#6 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php(1231): call_user_func(Object(Closure))
-#7 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php(1267): Illuminate/Database/Connection->getPdo()
-#8 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php(512): Illuminate/Database/Connection->getReadPdo()
-#9 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php(407): Illuminate/Database/Connection->getPdoForSelect(true)
-#10 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php(812): Illuminate/Database/Connection->{closure:Illuminate/Database/Connection::select():398}('select * from `...', Array)
-#11 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php(979): Illuminate/Database/Connection->runQueryCallback('select * from `...', Array, Object(Closure))
-#12 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php(958): Illuminate/Database/Connection->tryAgainIfCausedByLostConnection(Object(Illuminate/Database/QueryException), 'select * from `...', Array, Object(Closure))
-#13 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php(781): Illuminate/Database/Connection->handleQueryException(Object(Illuminate/Database/QueryException), 'select * from `...', Array, Object(Closure))
-#14 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php(398): Illuminate/Database/Connection->run('select * from `...', Array, Object(Closure))
-#15 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3106): Illuminate/Database/Connection->select('select * from `...', Array, true)
-#16 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3091): Illuminate/Database/Query/Builder->runSelect()
-#17 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3676): Illuminate/Database/Query/Builder->{closure:Illuminate/Database/Query/Builder::get():3090}()
-#18 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3090): Illuminate/Database/Query/Builder->onceWithColumns(Array, Object(Closure))
-#19 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Cache/DatabaseStore.php(130): Illuminate/Database/Query/Builder->get()
-#20 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Cache/DatabaseStore.php(105): Illuminate/Cache/DatabaseStore->many(Array)
-#21 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Cache/Repository.php(117): Illuminate/Cache/DatabaseStore->get('illuminate:queu...')
-#22 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(714): Illuminate/Cache/Repository->get('illuminate:queu...')
-#23 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(703): Illuminate/Queue/Worker->getTimestampOfLastQueueRestart()
-#24 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(309): Illuminate/Queue/Worker->queueShouldRestart(NULL)
-#25 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(194): Illuminate/Queue/Worker->stopIfNecessary(Object(Illuminate/Queue/WorkerOptions), NULL, 898613.8141661, 5, NULL)
-#26 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Queue/Console/WorkCommand.php(149): Illuminate/Queue/Worker->daemon('database', 'ocr,graph,defau...', Object(Illuminate/Queue/WorkerOptions))
-#27 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Queue/Console/WorkCommand.php(132): Illuminate/Queue/Console/WorkCommand->runWorker('database', 'ocr,graph,defau...')
-#28 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate/Queue/Console/WorkCommand->handle()
-#29 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate/Container/BoundMethod::{closure:Illuminate/Container/BoundMethod::call():35}()
-#30 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate/Container/Util::unwrapIfClosure(Object(Closure))
-#31 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate/Container/BoundMethod::callBoundMethod(Object(Illuminate/Foundation/Application), Array, Object(Closure))
-#32 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate/Container/BoundMethod::call(Object(Illuminate/Foundation/Application), Array, Array, NULL)
-#33 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate/Container/Container->call(Array)
-#34 D:/ProyekTA/vendor/symfony/console/Command/Command.php(341): Illuminate/Console/Command->execute(Object(Symfony/Component/Console/Input/ArgvInput), Object(Illuminate/Console/OutputStyle))
-#35 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony/Component/Console/Command/Command->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Illuminate/Console/OutputStyle))
-#36 D:/ProyekTA/vendor/symfony/console/Application.php(1102): Illuminate/Console/Command->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
-#37 D:/ProyekTA/vendor/symfony/console/Application.php(356): Symfony/Component/Console/Application->doRunCommand(Object(Illuminate/Queue/Console/WorkCommand), Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
-#38 D:/ProyekTA/vendor/symfony/console/Application.php(195): Symfony/Component/Console/Application->doRun(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
-#39 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony/Component/Console/Application->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
-#40 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1235): Illuminate/Foundation/Console/Kernel->handle(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
-#41 D:/ProyekTA/artisan(16): Illuminate/Foundation/Application->handleCommand(Object(Symfony/Component/Console/Input/ArgvInput))
-#42 {main}
+#0 D:/ProyekTA/vendor/psy/psysh/src/CodeCleaner.php(488): Psy/Exception/ParseErrorException::fromParseError(Object(PhpParser/Error))
+#1 D:/ProyekTA/vendor/psy/psysh/src/CodeCleaner.php(269): Psy/CodeCleaner->parse('<?php /n// = //App...', false)
+#2 D:/ProyekTA/vendor/psy/psysh/src/Shell.php(1059): Psy/CodeCleaner->clean(Array, false)
+#3 D:/ProyekTA/vendor/psy/psysh/src/Shell.php(1092): Psy/Shell->addCode('/n// = //App//Model...', true)
+#4 D:/ProyekTA/vendor/psy/psysh/src/Shell.php(1640): Psy/Shell->setCode('/n// = //App//Model...', true)
+#5 D:/ProyekTA/vendor/laravel/tinker/src/Console/TinkerCommand.php(77): Psy/Shell->execute('/n// = //App//Model...')
+#6 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Laravel/Tinker/Console/TinkerCommand->handle()
+#7 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate/Container/BoundMethod::{closure:Illuminate/Container/BoundMethod::call():35}()
+#8 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate/Container/Util::unwrapIfClosure(Object(Closure))
+#9 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate/Container/BoundMethod::callBoundMethod(Object(Illuminate/Foundation/Application), Array, Object(Closure))
+#10 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate/Container/BoundMethod::call(Object(Illuminate/Foundation/Application), Array, Array, NULL)
+#11 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate/Container/Container->call(Array)
+#12 D:/ProyekTA/vendor/symfony/console/Command/Command.php(341): Illuminate/Console/Command->execute(Object(Symfony/Component/Console/Input/ArgvInput), Object(Illuminate/Console/OutputStyle))
+#13 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony/Component/Console/Command/Command->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Illuminate/Console/OutputStyle))
+#14 D:/ProyekTA/vendor/symfony/console/Application.php(1102): Illuminate/Console/Command->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#15 D:/ProyekTA/vendor/symfony/console/Application.php(356): Symfony/Component/Console/Application->doRunCommand(Object(Laravel/Tinker/Console/TinkerCommand), Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#16 D:/ProyekTA/vendor/symfony/console/Application.php(195): Symfony/Component/Console/Application->doRun(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#17 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony/Component/Console/Application->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#18 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1235): Illuminate/Foundation/Console/Kernel->handle(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#19 D:/ProyekTA/artisan(16): Illuminate/Foundation/Application->handleCommand(Object(Symfony/Component/Console/Input/ArgvInput))
+#20 {main}
+"} 
+[2026-04-04 01:57:56] local.INFO: Chart data built {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"totalData":[0,0,0,0,0,1,2],"publicData":[0,0,0,0,0,0,1],"internalData":[0,0,0,0,0,1,1],"user":"PA Assistant","institution_id":"1"} 
+[2026-04-04 01:57:57] local.INFO: Chart data received successfully {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"datasetCount":3} 
+[2026-04-04 02:00:44] local.INFO: Chart data built {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"totalData":[0,0,0,0,0,1,2],"publicData":[0,0,0,0,0,0,1],"internalData":[0,0,0,0,0,1,1],"user":"PA Assistant","institution_id":"1"} 
+[2026-04-04 02:00:44] local.INFO: Chart data received successfully {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"datasetCount":3} 
+[2026-04-04 02:01:00] local.INFO: Chart data built {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"totalData":[0,0,0,0,0,1,2],"publicData":[0,0,0,0,0,0,1],"internalData":[0,0,0,0,0,1,1],"user":"PA Assistant","institution_id":"1"} 
+[2026-04-04 02:01:00] local.INFO: Chart data received successfully {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"datasetCount":3} 
+[2026-04-04 02:01:56] local.ERROR: SQLSTATE[01000]: Warning: 1265 Data truncated for column 'status' at row 1 (Connection: mysql, SQL: UPDATE public_submissions SET status = 'SUBMITTED' WHERE status = 'WAITING_OCR') {"exception":"[object] (Illuminate\\Database\\QueryException(code: 01000): SQLSTATE[01000]: Warning: 1265 Data truncated for column 'status' at row 1 (Connection: mysql, SQL: UPDATE public_submissions SET status = 'SUBMITTED' WHERE status = 'WAITING_OCR') at D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php:825)
+[stacktrace]
+#0 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php(779): Illuminate/Database/Connection->runQueryCallback('UPDATE public_s...', Array, Object(Closure))
+#1 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php(560): Illuminate/Database/Connection->run('UPDATE public_s...', Array, Object(Closure))
+#2 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/DatabaseManager.php(495): Illuminate/Database/Connection->statement('UPDATE public_s...')
+#3 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Support/Facades/Facade.php(361): Illuminate/Database/DatabaseManager->__call('statement', Array)
+#4 D:/ProyekTA/database/migrations/2026_04_04_000003_update_public_submission_status_enum.php(13): Illuminate/Support/Facades/Facade::__callStatic('statement', Array)
+#5 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(507): Illuminate/Database/Migrations/Migration@anonymous->up()
+#6 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(432): Illuminate/Database/Migrations/Migrator->runMethod(Object(Illuminate/Database/MySqlConnection), Object(Illuminate/Database/Migrations/Migration@anonymous), 'up')
+#7 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(441): Illuminate/Database/Migrations/Migrator->{closure:Illuminate/Database/Migrations/Migrator::runMigration():428}()
+#8 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(244): Illuminate/Database/Migrations/Migrator->runMigration(Object(Illuminate/Database/Migrations/Migration@anonymous), 'up')
+#9 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Console/View/Components/Task.php(40): Illuminate/Database/Migrations/Migrator->{closure:Illuminate/Database/Migrations/Migrator::runUp():244}()
+#10 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(798): Illuminate/Console/View/Components/Task->render('2026_04_04_0000...', Object(Closure))
+#11 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(244): Illuminate/Database/Migrations/Migrator->write('Illuminate//Cons...', '2026_04_04_0000...', Object(Closure))
+#12 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(211): Illuminate/Database/Migrations/Migrator->runUp('D://ProyekTA//dat...', 7, false)
+#13 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(138): Illuminate/Database/Migrations/Migrator->runPending(Array, Array)
+#14 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(117): Illuminate/Database/Migrations/Migrator->run(Array, Array)
+#15 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(658): Illuminate/Database/Console/Migrations/MigrateCommand->{closure:Illuminate/Database/Console/Migrations/MigrateCommand::runMigrations():110}()
+#16 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(110): Illuminate/Database/Migrations/Migrator->usingConnection(NULL, Object(Closure))
+#17 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(89): Illuminate/Database/Console/Migrations/MigrateCommand->runMigrations()
+#18 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate/Database/Console/Migrations/MigrateCommand->handle()
+#19 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate/Container/BoundMethod::{closure:Illuminate/Container/BoundMethod::call():35}()
+#20 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate/Container/Util::unwrapIfClosure(Object(Closure))
+#21 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate/Container/BoundMethod::callBoundMethod(Object(Illuminate/Foundation/Application), Array, Object(Closure))
+#22 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate/Container/BoundMethod::call(Object(Illuminate/Foundation/Application), Array, Array, NULL)
+#23 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate/Container/Container->call(Array)
+#24 D:/ProyekTA/vendor/symfony/console/Command/Command.php(341): Illuminate/Console/Command->execute(Object(Symfony/Component/Console/Input/ArgvInput), Object(Illuminate/Console/OutputStyle))
+#25 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony/Component/Console/Command/Command->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Illuminate/Console/OutputStyle))
+#26 D:/ProyekTA/vendor/symfony/console/Application.php(1102): Illuminate/Console/Command->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#27 D:/ProyekTA/vendor/symfony/console/Application.php(356): Symfony/Component/Console/Application->doRunCommand(Object(Illuminate/Database/Console/Migrations/MigrateCommand), Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#28 D:/ProyekTA/vendor/symfony/console/Application.php(195): Symfony/Component/Console/Application->doRun(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#29 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony/Component/Console/Application->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#30 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1235): Illuminate/Foundation/Console/Kernel->handle(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#31 D:/ProyekTA/artisan(16): Illuminate/Foundation/Application->handleCommand(Object(Symfony/Component/Console/Input/ArgvInput))
+#32 {main}
+
+[previous exception] [object] (PDOException(code: 01000): SQLSTATE[01000]: Warning: 1265 Data truncated for column 'status' at row 1 at D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php:571)
+[stacktrace]
+#0 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php(571): PDOStatement->execute()
+#1 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php(812): Illuminate/Database/Connection->{closure:Illuminate/Database/Connection::statement():560}('UPDATE public_s...', Array)
+#2 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php(779): Illuminate/Database/Connection->runQueryCallback('UPDATE public_s...', Array, Object(Closure))
+#3 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php(560): Illuminate/Database/Connection->run('UPDATE public_s...', Array, Object(Closure))
+#4 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/DatabaseManager.php(495): Illuminate/Database/Connection->statement('UPDATE public_s...')
+#5 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Support/Facades/Facade.php(361): Illuminate/Database/DatabaseManager->__call('statement', Array)
+#6 D:/ProyekTA/database/migrations/2026_04_04_000003_update_public_submission_status_enum.php(13): Illuminate/Support/Facades/Facade::__callStatic('statement', Array)
+#7 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(507): Illuminate/Database/Migrations/Migration@anonymous->up()
+#8 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(432): Illuminate/Database/Migrations/Migrator->runMethod(Object(Illuminate/Database/MySqlConnection), Object(Illuminate/Database/Migrations/Migration@anonymous), 'up')
+#9 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(441): Illuminate/Database/Migrations/Migrator->{closure:Illuminate/Database/Migrations/Migrator::runMigration():428}()
+#10 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(244): Illuminate/Database/Migrations/Migrator->runMigration(Object(Illuminate/Database/Migrations/Migration@anonymous), 'up')
+#11 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Console/View/Components/Task.php(40): Illuminate/Database/Migrations/Migrator->{closure:Illuminate/Database/Migrations/Migrator::runUp():244}()
+#12 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(798): Illuminate/Console/View/Components/Task->render('2026_04_04_0000...', Object(Closure))
+#13 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(244): Illuminate/Database/Migrations/Migrator->write('Illuminate//Cons...', '2026_04_04_0000...', Object(Closure))
+#14 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(211): Illuminate/Database/Migrations/Migrator->runUp('D://ProyekTA//dat...', 7, false)
+#15 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(138): Illuminate/Database/Migrations/Migrator->runPending(Array, Array)
+#16 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(117): Illuminate/Database/Migrations/Migrator->run(Array, Array)
+#17 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(658): Illuminate/Database/Console/Migrations/MigrateCommand->{closure:Illuminate/Database/Console/Migrations/MigrateCommand::runMigrations():110}()
+#18 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(110): Illuminate/Database/Migrations/Migrator->usingConnection(NULL, Object(Closure))
+#19 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(89): Illuminate/Database/Console/Migrations/MigrateCommand->runMigrations()
+#20 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate/Database/Console/Migrations/MigrateCommand->handle()
+#21 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate/Container/BoundMethod::{closure:Illuminate/Container/BoundMethod::call():35}()
+#22 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate/Container/Util::unwrapIfClosure(Object(Closure))
+#23 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate/Container/BoundMethod::callBoundMethod(Object(Illuminate/Foundation/Application), Array, Object(Closure))
+#24 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate/Container/BoundMethod::call(Object(Illuminate/Foundation/Application), Array, Array, NULL)
+#25 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate/Container/Container->call(Array)
+#26 D:/ProyekTA/vendor/symfony/console/Command/Command.php(341): Illuminate/Console/Command->execute(Object(Symfony/Component/Console/Input/ArgvInput), Object(Illuminate/Console/OutputStyle))
+#27 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony/Component/Console/Command/Command->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Illuminate/Console/OutputStyle))
+#28 D:/ProyekTA/vendor/symfony/console/Application.php(1102): Illuminate/Console/Command->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#29 D:/ProyekTA/vendor/symfony/console/Application.php(356): Symfony/Component/Console/Application->doRunCommand(Object(Illuminate/Database/Console/Migrations/MigrateCommand), Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#30 D:/ProyekTA/vendor/symfony/console/Application.php(195): Symfony/Component/Console/Application->doRun(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#31 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony/Component/Console/Application->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#32 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1235): Illuminate/Foundation/Console/Kernel->handle(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#33 D:/ProyekTA/artisan(16): Illuminate/Foundation/Application->handleCommand(Object(Symfony/Component/Console/Input/ArgvInput))
+#34 {main}
+"} 
+[2026-04-04 02:02:01] local.INFO: Chart data built {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"totalData":[0,0,0,0,0,1,2],"publicData":[0,0,0,0,0,0,1],"internalData":[0,0,0,0,0,1,1],"user":"PA Assistant","institution_id":"1"} 
+[2026-04-04 02:02:02] local.INFO: Chart data received successfully {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"datasetCount":3} 
+[2026-04-04 02:02:49] local.INFO: Chart data built {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"totalData":[0,0,0,0,0,1,2],"publicData":[0,0,0,0,0,0,1],"internalData":[0,0,0,0,0,1,1],"user":"PA Assistant","institution_id":"1"} 
+[2026-04-04 02:02:49] local.INFO: Chart data received successfully {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"datasetCount":3} 
+[2026-04-04 02:04:03] local.INFO: Chart data built {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"totalData":[0,0,0,0,0,1,2],"publicData":[0,0,0,0,0,0,1],"internalData":[0,0,0,0,0,1,1],"user":"PA Assistant","institution_id":"1"} 
+[2026-04-04 02:04:03] local.INFO: Chart data received successfully {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"datasetCount":3} 
+[2026-04-04 02:08:27] local.INFO: Chart data built {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"totalData":[0,0,0,0,0,1,2],"publicData":[0,0,0,0,0,0,1],"internalData":[0,0,0,0,0,1,1],"user":"PA Assistant","institution_id":"1"} 
+[2026-04-04 02:08:27] local.INFO: Chart data received successfully {"labels":["Oct 2025","Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026"],"datasetCount":3} 
+[2026-04-04 02:11:48] local.ERROR: PHP Parse error: Syntax error, unexpected T_NS_SEPARATOR on line 2 {"exception":"[object] (Psy\\Exception\\ParseErrorException(code: 0): PHP Parse error: Syntax error, unexpected T_NS_SEPARATOR on line 2 at D:/ProyekTA/vendor/psy/psysh/src/Exception/ParseErrorException.php:44)
+[stacktrace]
+#0 D:/ProyekTA/vendor/psy/psysh/src/CodeCleaner.php(488): Psy/Exception/ParseErrorException::fromParseError(Object(PhpParser/Error))
+#1 D:/ProyekTA/vendor/psy/psysh/src/CodeCleaner.php(269): Psy/CodeCleaner->parse('<?php /n// = App//...', false)
+#2 D:/ProyekTA/vendor/psy/psysh/src/Shell.php(1059): Psy/CodeCleaner->clean(Array, false)
+#3 D:/ProyekTA/vendor/psy/psysh/src/Shell.php(1092): Psy/Shell->addCode('/n// = App//Models...', true)
+#4 D:/ProyekTA/vendor/psy/psysh/src/Shell.php(1640): Psy/Shell->setCode('/n// = App//Models...', true)
+#5 D:/ProyekTA/vendor/laravel/tinker/src/Console/TinkerCommand.php(77): Psy/Shell->execute('/n// = App//Models...')
+#6 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Laravel/Tinker/Console/TinkerCommand->handle()
+#7 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate/Container/BoundMethod::{closure:Illuminate/Container/BoundMethod::call():35}()
+#8 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate/Container/Util::unwrapIfClosure(Object(Closure))
+#9 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate/Container/BoundMethod::callBoundMethod(Object(Illuminate/Foundation/Application), Array, Object(Closure))
+#10 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate/Container/BoundMethod::call(Object(Illuminate/Foundation/Application), Array, Array, NULL)
+#11 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate/Container/Container->call(Array)
+#12 D:/ProyekTA/vendor/symfony/console/Command/Command.php(341): Illuminate/Console/Command->execute(Object(Symfony/Component/Console/Input/ArgvInput), Object(Illuminate/Console/OutputStyle))
+#13 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony/Component/Console/Command/Command->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Illuminate/Console/OutputStyle))
+#14 D:/ProyekTA/vendor/symfony/console/Application.php(1102): Illuminate/Console/Command->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#15 D:/ProyekTA/vendor/symfony/console/Application.php(356): Symfony/Component/Console/Application->doRunCommand(Object(Laravel/Tinker/Console/TinkerCommand), Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#16 D:/ProyekTA/vendor/symfony/console/Application.php(195): Symfony/Component/Console/Application->doRun(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#17 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony/Component/Console/Application->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#18 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1235): Illuminate/Foundation/Console/Kernel->handle(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#19 D:/ProyekTA/artisan(16): Illuminate/Foundation/Application->handleCommand(Object(Symfony/Component/Console/Input/ArgvInput))
+#20 {main}
+"} 
+[2026-04-04 02:21:59] local.ERROR: PHP Parse error: Syntax error, unexpected T_NAME_FULLY_QUALIFIED, expecting '{' on line 1 {"exception":"[object] (Psy\\Exception\\ParseErrorException(code: 0): PHP Parse error: Syntax error, unexpected T_NAME_FULLY_QUALIFIED, expecting '{' on line 1 at D:/ProyekTA/vendor/psy/psysh/src/Exception/ParseErrorException.php:44)
+[stacktrace]
+#0 D:/ProyekTA/vendor/psy/psysh/src/CodeCleaner.php(488): Psy/Exception/ParseErrorException::fromParseError(Object(PhpParser/Error))
+#1 D:/ProyekTA/vendor/psy/psysh/src/CodeCleaner.php(269): Psy/CodeCleaner->parse('<?php use App////...', false)
+#2 D:/ProyekTA/vendor/psy/psysh/src/Shell.php(1059): Psy/CodeCleaner->clean(Array, false)
+#3 D:/ProyekTA/vendor/psy/psysh/src/Shell.php(1092): Psy/Shell->addCode('use App////Models...', true)
+#4 D:/ProyekTA/vendor/psy/psysh/src/Shell.php(1640): Psy/Shell->setCode('use App////Models...', true)
+#5 D:/ProyekTA/vendor/laravel/tinker/src/Console/TinkerCommand.php(77): Psy/Shell->execute('use App////Models...')
+#6 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Laravel/Tinker/Console/TinkerCommand->handle()
+#7 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate/Container/BoundMethod::{closure:Illuminate/Container/BoundMethod::call():35}()
+#8 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate/Container/Util::unwrapIfClosure(Object(Closure))
+#9 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate/Container/BoundMethod::callBoundMethod(Object(Illuminate/Foundation/Application), Array, Object(Closure))
+#10 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate/Container/BoundMethod::call(Object(Illuminate/Foundation/Application), Array, Array, NULL)
+#11 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate/Container/Container->call(Array)
+#12 D:/ProyekTA/vendor/symfony/console/Command/Command.php(341): Illuminate/Console/Command->execute(Object(Symfony/Component/Console/Input/ArgvInput), Object(Illuminate/Console/OutputStyle))
+#13 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony/Component/Console/Command/Command->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Illuminate/Console/OutputStyle))
+#14 D:/ProyekTA/vendor/symfony/console/Application.php(1102): Illuminate/Console/Command->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#15 D:/ProyekTA/vendor/symfony/console/Application.php(356): Symfony/Component/Console/Application->doRunCommand(Object(Laravel/Tinker/Console/TinkerCommand), Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#16 D:/ProyekTA/vendor/symfony/console/Application.php(195): Symfony/Component/Console/Application->doRun(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#17 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony/Component/Console/Application->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#18 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1235): Illuminate/Foundation/Console/Kernel->handle(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#19 D:/ProyekTA/artisan(16): Illuminate/Foundation/Application->handleCommand(Object(Symfony/Component/Console/Input/ArgvInput))
+#20 {main}
+"} 
+[2026-04-04 02:22:23] local.ERROR: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry 'LAINNYA_1775241925.jpg' for key 'documents.documents_stored_name_unique' (Connection: mysql, SQL: insert into `documents` (`case_id`, `uploaded_by`, `original_name`, `stored_name`, `disk`, `path`, `mime_type`, `size_bytes`, `document_type`, `checksum`, `updated_at`, `created_at`) values (10, 2, sample (10).jpg, LAINNYA_1775241925.jpg, public, public_submissions/2/LAINNYA_1775241925.jpg, image/png, 244316, OTHER, 5ff121194381843554959a58f5eca8be87225a9ede3010681c376d26b75226ce, 2026-04-04 02:22:23, 2026-04-04 02:22:23)) {"exception":"[object] (Illuminate\\Database\\UniqueConstraintViolationException(code: 23000): SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry 'LAINNYA_1775241925.jpg' for key 'documents.documents_stored_name_unique' (Connection: mysql, SQL: insert into `documents` (`case_id`, `uploaded_by`, `original_name`, `stored_name`, `disk`, `path`, `mime_type`, `size_bytes`, `document_type`, `checksum`, `updated_at`, `created_at`) values (10, 2, sample (10).jpg, LAINNYA_1775241925.jpg, public, public_submissions/2/LAINNYA_1775241925.jpg, image/png, 244316, OTHER, 5ff121194381843554959a58f5eca8be87225a9ede3010681c376d26b75226ce, 2026-04-04 02:22:23, 2026-04-04 02:22:23)) at D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php:820)
+[stacktrace]
+#0 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php(779): Illuminate/Database/Connection->runQueryCallback('insert into `do...', Array, Object(Closure))
+#1 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/MySqlConnection.php(42): Illuminate/Database/Connection->run('insert into `do...', Array, Object(Closure))
+#2 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/MySqlProcessor.php(35): Illuminate/Database/MySqlConnection->insert('insert into `do...', Array, 'id')
+#3 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3766): Illuminate/Database/Query/Processors/MySqlProcessor->processInsertGetId(Object(Illuminate/Database/Query/Builder), 'insert into `do...', Array, 'id')
+#4 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(2120): Illuminate/Database/Query/Builder->insertGetId(Array, 'id')
+#5 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1359): Illuminate/Database/Eloquent/Builder->__call('insertGetId', Array)
+#6 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1324): Illuminate/Database/Eloquent/Model->insertAndSetId(Object(Illuminate/Database/Eloquent/Builder), Array)
+#7 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1163): Illuminate/Database/Eloquent/Model->performInsert(Object(Illuminate/Database/Eloquent/Builder))
+#8 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(1128): Illuminate/Database/Eloquent/Model->save()
+#9 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Support/helpers.php(399): Illuminate/Database/Eloquent/Builder->{closure:Illuminate/Database/Eloquent/Builder::create():1127}(Object(App/Models/Document))
+#10 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(1127): tap(Object(App/Models/Document), Object(Closure))
+#11 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Support/Traits/ForwardsCalls.php(23): Illuminate/Database/Eloquent/Builder->create(Array)
+#12 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(2372): Illuminate/Database/Eloquent/Model->forwardCallTo(Object(Illuminate/Database/Eloquent/Builder), 'create', Array)
+#13 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(2384): Illuminate/Database/Eloquent/Model->__call('create', Array)
+#14 D:/ProyekTA/_backfill_public_to_case.php(89): Illuminate/Database/Eloquent/Model::__callStatic('create', Array)
+#15 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Concerns/ManagesTransactions.php(32): {closure:D:/ProyekTA/_backfill_public_to_case.php:24}(Object(Illuminate/Database/MySqlConnection))
+#16 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/DatabaseManager.php(495): Illuminate/Database/Connection->transaction(Object(Closure))
+#17 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Support/Facades/Facade.php(361): Illuminate/Database/DatabaseManager->__call('transaction', Array)
+#18 D:/ProyekTA/_backfill_public_to_case.php(24): Illuminate/Support/Facades/Facade::__callStatic('transaction', Array)
+#19 {main}
+
+[previous exception] [object] (PDOException(code: 23000): SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry 'LAINNYA_1775241925.jpg' for key 'documents.documents_stored_name_unique' at D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/MySqlConnection.php:53)
+[stacktrace]
+#0 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/MySqlConnection.php(53): PDOStatement->execute()
+#1 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php(812): Illuminate/Database/MySqlConnection->{closure:Illuminate/Database/MySqlConnection::insert():42}('insert into `do...', Array)
+#2 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php(779): Illuminate/Database/Connection->runQueryCallback('insert into `do...', Array, Object(Closure))
+#3 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/MySqlConnection.php(42): Illuminate/Database/Connection->run('insert into `do...', Array, Object(Closure))
+#4 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/MySqlProcessor.php(35): Illuminate/Database/MySqlConnection->insert('insert into `do...', Array, 'id')
+#5 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3766): Illuminate/Database/Query/Processors/MySqlProcessor->processInsertGetId(Object(Illuminate/Database/Query/Builder), 'insert into `do...', Array, 'id')
+#6 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(2120): Illuminate/Database/Query/Builder->insertGetId(Array, 'id')
+#7 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1359): Illuminate/Database/Eloquent/Builder->__call('insertGetId', Array)
+#8 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1324): Illuminate/Database/Eloquent/Model->insertAndSetId(Object(Illuminate/Database/Eloquent/Builder), Array)
+#9 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1163): Illuminate/Database/Eloquent/Model->performInsert(Object(Illuminate/Database/Eloquent/Builder))
+#10 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(1128): Illuminate/Database/Eloquent/Model->save()
+#11 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Support/helpers.php(399): Illuminate/Database/Eloquent/Builder->{closure:Illuminate/Database/Eloquent/Builder::create():1127}(Object(App/Models/Document))
+#12 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(1127): tap(Object(App/Models/Document), Object(Closure))
+#13 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Support/Traits/ForwardsCalls.php(23): Illuminate/Database/Eloquent/Builder->create(Array)
+#14 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(2372): Illuminate/Database/Eloquent/Model->forwardCallTo(Object(Illuminate/Database/Eloquent/Builder), 'create', Array)
+#15 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(2384): Illuminate/Database/Eloquent/Model->__call('create', Array)
+#16 D:/ProyekTA/_backfill_public_to_case.php(89): Illuminate/Database/Eloquent/Model::__callStatic('create', Array)
+#17 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Concerns/ManagesTransactions.php(32): {closure:D:/ProyekTA/_backfill_public_to_case.php:24}(Object(Illuminate/Database/MySqlConnection))
+#18 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/DatabaseManager.php(495): Illuminate/Database/Connection->transaction(Object(Closure))
+#19 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Support/Facades/Facade.php(361): Illuminate/Database/DatabaseManager->__call('transaction', Array)
+#20 D:/ProyekTA/_backfill_public_to_case.php(24): Illuminate/Support/Facades/Facade::__callStatic('transaction', Array)
+#21 {main}
+"} 
+[2026-04-04 02:22:32] local.ERROR: PHP Parse error: Syntax error, unexpected '=', expecting ';' on line 1 {"exception":"[object] (Psy\\Exception\\ParseErrorException(code: 0): PHP Parse error: Syntax error, unexpected '=', expecting ';' on line 1 at D:/ProyekTA/vendor/psy/psysh/src/Exception/ParseErrorException.php:44)
+[stacktrace]
+#0 D:/ProyekTA/vendor/psy/psysh/src/CodeCleaner.php(488): Psy/Exception/ParseErrorException::fromParseError(Object(PhpParser/Error))
+#1 D:/ProyekTA/vendor/psy/psysh/src/CodeCleaner.php(269): Psy/CodeCleaner->parse('<?php echo unli...', false)
+#2 D:/ProyekTA/vendor/psy/psysh/src/Shell.php(1059): Psy/CodeCleaner->clean(Array, false)
+#3 D:/ProyekTA/vendor/psy/psysh/src/Shell.php(1092): Psy/Shell->addCode('echo unlinked= ...', true)
+#4 D:/ProyekTA/vendor/psy/psysh/src/Shell.php(1640): Psy/Shell->setCode('echo unlinked= ...', true)
+#5 D:/ProyekTA/vendor/laravel/tinker/src/Console/TinkerCommand.php(77): Psy/Shell->execute('echo unlinked= ...')
+#6 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Laravel/Tinker/Console/TinkerCommand->handle()
+#7 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate/Container/BoundMethod::{closure:Illuminate/Container/BoundMethod::call():35}()
+#8 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate/Container/Util::unwrapIfClosure(Object(Closure))
+#9 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate/Container/BoundMethod::callBoundMethod(Object(Illuminate/Foundation/Application), Array, Object(Closure))
+#10 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate/Container/BoundMethod::call(Object(Illuminate/Foundation/Application), Array, Array, NULL)
+#11 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate/Container/Container->call(Array)
+#12 D:/ProyekTA/vendor/symfony/console/Command/Command.php(341): Illuminate/Console/Command->execute(Object(Symfony/Component/Console/Input/ArgvInput), Object(Illuminate/Console/OutputStyle))
+#13 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony/Component/Console/Command/Command->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Illuminate/Console/OutputStyle))
+#14 D:/ProyekTA/vendor/symfony/console/Application.php(1102): Illuminate/Console/Command->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#15 D:/ProyekTA/vendor/symfony/console/Application.php(356): Symfony/Component/Console/Application->doRunCommand(Object(Laravel/Tinker/Console/TinkerCommand), Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#16 D:/ProyekTA/vendor/symfony/console/Application.php(195): Symfony/Component/Console/Application->doRun(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#17 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony/Component/Console/Application->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#18 D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1235): Illuminate/Foundation/Console/Kernel->handle(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#19 D:/ProyekTA/artisan(16): Illuminate/Foundation/Application->handleCommand(Object(Symfony/Component/Console/Input/ArgvInput))
+#20 {main}
+"} 
+[2026-04-04 02:25:02] local.ERROR: Uncaught PDOException: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry 'LAINNYA_1775241925.jpg' for key 'documents.documents_stored_name_unique' in D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\MySqlConnection.php:53
+Stack trace:
+#0 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\MySqlConnection.php(53): PDOStatement->execute()
+#1 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Connection.php(812): Illuminate\Database\MySqlConnection->{closure:Illuminate\Database\MySqlConnection::insert():42}('insert into `do...', Array)
+#2 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Connection.php(779): Illuminate\Database\Connection->runQueryCallback('insert into `do...', Array, Object(Closure))
+#3 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\MySqlConnection.php(42): Illuminate\Database\Connection->run('insert into `do...', Array, Object(Closure))
+#4 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Query\Processors\MySqlProcessor.php(35): Illuminate\Database\MySqlConnection->insert('insert into `do...', Array, 'id')
+#5 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Query\Builder.php(3766): Illuminate\Database\Query\Processors\MySqlProcessor->processInsertGetId(Object(Illuminate\Database\Query\Builder), 'insert into `do...', Array, 'id')
+#6 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Builder.php(2120): Illuminate\Database\Query\Builder->insertGetId(Array, 'id')
+#7 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php(1359): Illuminate\Database\Eloquent\Builder->__call('insertGetId', Array)
+#8 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php(1324): Illuminate\Database\Eloquent\Model->insertAndSetId(Object(Illuminate\Database\Eloquent\Builder), Array)
+#9 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php(1163): Illuminate\Database\Eloquent\Model->performInsert(Object(Illuminate\Database\Eloquent\Builder))
+#10 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Builder.php(1128): Illuminate\Database\Eloquent\Model->save()
+#11 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Support\helpers.php(399): Illuminate\Database\Eloquent\Builder->{closure:Illuminate\Database\Eloquent\Builder::create():1127}(Object(App\Models\Document))
+#12 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Builder.php(1127): tap(Object(App\Models\Document), Object(Closure))
+#13 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Support\Traits\ForwardsCalls.php(23): Illuminate\Database\Eloquent\Builder->create(Array)
+#14 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php(2372): Illuminate\Database\Eloquent\Model->forwardCallTo(Object(Illuminate\Database\Eloquent\Builder), 'create', Array)
+#15 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php(2384): Illuminate\Database\Eloquent\Model->__call('create', Array)
+#16 Command line code(1): Illuminate\Database\Eloquent\Model::__callStatic('create', Array)
+#17 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Concerns\ManagesTransactions.php(32): {closure:Command line code:1}(Object(Illuminate\Database\MySqlConnection))
+#18 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\DatabaseManager.php(495): Illuminate\Database\Connection->transaction(Object(Closure))
+#19 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php(361): Illuminate\Database\DatabaseManager->__call('transaction', Array)
+#20 Command line code(1): Illuminate\Support\Facades\Facade::__callStatic('transaction', Array)
+#21 {main}
+
+Next Illuminate\Database\UniqueConstraintViolationException: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry 'LAINNYA_1775241925.jpg' for key 'documents.documents_stored_name_unique' (Connection: mysql, SQL: insert into `documents` (`case_id`, `uploaded_by`, `original_name`, `stored_name`, `disk`, `path`, `mime_type`, `size_bytes`, `document_type`, `checksum`, `updated_at`, `created_at`) values (11, 2, sample (10).jpg, LAINNYA_1775241925.jpg, public, public_submissions/2/LAINNYA_1775241925.jpg, image/png, 244316, OTHER, 5ff121194381843554959a58f5eca8be87225a9ede3010681c376d26b75226ce, 2026-04-04 02:25:02, 2026-04-04 02:25:02)) in D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Connection.php:820
+Stack trace:
+#0 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Connection.php(779): Illuminate\Database\Connection->runQueryCallback('insert into `do...', Array, Object(Closure))
+#1 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\MySqlConnection.php(42): Illuminate\Database\Connection->run('insert into `do...', Array, Object(Closure))
+#2 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Query\Processors\MySqlProcessor.php(35): Illuminate\Database\MySqlConnection->insert('insert into `do...', Array, 'id')
+#3 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Query\Builder.php(3766): Illuminate\Database\Query\Processors\MySqlProcessor->processInsertGetId(Object(Illuminate\Database\Query\Builder), 'insert into `do...', Array, 'id')
+#4 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Builder.php(2120): Illuminate\Database\Query\Builder->insertGetId(Array, 'id')
+#5 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php(1359): Illuminate\Database\Eloquent\Builder->__call('insertGetId', Array)
+#6 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php(1324): Illuminate\Database\Eloquent\Model->insertAndSetId(Object(Illuminate\Database\Eloquent\Builder), Array)
+#7 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php(1163): Illuminate\Database\Eloquent\Model->performInsert(Object(Illuminate\Database\Eloquent\Builder))
+#8 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Builder.php(1128): Illuminate\Database\Eloquent\Model->save()
+#9 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Support\helpers.php(399): Illuminate\Database\Eloquent\Builder->{closure:Illuminate\Database\Eloquent\Builder::create():1127}(Object(App\Models\Document))
+#10 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Builder.php(1127): tap(Object(App\Models\Document), Object(Closure))
+#11 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Support\Traits\ForwardsCalls.php(23): Illuminate\Database\Eloquent\Builder->create(Array)
+#12 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php(2372): Illuminate\Database\Eloquent\Model->forwardCallTo(Object(Illuminate\Database\Eloquent\Builder), 'create', Array)
+#13 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php(2384): Illuminate\Database\Eloquent\Model->__call('create', Array)
+#14 Command line code(1): Illuminate\Database\Eloquent\Model::__callStatic('create', Array)
+#15 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\Concerns\ManagesTransactions.php(32): {closure:Command line code:1}(Object(Illuminate\Database\MySqlConnection))
+#16 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Database\DatabaseManager.php(495): Illuminate\Database\Connection->transaction(Object(Closure))
+#17 D:\ProyekTA\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php(361): Illuminate\Database\DatabaseManager->__call('transaction', Array)
+#18 Command line code(1): Illuminate\Support\Facades\Facade::__callStatic('transaction', Array)
+#19 {main}
+  thrown {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Uncaught PDOException: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry 'LAINNYA_1775241925.jpg' for key 'documents.documents_stored_name_unique' in D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\MySqlConnection.php:53
+Stack trace:
+#0 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\MySqlConnection.php(53): PDOStatement->execute()
+#1 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(812): Illuminate\\Database\\MySqlConnection->{closure:Illuminate\\Database\\MySqlConnection::insert():42}('insert into `do...', Array)
+#2 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(779): Illuminate\\Database\\Connection->runQueryCallback('insert into `do...', Array, Object(Closure))
+#3 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\MySqlConnection.php(42): Illuminate\\Database\\Connection->run('insert into `do...', Array, Object(Closure))
+#4 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Processors\\MySqlProcessor.php(35): Illuminate\\Database\\MySqlConnection->insert('insert into `do...', Array, 'id')
+#5 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php(3766): Illuminate\\Database\\Query\\Processors\\MySqlProcessor->processInsertGetId(Object(Illuminate\\Database\\Query\\Builder), 'insert into `do...', Array, 'id')
+#6 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(2120): Illuminate\\Database\\Query\\Builder->insertGetId(Array, 'id')
+#7 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(1359): Illuminate\\Database\\Eloquent\\Builder->__call('insertGetId', Array)
+#8 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(1324): Illuminate\\Database\\Eloquent\\Model->insertAndSetId(Object(Illuminate\\Database\\Eloquent\\Builder), Array)
+#9 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(1163): Illuminate\\Database\\Eloquent\\Model->performInsert(Object(Illuminate\\Database\\Eloquent\\Builder))
+#10 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(1128): Illuminate\\Database\\Eloquent\\Model->save()
+#11 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Support\\helpers.php(399): Illuminate\\Database\\Eloquent\\Builder->{closure:Illuminate\\Database\\Eloquent\\Builder::create():1127}(Object(App\\Models\\Document))
+#12 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(1127): tap(Object(App\\Models\\Document), Object(Closure))
+#13 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Support\\Traits\\ForwardsCalls.php(23): Illuminate\\Database\\Eloquent\\Builder->create(Array)
+#14 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(2372): Illuminate\\Database\\Eloquent\\Model->forwardCallTo(Object(Illuminate\\Database\\Eloquent\\Builder), 'create', Array)
+#15 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(2384): Illuminate\\Database\\Eloquent\\Model->__call('create', Array)
+#16 Command line code(1): Illuminate\\Database\\Eloquent\\Model::__callStatic('create', Array)
+#17 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\ManagesTransactions.php(32): {closure:Command line code:1}(Object(Illuminate\\Database\\MySqlConnection))
+#18 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\DatabaseManager.php(495): Illuminate\\Database\\Connection->transaction(Object(Closure))
+#19 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Support\\Facades\\Facade.php(361): Illuminate\\Database\\DatabaseManager->__call('transaction', Array)
+#20 Command line code(1): Illuminate\\Support\\Facades\\Facade::__callStatic('transaction', Array)
+#21 {main}
+
+Next Illuminate\\Database\\UniqueConstraintViolationException: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry 'LAINNYA_1775241925.jpg' for key 'documents.documents_stored_name_unique' (Connection: mysql, SQL: insert into `documents` (`case_id`, `uploaded_by`, `original_name`, `stored_name`, `disk`, `path`, `mime_type`, `size_bytes`, `document_type`, `checksum`, `updated_at`, `created_at`) values (11, 2, sample (10).jpg, LAINNYA_1775241925.jpg, public, public_submissions/2/LAINNYA_1775241925.jpg, image/png, 244316, OTHER, 5ff121194381843554959a58f5eca8be87225a9ede3010681c376d26b75226ce, 2026-04-04 02:25:02, 2026-04-04 02:25:02)) in D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php:820
+Stack trace:
+#0 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(779): Illuminate\\Database\\Connection->runQueryCallback('insert into `do...', Array, Object(Closure))
+#1 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\MySqlConnection.php(42): Illuminate\\Database\\Connection->run('insert into `do...', Array, Object(Closure))
+#2 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Processors\\MySqlProcessor.php(35): Illuminate\\Database\\MySqlConnection->insert('insert into `do...', Array, 'id')
+#3 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php(3766): Illuminate\\Database\\Query\\Processors\\MySqlProcessor->processInsertGetId(Object(Illuminate\\Database\\Query\\Builder), 'insert into `do...', Array, 'id')
+#4 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(2120): Illuminate\\Database\\Query\\Builder->insertGetId(Array, 'id')
+#5 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(1359): Illuminate\\Database\\Eloquent\\Builder->__call('insertGetId', Array)
+#6 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(1324): Illuminate\\Database\\Eloquent\\Model->insertAndSetId(Object(Illuminate\\Database\\Eloquent\\Builder), Array)
+#7 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(1163): Illuminate\\Database\\Eloquent\\Model->performInsert(Object(Illuminate\\Database\\Eloquent\\Builder))
+#8 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(1128): Illuminate\\Database\\Eloquent\\Model->save()
+#9 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Support\\helpers.php(399): Illuminate\\Database\\Eloquent\\Builder->{closure:Illuminate\\Database\\Eloquent\\Builder::create():1127}(Object(App\\Models\\Document))
+#10 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(1127): tap(Object(App\\Models\\Document), Object(Closure))
+#11 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Support\\Traits\\ForwardsCalls.php(23): Illuminate\\Database\\Eloquent\\Builder->create(Array)
+#12 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(2372): Illuminate\\Database\\Eloquent\\Model->forwardCallTo(Object(Illuminate\\Database\\Eloquent\\Builder), 'create', Array)
+#13 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(2384): Illuminate\\Database\\Eloquent\\Model->__call('create', Array)
+#14 Command line code(1): Illuminate\\Database\\Eloquent\\Model::__callStatic('create', Array)
+#15 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\ManagesTransactions.php(32): {closure:Command line code:1}(Object(Illuminate\\Database\\MySqlConnection))
+#16 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\DatabaseManager.php(495): Illuminate\\Database\\Connection->transaction(Object(Closure))
+#17 D:\\ProyekTA\\vendor\\laravel\\framework\\src\\Illuminate\\Support\\Facades\\Facade.php(361): Illuminate\\Database\\DatabaseManager->__call('transaction', Array)
+#18 Command line code(1): Illuminate\\Support\\Facades\\Facade::__callStatic('transaction', Array)
+#19 {main}
+  thrown at D:/ProyekTA/vendor/laravel/framework/src/Illuminate/Database/Connection.php:820)
+[stacktrace]
+#0 {main}
 "} 

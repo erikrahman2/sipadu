@@ -1,521 +1,413 @@
-@extends('layouts.app')
-
-@section('title', 'Detail Validasi OCR - ' . $case->case_number)
+@extends('layouts.admin')
 
 @section('content')
-<div class="container-fluid px-4">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-1">Detail Validasi OCR</h1>
-            <p class="text-muted mb-0">Kasus: <strong>{{ $case->case_number }}</strong></p>
-        </div>
-        <div>
-            <a href="{{ route('dashboard.review.cases') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left"></i> Kembali
-            </a>
-        </div>
-    </div>
-
-    <div class="d-flex gap-2 mb-3">
-        <form method="POST" action="{{ route('dashboard.review.refresh_ocr', $case->id) }}" onsubmit="return confirm('Hapus data OCR lama lalu proses ulang cepat untuk kasus ini?');">
-            @csrf
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-bolt"></i> Proses OCR Cepat + Hapus Data Lama
-            </button>
-        </form>
-    </div>
-
-    <div class="alert alert-primary border-0 shadow-sm mb-4">
-        <div class="d-flex align-items-start">
-            <i class="fas fa-user-shield fa-lg me-2 mt-1"></i>
-            <div>
-                <strong>Mode Review PA Management</strong><br>
-                <small>Halaman ini menampilkan hasil OCR, perbandingan dengan input manual, dan fitur edit hasil OCR langsung sebelum approve/reject.</small>
-            </div>
-        </div>
-    </div>
-
-    <!-- Case Info -->
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">Informasi Kasus</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <table class="table table-sm table-borderless">
-                                <tr>
-                                    <td class="text-muted" width="150">No. Kasus</td>
-                                    <td><strong>{{ $case->case_number }}</strong></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted">NIK Pemohon</td>
-                                    <td><code>{{ $case->petitioner_nik ?? $case->publicSubmission->nik ?? '-' }}</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted">Nama Pemohon</td>
-                                    <td>{{ $case->petitioner_name ?? $case->publicSubmission->nama_lengkap ?? '-' }}</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted">Jenis Layanan</td>
-                                    <td>{{ $case->service_type ?? '-' }}</td>
-                                </tr>
-                            </table>
-                        </div>
-                        <div class="col-md-6">
-                            <table class="table table-sm table-borderless">
-                                <tr>
-                                    <td class="text-muted" width="150">Status Kasus</td>
-                                    <td><span class="badge bg-info">{{ strtoupper($case->status) }}</span></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted">Tanggal Submit</td>
-                                    <td>{{ $case->created_at->format('d M Y H:i:s') }}</td>
-                                </tr>
-                                @php
-                                    $latestOcrCompletion = $case->ocrValidations
-                                        ->map(fn($v) => $v->ocrResult?->created_at)
-                                        ->filter()
-                                        ->sort()
-                                        ->last();
-                                @endphp
-                                @if($latestOcrCompletion)
-                                    <tr>
-                                        <td class="text-muted">Waktu OCR Selesai</td>
-                                        <td>
-                                            <span class="badge bg-success">{{ $latestOcrCompletion->format('d M Y H:i:s') }}</span>
-                                        </td>
-                                    </tr>
-                                @endif
-                                <tr>
-                                    <td class="text-muted">Total Validasi</td>
-                                    <td><strong>{{ $validationStats['total'] }}</strong></td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">Statistik Validasi</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <small class="text-muted">Match</small>
-                            <small class="text-success"><strong>{{ $validationStats['match'] }}</strong></small>
-                        </div>
-                        <div class="progress" style="height: 8px;">
-                            <div class="progress-bar bg-success" style="width: {{ $validationStats['total'] > 0 ? ($validationStats['match'] / $validationStats['total'] * 100) : 0 }}%"></div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <small class="text-muted">Partial Match</small>
-                            <small class="text-warning"><strong>{{ $validationStats['partial_match'] }}</strong></small>
-                        </div>
-                        <div class="progress" style="height: 8px;">
-                            <div class="progress-bar bg-warning" style="width: {{ $validationStats['total'] > 0 ? ($validationStats['partial_match'] / $validationStats['total'] * 100) : 0 }}%"></div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <small class="text-muted">Manual Review</small>
-                            <small class="text-info"><strong>{{ $validationStats['manual_review'] }}</strong></small>
-                        </div>
-                        <div class="progress" style="height: 8px;">
-                            <div class="progress-bar bg-info" style="width: {{ $validationStats['total'] > 0 ? ($validationStats['manual_review'] / $validationStats['total'] * 100) : 0 }}%"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="d-flex justify-content-between mb-1">
-                            <small class="text-muted">Mismatch</small>
-                            <small class="text-danger"><strong>{{ $validationStats['mismatch'] }}</strong></small>
-                        </div>
-                        <div class="progress" style="height: 8px;">
-                            <div class="progress-bar bg-danger" style="width: {{ $validationStats['total'] > 0 ? ($validationStats['mismatch'] / $validationStats['total'] * 100) : 0 }}%"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Validation Results -->
-    @if($case->ocrValidations->isEmpty())
-        <div class="alert alert-info">
-            <div class="d-flex align-items-start">
-                <i class="fas fa-hourglass-half me-2 mt-1"></i>
-                <div>
-                    <strong>OCR Sedang Diproses...</strong>
-                    <p class="mb-0 mt-2">Belum ada hasil validasi OCR untuk kasus ini. Mohon tunggu atau refresh halaman.</p>
-                </div>
-            </div>
-        </div>
-    @else
-        @foreach($case->ocrValidations as $validation)
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-0">
-                                Validasi OCR - {{ $validation->document ? strtoupper(str_replace('_', ' ', $validation->document->document_type)) : 'Unknown' }}
-                            </h5>
-                            @php
-                                $ocrCompletedAt = $validation->ocrResult?->created_at;
-                            @endphp
-                            @if($ocrCompletedAt)
-                                <small class="text-muted">
-                                    <i class="fas fa-check-circle text-success me-1"></i>
-                                    Selesai: <strong>{{ $ocrCompletedAt->format('d M Y H:i:s') }}</strong>
-                                </small>
-                            @else
-                                <small class="text-muted">
-                                    <i class="fas fa-clock me-1"></i>
-                                    Created: {{ $validation->created_at->format('d M Y H:i:s') }}
-                                </small>
-                            @endif
-                        </div>
-                        <div>
-                            <span class="badge {{ $validation->getStatusBadgeClass() }} fs-6">
-                                {{ $validation->getStatusLabel() }}
-                            </span>
-                            <span class="badge bg-dark fs-6 ms-2">
-                                Score: {{ number_format($validation->overall_match_score, 1) }}%
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <!-- Comparison Table -->
-                    <div class="table-responsive">
-                        <table class="table table-bordered align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="20%">Field</th>
-                                    <th width="35%">Data Manual Input</th>
-                                    <th width="35%">Data OCR</th>
-                                    <th width="10%" class="text-center">Match Score</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @php
-                                    $fields = [
-                                        'nik' => 'NIK',
-                                        'nama' => 'Nama Lengkap',
-                                        'alamat' => 'Alamat',
-                                        'rt_rw' => 'RT/RW',
-                                        'kelurahan' => 'Kelurahan',
-                                        'kecamatan' => 'Kecamatan'
-                                    ];
-                                    $comparisonResults = $validation->comparison_results ?? [];
-                                @endphp
-                                
-                                @foreach($fields as $fieldKey => $fieldLabel)
-                                    @php
-                                        $inputValue = $validation->{"input_$fieldKey"} ?? '-';
-                                        $ocrValue = $validation->{"ocr_$fieldKey"} ?? '-';
-                                        
-                                        // Defensive extraction: handle various data structures
-                                        $fieldData = data_get($comparisonResults, $fieldKey, []);
-                                        $similarityRaw = is_array($fieldData) ? ($fieldData['similarity'] ?? 0) : 0;
-                                        
-                                        // Ensure similarity is numeric
-                                        if (is_array($similarityRaw)) {
-                                          $similarityRaw = $similarityRaw[0] ?? 0;
-                                        }
-                                        
-                                        $similarity = (float) $similarityRaw;
-                                        $matchScore = round($similarity * 100, 1);
-                                        $isMatch = $matchScore >= 95;
-                                        $isPartial = $matchScore >= 80 && $matchScore < 95;
-                                        $isMismatch = $matchScore < 80;
-                                    @endphp
-                                    <tr class="{{ $isMismatch ? 'table-danger' : ($isPartial ? 'table-warning' : '') }}">
-                                        <td>
-                                            <strong>{{ $fieldLabel }}</strong>
-                                            @if($fieldKey === 'nik')
-                                                <span class="badge bg-danger ms-1">CRITICAL</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if($inputValue && $inputValue !== '-')
-                                                <span class="text-dark">{{ $inputValue }}</span>
-                                            @else
-                                                <span class="text-muted fst-italic">Tidak ada data</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if($ocrValue && $ocrValue !== '-')
-                                                <span class="text-dark">{{ $ocrValue }}</span>
-                                            @else
-                                                <span class="text-muted fst-italic">Tidak terdeteksi</span>
-                                            @endif
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="d-flex flex-column align-items-center">
-                                                <div class="progress mb-1" style="height: 20px; width: 80px;">
-                                                    <div class="progress-bar {{ $isMatch ? 'bg-success' : ($isPartial ? 'bg-warning' : 'bg-danger') }}" 
-                                                         role="progressbar" 
-                                                         style="width: {{ $matchScore }}%"
-                                                         aria-valuenow="{{ $matchScore }}" 
-                                                         aria-valuemin="0" 
-                                                         aria-valuemax="100">
-                                                    </div>
-                                                </div>
-                                                <small><strong>{{ number_format($matchScore, 1) }}%</strong></small>
-                                                @if($isMatch)
-                                                    <small class="text-success"><i class="fas fa-check"></i></small>
-                                                @elseif($isMismatch)
-                                                    <small class="text-danger"><i class="fas fa-times"></i></small>
-                                                @endif
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
+<div class="main-content">
+    <div class="container-fluid">
+        <!-- Case Info + Stats -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h6 class="mb-3 fw-bold">Informasi Kasus</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td class="text-muted" style="width:150px;">No. Kasus</td>
+                                <td><strong>{{ $case->case_number }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">NIK Pemohon</td>
+                                <td><small><code>{{ $case->petitioner_nik ?? '-' }}</code></small></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Nama Pemohon</td>
+                                <td>{{ $case->petitioner_name ?? '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Status Kasus</td>
+                                <td><span class="badge" style="background-color: #06a8d9; color: white;">{{ config('workflow.states.' . $case->status, $case->status) }}</span></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Tanggal Submit</td>
+                                <td>{{ $case->created_at->format('d M Y H:i:s') }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Total Validasi</td>
+                                <td><strong>{{ $validationStats['total'] }}</strong></td>
+                            </tr>
                         </table>
                     </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h6 class="mb-3 fw-bold">Statistik Validasi</h6>
+                        <div class="small">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Match</span>
+                                <strong>{{ $validationStats['match'] }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Partial Match</span>
+                                <strong>{{ $validationStats['partial_match'] }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Manual Review</span>
+                                <strong>{{ $validationStats['manual_review'] }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Mismatch</span>
+                                <strong>{{ $validationStats['mismatch'] }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                    <!-- Review Section -->
-                    <div class="mt-4">
-                        @if($validation->is_reviewed)
-                            <!-- Already Reviewed -->
-                            <div class="alert alert-success">
-                                <div class="d-flex align-items-start">
-                                    <i class="fas fa-check-circle fa-2x me-3"></i>
-                                    <div class="flex-grow-1">
-                                        <h5 class="alert-heading">Sudah Direview</h5>
-                                        <p class="mb-1"><strong>Aksi:</strong> {{ ucfirst($validation->review_action) }}</p>
-                                        <p class="mb-1"><strong>Oleh:</strong> {{ $validation->reviewer->name ?? '-' }}</p>
-                                        <p class="mb-1"><strong>Tanggal:</strong> {{ $validation->reviewed_at?->format('d M Y H:i') ?? '-' }}</p>
-                                        @if($validation->review_notes)
-                                            <p class="mb-0"><strong>Catatan:</strong> {{ $validation->review_notes }}</p>
+        <!-- Final Action Section -->
+        <div class="card shadow-sm mb-4 border-0" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="fas fa-check-double" style="font-size: 18px; color: #667eea; margin-right: 8px;"></i>
+                    <h6 class="mb-0 fw-bold" style="font-size: 15px;">Tindakan Final Kasus (Global)</h6>
+                </div>
+                <p class="text-muted small mb-4" style="line-height: 1.5;">
+                    Approve atau Reject di sini akan diterapkan ke <strong>semua data KTP/dokumen</strong> yang belum direview pada kasus ini.
+                </p>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn btn-success btn-lg" 
+                            onclick="approveAll(this)"
+                            style="flex: 1; min-width: 150px; font-weight: 600; padding: 10px 24px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);">
+                        <i class="fas fa-thumbs-up"></i> Approve Semua
+                    </button>
+                    <button class="btn btn-danger btn-lg" 
+                            onclick="rejectAll(this)"
+                            style="flex: 1; min-width: 150px; font-weight: 600; padding: 10px 24px; background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); border: none; box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);">
+                        <i class="fas fa-times-circle"></i> Reject Semua
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- OCR Validations Section -->
+        <div class="mb-3">
+            <h6 class="fw-bold" style="font-size: 14px; color: #333;">
+                <i class="fas fa-file-image" style="color: #667eea; margin-right: 8px;"></i>
+                Hasil Validasi OCR
+            </h6>
+        </div>
+
+        <!-- OCR Validations - Card Grid Layout (2 Columns - Fixed) -->
+        @if($case->ocrValidations->isEmpty())
+            <div class="alert alert-info">
+                <strong>OCR Sedang Diproses...</strong> Belum ada hasil validasi OCR untuk kasus ini.
+            </div>
+        @else
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; width: 100%;">
+                @foreach($case->ocrValidations as $validation)
+                    <div style="width: 100%; min-width: 0;">
+                        <x-ocr-validation-card :validation="$validation" :case="$case" />
+                    </div>
+                @endforeach
+            </div>
+        @endif
+
+        <!-- Documents & Case Data Section -->
+        <div class="mb-4">
+            <h5 class="mb-3 fw-bold" style="font-size: 15px;">📄 Dokumen yang Diupload</h5>
+            
+            @php
+                $publicDocs = $case->publicSubmission?->documents ?? collect();
+                $caseDocs = $case->documents ?? collect();
+                $allDocs = $publicDocs->merge($caseDocs);
+            @endphp
+            
+            @if($allDocs->isNotEmpty())
+                <div class="row g-3 mb-4" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                    @foreach($publicDocs as $doc)
+                        <div style="width: 100%; min-width: 0;">
+                            @php
+                                $fileUrl = asset('storage/' . $doc->stored_path);
+                                $isImage = in_array(strtolower(pathinfo($doc->original_filename, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'gif']);
+                                $fileExists = file_exists(storage_path('app/' . $doc->stored_path));
+                            @endphp
+                            <a href="{{ $fileUrl }}" target="_blank" style="text-decoration: none; color: inherit; display: block; height: 100%;">
+                                <div class="card shadow-sm" style="height: 100%; overflow: hidden; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'" onmouseout="this.style.boxShadow=''">
+                                    @if($isImage && $fileExists)
+                                        <div style="background: #f0f0f0; height: 200px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                            <img src="{{ $fileUrl }}" alt="{{ $doc->original_filename }}" style="max-width: 100%; max-height: 100%; object-fit: cover;">
+                                        </div>
+                                    @endif
+                                    <div class="card-body">
+                                        <h6 class="card-title mb-2 badge bg-success" style="font-size: 10px; display: inline-block;">
+                                            📄 {{ \App\Models\PublicSubmissionDocument::$typeLabels[$doc->document_type] ?? $doc->document_type }}
+                                        </h6>
+                                        <p class="text-muted mb-1" style="font-size: 12px; word-break: break-all;">{{ $doc->original_filename }}</p>
+                                        <p style="font-size: 11px; color: #6c757d;">Ukuran: {{ number_format($doc->file_size / 1024, 2) }} KB</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    @endforeach
+                    
+                    @foreach($caseDocs as $doc)
+                        <div style="width: 100%; min-width: 0;">
+                            @php
+                                $filePath = '';
+                                $fileExists = false;
+                                if($doc->disk === 'public') {
+                                    $filePath = 'storage/' . preg_replace('/^public\//', '', $doc->path);
+                                    $fileExists = file_exists(storage_path('app/public/' . preg_replace('/^public\//', '', $doc->path)));
+                                }
+                                $isImage = in_array(strtolower(pathinfo($doc->original_name, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'gif']);
+                            @endphp
+                            @if($doc->disk === 'public' && $fileExists)
+                                <a href="{{ asset($filePath) }}" target="_blank" style="text-decoration: none; color: inherit; display: block; height: 100%;">
+                                    <div class="card shadow-sm" style="height: 100%; overflow: hidden; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'" onmouseout="this.style.boxShadow=''">
+                                        @if($isImage)
+                                            <div style="background: #f0f0f0; height: 200px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                                <img src="{{ asset($filePath) }}" alt="{{ $doc->original_name }}" style="max-width: 100%; max-height: 100%; object-fit: cover;">
+                                            </div>
+                                        @endif
+                                        <div class="card-body">
+                                            <h6 class="card-title mb-2 badge bg-info" style="font-size: 10px; display: inline-block;">
+                                                📋 {{ $doc->document_type }}
+                                            </h6>
+                                            <p class="text-muted mb-1" style="font-size: 12px; word-break: break-all;">{{ $doc->original_name }}</p>
+                                            <p style="font-size: 11px; color: #6c757d;">Ukuran: {{ number_format($doc->size_bytes / 1024, 2) }} KB</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            @else
+                                <div class="card shadow-sm" style="height: 100%; overflow: hidden; background: #f8f9fa;">
+                                    <div class="card-body">
+                                        <h6 class="card-title mb-2 badge bg-warning" style="font-size: 10px; display: inline-block;">
+                                            📋 {{ $doc->document_type }}
+                                        </h6>
+                                        <p class="text-muted mb-1" style="font-size: 12px;">{{ $doc->original_name }}</p>
+                                        @if($doc->disk !== 'public')
+                                            <p style="font-size: 11px; color: #d32f2f;">File lokal - hubungi admin</p>
+                                        @else
+                                            <p style="font-size: 11px; color: #d32f2f;">File tidak ditemukan</p>
                                         @endif
                                     </div>
                                 </div>
-                            </div>
-                        @else
-                            <!-- Review Actions -->
-                            <div class="d-flex gap-2">
-                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editOcrModal{{ $validation->id }}">
-                                    <i class="fas fa-pen"></i> Edit Hasil OCR
-                                </button>
-                                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approveModal{{ $validation->id }}">
-                                    <i class="fas fa-check"></i> Approve
-                                </button>
-                                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $validation->id }}">
-                                    <i class="fas fa-times"></i> Reject
-                                </button>
-                                <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#correctionModal{{ $validation->id }}">
-                                    <i class="fas fa-edit"></i> Request Correction
-                                </button>
-                            </div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="alert alert-info small mb-4">
+                    📁 Tidak ada dokumen yang diupload untuk kasus ini
+                </div>
+            @endif
+        </div>
 
-                            <!-- Edit OCR Modal -->
-                            <div class="modal fade" id="editOcrModal{{ $validation->id }}" tabindex="-1">
-                                <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                                    <div class="modal-content">
-                                        <form method="POST" action="{{ route('dashboard.review.correct', $case->id) }}">
-                                            @csrf
-                                            <input type="hidden" name="validation_id" value="{{ $validation->id }}">
-                                            <div class="modal-header bg-primary text-white">
-                                                <h5 class="modal-title">
-                                                    <i class="fas fa-pen"></i> Edit Hasil OCR
-                                                </h5>
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <p class="text-muted small mb-3">Perbaiki data hasil OCR jika ada salah baca. Sistem akan hitung ulang skor validasi otomatis.</p>
-                                                <div class="row g-3">
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">NIK</label>
-                                                        <input type="text" class="form-control" name="ocr_nik" value="{{ old('ocr_nik', $validation->ocr_nik) }}" maxlength="16">
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">No. KK</label>
-                                                        <input type="text" class="form-control" name="ocr_no_kk" value="{{ old('ocr_no_kk', $validation->ocr_no_kk) }}" maxlength="16">
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Nama Lengkap</label>
-                                                        <input type="text" class="form-control" name="ocr_nama" value="{{ old('ocr_nama', $validation->ocr_nama) }}">
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Tempat Lahir</label>
-                                                        <input type="text" class="form-control" name="ocr_tempat_lahir" value="{{ old('ocr_tempat_lahir', $validation->ocr_tempat_lahir) }}">
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Tanggal Lahir</label>
-                                                        <input type="text" class="form-control" name="ocr_tgl_lahir" value="{{ old('ocr_tgl_lahir', $validation->ocr_tgl_lahir) }}" placeholder="Contoh: 1990-01-31 / 31-01-1990">
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">RT/RW</label>
-                                                        <input type="text" class="form-control" name="ocr_rt_rw" value="{{ old('ocr_rt_rw', $validation->ocr_rt_rw) }}" maxlength="10">
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Kelurahan</label>
-                                                        <input type="text" class="form-control" name="ocr_kelurahan" value="{{ old('ocr_kelurahan', $validation->ocr_kelurahan) }}">
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Kecamatan</label>
-                                                        <input type="text" class="form-control" name="ocr_kecamatan" value="{{ old('ocr_kecamatan', $validation->ocr_kecamatan) }}">
-                                                    </div>
-                                                    <div class="col-12">
-                                                        <label class="form-label">Alamat</label>
-                                                        <textarea class="form-control" name="ocr_alamat" rows="3">{{ old('ocr_alamat', $validation->ocr_alamat) }}</textarea>
-                                                    </div>
-                                                    <div class="col-12">
-                                                        <label class="form-label">Catatan Koreksi (opsional)</label>
-                                                        <textarea class="form-control" name="correction_notes" rows="2" placeholder="Catatan perubahan OCR">{{ old('correction_notes') }}</textarea>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                                                <button type="submit" class="btn btn-primary">
-                                                    <i class="fas fa-save"></i> Simpan Koreksi OCR
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Approve Modal -->
-                            <div class="modal fade" id="approveModal{{ $validation->id }}" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <form method="POST" action="{{ route('dashboard.review.validate', $case->id) }}">
-                                            @csrf
-                                            <input type="hidden" name="validation_id" value="{{ $validation->id }}">
-                                            <input type="hidden" name="action" value="approve">
-                                            <div class="modal-header bg-success text-white">
-                                                <h5 class="modal-title">
-                                                    <i class="fas fa-check-circle"></i> Approve Validasi OCR
-                                                </h5>
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <p>Anda yakin ingin approve validasi OCR ini?</p>
-                                                <p class="text-muted small mb-3">
-                                                    Data OCR akan dianggap valid dan dapat digunakan untuk proses selanjutnya.
-                                                </p>
-                                                <div class="mb-3">
-                                                    <label for="approveNotes{{ $validation->id }}" class="form-label">Catatan (opsional)</label>
-                                                    <textarea class="form-control" id="approveNotes{{ $validation->id }}" name="notes" rows="3" placeholder="Tambahkan catatan jika diperlukan"></textarea>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                                                <button type="submit" class="btn btn-success">
-                                                    <i class="fas fa-check"></i> Ya, Approve
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Reject Modal -->
-                            <div class="modal fade" id="rejectModal{{ $validation->id }}" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <form method="POST" action="{{ route('dashboard.review.validate', $case->id) }}">
-                                            @csrf
-                                            <input type="hidden" name="validation_id" value="{{ $validation->id }}">
-                                            <input type="hidden" name="action" value="reject">
-                                            <div class="modal-header bg-danger text-white">
-                                                <h5 class="modal-title">
-                                                    <i class="fas fa-times-circle"></i> Reject Validasi OCR
-                                                </h5>
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <p>Anda yakin ingin reject validasi OCR ini?</p>
-                                                <p class="text-muted small mb-3">
-                                                    Kasus akan dikembalikan untuk verifikasi ulang dokumen.
-                                                </p>
-                                                <div class="mb-3">
-                                                    <label for="rejectNotes{{ $validation->id }}" class="form-label">Alasan Reject <span class="text-danger">*</span></label>
-                                                    <textarea class="form-control" id="rejectNotes{{ $validation->id }}" name="notes" rows="3" placeholder="Jelaskan alasan reject" required></textarea>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                                                <button type="submit" class="btn btn-danger">
-                                                    <i class="fas fa-times"></i> Ya, Reject
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Request Correction Modal -->
-                            <div class="modal fade" id="correctionModal{{ $validation->id }}" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <form method="POST" action="{{ route('dashboard.review.validate', $case->id) }}">
-                                            @csrf
-                                            <input type="hidden" name="validation_id" value="{{ $validation->id }}">
-                                            <input type="hidden" name="action" value="request_correction">
-                                            <div class="modal-header bg-warning">
-                                                <h5 class="modal-title">
-                                                    <i class="fas fa-edit"></i> Request Correction
-                                                </h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <p>Minta koreksi data kepada PA Assistant atau Pengaju Publik?</p>
-                                                <p class="text-muted small mb-3">
-                                                    Notifikasi akan dikirim untuk melakukan perbaikan data.
-                                                </p>
-                                                <div class="mb-3">
-                                                    <label for="correctionNotes{{ $validation->id }}" class="form-label">Catatan Koreksi <span class="text-danger">*</span></label>
-                                                    <textarea class="form-control" id="correctionNotes{{ $validation->id }}" name="notes" rows="3" placeholder="Jelaskan data yang perlu dikoreksi" required></textarea>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                                                <button type="submit" class="btn btn-warning">
-                                                    <i class="fas fa-edit"></i> Kirim Request
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
+        <!-- Case Data Section -->
+        <div class="mb-4">
+            <h5 class="mb-3 fw-bold" style="font-size: 15px;">📋 Data Perceraian & Kasus</h5>
+            <div class="row g-4">
+                <div class="col-lg-12">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h6 class="mb-3" style="font-size: 13px; color: #dc3545; border-bottom: 2px solid #dc3545; padding-bottom: 8px;">⚖️ Data Perceraian</h6>
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td class="text-muted fw-bold" style="width: 130px;">Nomor Putusan</td>
+                                    <td><code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">{{ $case->verdict_number ?? ($case->publicSubmission->verdict_number ?? '-') }}</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted fw-bold">Tanggal Cerai</td>
+                                    <td><strong>{{ $case->divorce_date?->format('d M Y') ?? ($case->publicSubmission->divorce_date?->format('d M Y') ?? '-') }}</strong></td>
+                                </tr>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
-        @endforeach
-    @endif
+        </div>
+
+    </div>
 </div>
-@endsection
 
-@section('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Highlight mismatched fields dengan warning color
-    const mismatchedRows = document.querySelectorAll('tr.table-danger');
-    mismatchedRows.forEach(row => {
-        row.style.transition = 'background-color 0.3s';
-    });
-
-    // Auto-refresh halaman jika OCR belum ada hasil (setiap 5 detik)
-    const emptyAlert = document.querySelector('.alert-info');
-    if (emptyAlert && emptyAlert.textContent.includes('Sedang Diproses')) {
-        setInterval(() => {
-            location.reload();
-        }, 5000);
+function toggleDetail(validationId) {
+    const detail = document.getElementById(`detail-${validationId}`);
+    const icon = document.getElementById(`chevron-${validationId}`);
+    
+    if (detail.style.display === 'none') {
+        detail.style.display = 'block';
+        icon.style.transform = 'rotate(180deg)';
+    } else {
+        detail.style.display = 'none';
+        icon.style.transform = 'rotate(0deg)';
     }
-});
+}
+
+async function approveAll(buttonElement) {
+    const caseId = {{ $case->id }};
+    const unreviewed = document.querySelectorAll('[data-is-reviewed="false"]');
+    
+    if (unreviewed.length === 0) {
+        alert('Tidak ada validasi yang menunggu review');
+        return;
+    }
+    
+    const confirmAction = window.confirm(`Approve semua ${unreviewed.length} validasi OCR untuk kasus ini?`);
+    if (!confirmAction) return;
+    
+    try {
+        const originalText = buttonElement.innerHTML;
+        buttonElement.disabled = true;
+        buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        
+        let approved = 0;
+        let failed = 0;
+        
+        for (const element of unreviewed) {
+            const validationId = element.getAttribute('data-validation-id');
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+            
+            try {
+                const response = await fetch(`/dashboard/review/cases/${caseId}/validate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        validation_id: parseInt(validationId),
+                        action: 'approve',
+                        notes: 'Bulk approve by PA Management'
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    approved++;
+                    element.setAttribute('data-is-reviewed', 'true');
+                } else {
+                    console.error('API response error:', data);
+                    failed++;
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                failed++;
+            }
+        }
+        
+        buttonElement.disabled = false;
+        buttonElement.innerHTML = originalText;
+        
+        if (failed === 0) {
+            alert(`✓ Berhasil approve ${approved} validasi OCR\nHalaman akan di-refresh...`);
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            alert(`⚠ Berhasil: ${approved}, Gagal: ${failed}`);
+        }
+    } catch (error) {
+        console.error('Fatal error in approveAll:', error);
+        alert('❌ Terjadi kesalahan: ' + error.message);
+    }
+}
+
+async function rejectAll(buttonElement) {
+    const caseId = {{ $case->id }};
+    const unreviewed = document.querySelectorAll('[data-is-reviewed="false"]');
+    
+    if (unreviewed.length === 0) {
+        alert('Tidak ada validasi yang menunggu review');
+        return;
+    }
+    
+    const reason = prompt(`Reject semua ${unreviewed.length} validasi OCR?\n\nMasukkan alasan reject (optional):`);
+    if (reason === null) return;
+    
+    try {
+        const originalText = buttonElement.innerHTML;
+        buttonElement.disabled = true;
+        buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        
+        let rejected = 0;
+        let failed = 0;
+        
+        for (const element of unreviewed) {
+            const validationId = element.getAttribute('data-validation-id');
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+            
+            try {
+                const response = await fetch(`/dashboard/review/cases/${caseId}/validate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        validation_id: parseInt(validationId),
+                        action: 'reject',
+                        notes: reason || 'Bulk reject by PA Management'
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    rejected++;
+                    element.setAttribute('data-is-reviewed', 'true');
+                } else {
+                    console.error('API response error:', data);
+                    failed++;
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                failed++;
+            }
+        }
+        
+        buttonElement.disabled = false;
+        buttonElement.innerHTML = originalText;
+        
+        if (failed === 0) {
+            alert(`✓ Berhasil reject ${rejected} validasi OCR\n• Status kasus: NEEDS_REVISION\n• Notifikasi dikirim ke pemohon & PA Assistant\n\nHalaman akan di-refresh...`);
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            alert(`⚠ Berhasil: ${rejected}, Gagal: ${failed}`);
+        }
+    } catch (error) {
+        console.error('Fatal error in rejectAll:', error);
+        alert('❌ Terjadi kesalahan: ' + error.message);
+    }
+}
+
+function submitValidationAction(validationId, action) {
+    let confirmMsg = '';
+    let modalId = '';
+    
+    switch(action) {
+        case 'approve':
+            confirmMsg = 'Approve validasi OCR ini?';
+            modalId = 'approveModal';
+            break;
+        case 'reject':
+            confirmMsg = 'Reject validasi OCR ini?';
+            modalId = 'rejectModal';
+            break;
+        case 'request_correction':
+            confirmMsg = 'Request koreksi untuk validasi ini?';
+            modalId = 'correctionModal';
+            break;
+    }
+    
+    if (confirm(confirmMsg)) {
+        const modal = document.getElementById(`${modalId}${validationId}`);
+        if (modal) {
+            const bootstrapModal = new bootstrap.Modal(modal);
+            bootstrapModal.show();
+        }
+    }
+}
 </script>
+
 @endsection

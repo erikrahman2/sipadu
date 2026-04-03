@@ -45,4 +45,13 @@ class Document extends Model
     {
         return $query->where('document_type', $type);
     }
+
+    /** Ukuran file dalam format manusiawi. */
+    public function humanFileSize(): string
+    {
+        $bytes = $this->size_bytes;
+        if ($bytes < 1024) return $bytes . ' B';
+        if ($bytes < 1048576) return round($bytes / 1024, 1) . ' KB';
+        return round($bytes / 1048576, 2) . ' MB';
+    }
 }

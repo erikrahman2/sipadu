@@ -72,7 +72,8 @@
       <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
         <span class="step-badge">1</span>
         <h2 class="font-semibold text-gray-800">Input Data Pasangan</h2>
-          <span class="text-xs text-gray-400 ml-auto">Maks. 5 MB per file - JPG, PNG, PDF</span>
+        <span class="text-xs text-gray-400 ml-auto">Maks. 5 MB per file - JPG, PNG, PDF</span>
+      </div>
       <div class="p-6 space-y-6">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div class="rounded-xl border border-emerald-100 bg-emerald-50/40 p-4 space-y-4">
@@ -334,6 +335,11 @@
         <a href="{{ route('dashboard.cases') }}" class="flex-1 py-3 bg-gray-100 text-gray-700 font-medium text-center rounded-xl hover:bg-gray-200 transition">
           <i class="fas fa-times mr-1"></i> Batal
         </a>
+        <button type="button" id="draftBtn" onclick="saveDraft()"
+          class="flex-1 py-3 bg-amber-500 text-white font-medium rounded-xl hover:bg-amber-600 transition flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+          <i class="fas fa-save mr-1"></i>
+          Simpan Draft
+        </button>
         <button type="submit" id="submitBtn"
           class="flex-1 py-4 bg-emerald-600 text-white font-bold text-base rounded-xl hover:bg-emerald-700 transition flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
           <i class="fas fa-paper-plane"></i>
@@ -369,6 +375,18 @@ function handleFileSelect(input, key) {
     sel.classList.add('hidden');
     area.classList.remove('has-file');
   }
+}
+
+function saveDraft() {
+  const btn = document.getElementById('draftBtn');
+  const form = document.getElementById('caseForm');
+  
+  btn.disabled = true;
+  btn.innerHTML = '<svg class="animate-spin h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg> Menyimpan...';
+  
+  // Set action untuk draft
+  form.action = '{{ route("dashboard.cases.save-draft") }}';
+  form.submit();
 }
 
 document.getElementById('caseForm').addEventListener('submit', function () {

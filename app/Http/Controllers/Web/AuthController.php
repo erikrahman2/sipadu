@@ -40,11 +40,27 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $user = Auth::user();
-        $this->audit->log($user, 'auth.logout', 'User', $user?->id, null, null, $request);
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-        return redirect()->route('auth.login');
+        try {
+            $user = Auth::user();
+            
+            if ($user) {
+                $this->audit->log($user, 'auth.logout', 'User', $user->id, null, null, $request);
+            }
+            
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            
+            return redirect()->route('home');
+        } catch (\Exception $e) {
+            // Jika ada error (session tidak valid, dll), tetap logout dan redirect
+            Auth::logout();
+            if ($request->hasSession()) {
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
+            
+            return redirect()->route('home');
+        }
     }
 }

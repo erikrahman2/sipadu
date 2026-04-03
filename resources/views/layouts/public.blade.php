@@ -74,7 +74,7 @@
             class="px-4 py-2 text-sm font-semibold text-white gradient-hero rounded-lg hover:opacity-90 transition-opacity">
             Dashboard
           </a>
-          <form method="POST" action="{{ route('auth.logout') }}" class="inline">
+          <form method="POST" action="{{ route('auth.logout') }}">
             @csrf
             <button type="submit" class="px-4 py-2 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
               Keluar

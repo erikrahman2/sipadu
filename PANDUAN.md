@@ -9,9 +9,10 @@
 
 ## ⚠️ Catatan Penting: Frontend Architecture
 
-Sistem SiPadu sepenuhnya menggunakan **Laravel 11 dengan Blade templating**. File HTML statis di root folder (superadmin.html, admin-*.html, dashboard.html, dll) telah dihapus pada 28 Februari 2026 karena hanya merupakan mockup prototyping yang tidak terhubung ke backend.
+Sistem SiPadu sepenuhnya menggunakan **Laravel 11 dengan Blade templating**. File HTML statis di root folder (superadmin.html, admin-\*.html, dashboard.html, dll) telah dihapus pada 28 Februari 2026 karena hanya merupakan mockup prototyping yang tidak terhubung ke backend.
 
 **Sistem yang aktif:**
+
 - ✅ Backend: Laravel 11 API (`app/Http/Controllers/`)
 - ✅ Frontend Dashboard: Laravel Blade (`resources/views/dashboard/`)
 - ✅ Public Pages: Laravel Blade (`resources/views/pengajuan/`, `resources/views/tracking/`)
@@ -46,22 +47,22 @@ Saat mengakses `http://localhost:8000/dashboard`, yang ter-render adalah `resour
 ### Docker (cara yang direkomendasikan)
 
 | Perangkat lunak | Versi minimum |
-|-----------------|--------------|
-| Docker Desktop  | 24.x         |
-| Docker Compose  | v2.20.x      |
+| --------------- | ------------- |
+| Docker Desktop  | 24.x          |
+| Docker Compose  | v2.20.x       |
 
 ### Lokal / Manual
 
-| Perangkat lunak | Versi minimum |
-|-----------------|--------------|
-| PHP             | 8.1          |
-| Composer        | 2.x          |
-| MySQL           | 8.0          |
-| Redis           | 7.0          |
-| Neo4j           | 5.x          |
-| Python          | 3.11         |
-| Tesseract OCR   | 5.x          |
-| Node.js (opsional, untuk build aset) | 18.x |
+| Perangkat lunak                      | Versi minimum |
+| ------------------------------------ | ------------- |
+| PHP                                  | 8.1           |
+| Composer                             | 2.x           |
+| MySQL                                | 8.0           |
+| Redis                                | 7.0           |
+| Neo4j                                | 5.x           |
+| Python                               | 3.11          |
+| Tesseract OCR                        | 5.x           |
+| Node.js (opsional, untuk build aset) | 18.x          |
 
 ---
 
@@ -88,7 +89,7 @@ APP_URL=http://localhost:8000
 DB_HOST=mysql          # wajib: nama service Docker
 DB_PASSWORD=secret
 
-NEO4J_HOST=neo4j       # wajib: nama service Docker  
+NEO4J_HOST=neo4j       # wajib: nama service Docker
 NEO4J_PASSWORD=neo4jSecret1   # WAJIB minimal 8 karakter!
 
 REDIS_HOST=redis       # wajib: nama service Docker
@@ -109,15 +110,15 @@ docker compose up -d --build
 
 Perintah ini akan membangun dan menjalankan **7 container**:
 
-| Container                   | Port host | Keterangan                    |
-|-----------------------------|-----------|-------------------------------|
-| `pa_disdukcapil_nginx`      | 8000      | Web server (HTTP)             |
-| `pa_disdukcapil_app`        | –         | PHP-FPM Laravel               |
-| `pa_disdukcapil_worker`     | –         | Queue worker (OCR + Graph)    |
-| `pa_disdukcapil_ocr`        | 5001      | Python OCR microservice       |
-| `pa_disdukcapil_mysql`      | 3306      | MySQL 8                       |
-| `pa_disdukcapil_redis`      | 6379      | Redis 7                       |
-| `pa_disdukcapil_neo4j`      | 7474/7687 | Neo4j 5 (browser/Bolt)        |
+| Container               | Port host | Keterangan                 |
+| ----------------------- | --------- | -------------------------- |
+| `pa_disdukcapil_nginx`  | 8000      | Web server (HTTP)          |
+| `pa_disdukcapil_app`    | –         | PHP-FPM Laravel            |
+| `pa_disdukcapil_worker` | –         | Queue worker (OCR + Graph) |
+| `pa_disdukcapil_ocr`    | 5001      | Python OCR microservice    |
+| `pa_disdukcapil_mysql`  | 3306      | MySQL 8                    |
+| `pa_disdukcapil_redis`  | 6379      | Redis 7                    |
+| `pa_disdukcapil_neo4j`  | 7474/7687 | Neo4j 5 (browser/Bolt)     |
 
 ### Langkah 4 – Inisialisasi aplikasi Laravel
 
@@ -136,7 +137,7 @@ docker compose exec app php artisan config:clear
 docker compose exec app php artisan route:clear
 ```
 
-> **Catatan:** Jika perintah `php artisan migrate --seed` gagal karena tabel `cache` belum ada, pastikan file migrasi 
+> **Catatan:** Jika perintah `php artisan migrate --seed` gagal karena tabel `cache` belum ada, pastikan file migrasi
 > `2026_XXXX_create_cache_table.php` memiliki timestamp lebih kecil dari `create_permission_tables.php`.
 
 ### Langkah 5 – Verifikasi
@@ -229,15 +230,15 @@ Akses di [http://localhost:8000](http://localhost:8000).
 
 Setelah `php artisan migrate --seed`, akun berikut tersedia:
 
-| Nama                  | Email                                      | Password       | Role                  |
-|-----------------------|--------------------------------------------|----------------|-----------------------|
-| Administrator         | `admin@sipadu.go.id`                       | `Admin@123456` | `super_admin`         |
-| Dina Asisten PA       | `asisten@pa-painan.go.id`                  | `Pass@12345`   | `pa_assistant`        |
-| H. Budi Ketua PA      | `ketua@pa-painan.go.id`                    | `Pass@12345`   | `pa_management`       |
-| Andi Staf PA          | `staf@pa-painan.go.id`                     | `Pass@12345`   | `pa_staff`            |
-| Rini Petugas Capil    | `petugas@disdukcapil-pessel.go.id`         | `Pass@12345`   | `disdukcapil_staff`   |
+| Nama               | Email                              | Password       | Role                |
+| ------------------ | ---------------------------------- | -------------- | ------------------- |
+| Administrator      | `admin@sipadu.go.id`               | `Admin@123456` | `super_admin`       |
+| Dina Asisten PA    | `asisten@pa-painan.go.id`          | `Pass@12345`   | `pa_assistant`      |
+| H. Budi Ketua PA   | `ketua@pa-painan.go.id`            | `Pass@12345`   | `pa_management`     |
+| Andi Staf PA       | `staf@pa-painan.go.id`             | `Pass@12345`   | `pa_staff`          |
+| Rini Petugas Capil | `petugas@disdukcapil-pessel.go.id` | `Pass@12345`   | `disdukcapil_staff` |
 
-> ⚠ Ganti semua password di lingkungan produksi.
+> Ganti semua password di lingkungan produksi.
 
 ---
 
@@ -511,58 +512,58 @@ Base URL: `http://localhost:8000/api/v1`
 
 ### Autentikasi
 
-| Method | Endpoint           | Keterangan            | Auth |
-|--------|--------------------|-----------------------|------|
-| POST   | `/auth/login`      | Login, terima JWT     | –    |
-| POST   | `/auth/logout`     | Logout, invalidasi token | ✅ |
-| POST   | `/auth/refresh`    | Perbarui token        | ✅   |
-| GET    | `/auth/me`         | Profil pengguna aktif | ✅   |
+| Method | Endpoint        | Keterangan               | Auth |
+| ------ | --------------- | ------------------------ | ---- |
+| POST   | `/auth/login`   | Login, terima JWT        | –    |
+| POST   | `/auth/logout`  | Logout, invalidasi token | ✅   |
+| POST   | `/auth/refresh` | Perbarui token           | ✅   |
+| GET    | `/auth/me`      | Profil pengguna aktif    | ✅   |
 
 ### Kasus
 
-| Method | Endpoint              | Keterangan              | Auth |
-|--------|-----------------------|-------------------------|------|
-| GET    | `/cases`              | Daftar kasus (filter role) | ✅ |
-| POST   | `/cases`              | Buat kasus baru         | ✅   |
-| GET    | `/cases/{id}`         | Detail kasus            | ✅   |
-| PATCH  | `/cases/{id}/assign`  | Tugaskan petugas        | ✅   |
+| Method | Endpoint             | Keterangan                 | Auth |
+| ------ | -------------------- | -------------------------- | ---- |
+| GET    | `/cases`             | Daftar kasus (filter role) | ✅   |
+| POST   | `/cases`             | Buat kasus baru            | ✅   |
+| GET    | `/cases/{id}`        | Detail kasus               | ✅   |
+| PATCH  | `/cases/{id}/assign` | Tugaskan petugas           | ✅   |
 
 ### Dokumen
 
-| Method | Endpoint                    | Keterangan          | Auth |
-|--------|-----------------------------|---------------------|------|
-| POST   | `/documents/upload`         | Upload dokumen      | ✅   |
-| GET    | `/documents/{id}`           | Info dokumen        | ✅   |
-| GET    | `/documents/download/{id}`  | Unduh dokumen       | ✅   |
+| Method | Endpoint                   | Keterangan     | Auth |
+| ------ | -------------------------- | -------------- | ---- |
+| POST   | `/documents/upload`        | Upload dokumen | ✅   |
+| GET    | `/documents/{id}`          | Info dokumen   | ✅   |
+| GET    | `/documents/download/{id}` | Unduh dokumen  | ✅   |
 
 ### OCR
 
-| Method | Endpoint            | Keterangan              | Auth |
-|--------|---------------------|-------------------------|------|
-| POST   | `/ocr/process`      | Dispatch pekerjaan OCR  | ✅   |
-| GET    | `/ocr/result/{id}`  | Hasil OCR per dokumen   | ✅   |
-| GET    | `/ocr/job/{id}`     | Status job OCR          | ✅   |
+| Method | Endpoint           | Keterangan             | Auth |
+| ------ | ------------------ | ---------------------- | ---- |
+| POST   | `/ocr/process`     | Dispatch pekerjaan OCR | ✅   |
+| GET    | `/ocr/result/{id}` | Hasil OCR per dokumen  | ✅   |
+| GET    | `/ocr/job/{id}`    | Status job OCR         | ✅   |
 
 ### Tinjauan & Validasi
 
-| Method | Endpoint                   | Keterangan              | Auth | Role |
-|--------|----------------------------|-------------------------|------|------|
-| POST   | `/review/submit/{caseId}`  | PA Assistant submit kasus | ✅   | `pa_assistant` |
-| POST   | `/review/pa`               | PA approve/reject       | ✅   | `pa_management` |
-| POST   | `/review/disdukcapil`      | Disdukcapil validasi    | ✅   | `disdukcapil_staff` |
+| Method | Endpoint                  | Keterangan                | Auth | Role                |
+| ------ | ------------------------- | ------------------------- | ---- | ------------------- |
+| POST   | `/review/submit/{caseId}` | PA Assistant submit kasus | ✅   | `pa_assistant`      |
+| POST   | `/review/pa`              | PA approve/reject         | ✅   | `pa_management`     |
+| POST   | `/review/disdukcapil`     | Disdukcapil validasi      | ✅   | `disdukcapil_staff` |
 
 ### Tracking Publik
 
-| Method | Endpoint              | Keterangan                  | Auth |
-|--------|-----------------------|-----------------------------|------|
-| GET    | `/tracking/{token}`   | Status via kode TRK-        | –    |
+| Method | Endpoint            | Keterangan           | Auth |
+| ------ | ------------------- | -------------------- | ---- |
+| GET    | `/tracking/{token}` | Status via kode TRK- | –    |
 
 ### Sinkronisasi (Admin)
 
-| Method | Endpoint         | Keterangan                   | Auth | Role |
-|--------|------------------|------------------------------|------|------|
-| POST   | `/sync/graph`    | Trigger sinkronisasi Neo4j   | ✅   | `super_admin` |
-| GET    | `/sync/status`   | Status antrean sinkronisasi  | ✅   | `super_admin` |
+| Method | Endpoint       | Keterangan                  | Auth | Role          |
+| ------ | -------------- | --------------------------- | ---- | ------------- |
+| POST   | `/sync/graph`  | Trigger sinkronisasi Neo4j  | ✅   | `super_admin` |
+| GET    | `/sync/status` | Status antrean sinkronisasi | ✅   | `super_admin` |
 
 ---
 
@@ -728,6 +729,7 @@ curl -X POST http://localhost:8000/auth/login `
 #### B. Solusi Berdasarkan Penyebab
 
 **1. Browser Cache / Extension:**
+
 - ✅ **SOLUSI TERCEPAT:** Buka **Incognito/Private mode**
 - Clear browser cache & cookies completely
 - Disable browser extensions (uBlock, Privacy Badger, dll)
@@ -753,6 +755,7 @@ docker compose exec app ls -la storage/framework/sessions
 **3. Cookie Settings:**
 
 Tambahkan di `.env`:
+
 ```dotenv
 SESSION_DRIVER=file
 SESSION_LIFETIME=120
@@ -762,6 +765,7 @@ SESSION_DOMAIN=null              # null untuk localhost
 ```
 
 Di `docker-compose.yml`, tambahkan:
+
 ```yaml
 environment:
   SESSION_SECURE_COOKIE: false
@@ -769,6 +773,7 @@ environment:
 ```
 
 Restart containers:
+
 ```powershell
 docker compose restart app nginx
 ```
@@ -776,6 +781,7 @@ docker compose restart app nginx
 **4. CSRF Middleware Configuration:**
 
 Verifikasi `app/Http/Middleware/VerifyCsrfToken.php` ada dan benar:
+
 ```php
 <?php
 namespace App\Http\Middleware;
@@ -793,6 +799,7 @@ class VerifyCsrfToken extends Middleware
 **5. View Template Check:**
 
 Verifikasi `resources/views/auth/login.blade.php` memiliki:
+
 ```blade
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 
@@ -816,6 +823,7 @@ docker compose restart app nginx
 **7. Debug Mode (Development Only):**
 
 Tambahkan logging di `app/Http/Middleware/VerifyCsrfToken.php`:
+
 ```php
 use Illuminate\Support\Facades\Log;
 
@@ -827,12 +835,13 @@ public function handle($request, \Closure $next)
         'input_token' => $request->input('_token'),
         'has_session' => $request->hasSession(),
     ]);
-    
+
     return parent::handle($request, $next);
 }
 ```
 
 Lalu test login dan cek log:
+
 ```powershell
 Get-Content storage\logs\laravel.log -Tail 100 -Wait
 ```
@@ -889,28 +898,28 @@ Gunakan daftar berikut untuk memastikan semua komponen sudah dikonfigurasi sebel
 
 ### 10.1 File Environment (`.env`)
 
-| Variabel | Wajib | Keterangan |
-|----------|-------|------------|
-| `APP_KEY` | ✅ | Generate via `php artisan key:generate` |
-| `APP_URL` | ✅ | URL publik aplikasi, cth: `http://localhost:8000` |
-| `JWT_SECRET` | ✅ | Generate via `php artisan jwt:secret` |
-| `DB_HOST` | ✅ | Host MySQL — `mysql` (Docker) atau `127.0.0.1` (lokal) |
-| `DB_DATABASE` | ✅ | Nama database MySQL |
-| `DB_USERNAME` / `DB_PASSWORD` | ✅ | Kredensial MySQL |
-| `NEO4J_HOST` | ✅ | Host Neo4j — `neo4j` (Docker) atau `localhost` (lokal) |
-| `NEO4J_PORT` | ✅ | Port Bolt Neo4j, default `7687` |
-| `NEO4J_USERNAME` | ✅ | Default `neo4j` |
-| `NEO4J_PASSWORD` | ✅ | Harus sesuai `NEO4J_AUTH` di docker-compose |
-| `NEO4J_DATABASE` | ✅ | Default `neo4j` (nama database Neo4j) |
-| `REDIS_HOST` | ✅ | `redis` (Docker) atau `127.0.0.1` (lokal) |
-| `REDIS_PORT` | — | Default `6379` |
-| `OCR_SERVICE_URL` | ✅ | `http://ocr-service:5001` (Docker) atau `http://localhost:5001` |
-| `OCR_SECRET_KEY` | ✅ | Kunci rahasia antara Laravel dan microservice OCR |
-| `QUEUE_CONNECTION` | ✅ | `database` (production) atau `sync` (testing) |
-| `CACHE_DRIVER` | — | Disarankan `redis` |
-| `SESSION_DRIVER` | — | Disarankan `redis` |
-| `MAIL_MAILER` | — | Konfigurasi SMTP untuk notifikasi email |
-| `FILESYSTEM_DISK` | — | `local` atau `s3` untuk penyimpanan dokumen |
+| Variabel                      | Wajib | Keterangan                                                      |
+| ----------------------------- | ----- | --------------------------------------------------------------- |
+| `APP_KEY`                     | ✅    | Generate via `php artisan key:generate`                         |
+| `APP_URL`                     | ✅    | URL publik aplikasi, cth: `http://localhost:8000`               |
+| `JWT_SECRET`                  | ✅    | Generate via `php artisan jwt:secret`                           |
+| `DB_HOST`                     | ✅    | Host MySQL — `mysql` (Docker) atau `127.0.0.1` (lokal)          |
+| `DB_DATABASE`                 | ✅    | Nama database MySQL                                             |
+| `DB_USERNAME` / `DB_PASSWORD` | ✅    | Kredensial MySQL                                                |
+| `NEO4J_HOST`                  | ✅    | Host Neo4j — `neo4j` (Docker) atau `localhost` (lokal)          |
+| `NEO4J_PORT`                  | ✅    | Port Bolt Neo4j, default `7687`                                 |
+| `NEO4J_USERNAME`              | ✅    | Default `neo4j`                                                 |
+| `NEO4J_PASSWORD`              | ✅    | Harus sesuai `NEO4J_AUTH` di docker-compose                     |
+| `NEO4J_DATABASE`              | ✅    | Default `neo4j` (nama database Neo4j)                           |
+| `REDIS_HOST`                  | ✅    | `redis` (Docker) atau `127.0.0.1` (lokal)                       |
+| `REDIS_PORT`                  | —     | Default `6379`                                                  |
+| `OCR_SERVICE_URL`             | ✅    | `http://ocr-service:5001` (Docker) atau `http://localhost:5001` |
+| `OCR_SECRET_KEY`              | ✅    | Kunci rahasia antara Laravel dan microservice OCR               |
+| `QUEUE_CONNECTION`            | ✅    | `database` (production) atau `sync` (testing)                   |
+| `CACHE_DRIVER`                | —     | Disarankan `redis`                                              |
+| `SESSION_DRIVER`              | —     | Disarankan `redis`                                              |
+| `MAIL_MAILER`                 | —     | Konfigurasi SMTP untuk notifikasi email                         |
+| `FILESYSTEM_DISK`             | —     | `local` atau `s3` untuk penyimpanan dokumen                     |
 
 ### 10.2 MySQL
 
@@ -1048,13 +1057,13 @@ Sistem menggunakan skema graf berikut:
 
 **Properti setiap node:**
 
-| Node | Properti Wajib | Properti Opsional |
-|------|----------------|-------------------|
-| `User` | `mysql_id`, `name`, `email` | `institution_id` |
-| `Institution` | `mysql_id`, `code`, `name`, `type` | – |
-| `Case` | `mysql_id`, `case_number`, `tracking_token`, `status` | – |
-| `Document` | `mysql_id`, `document_type`, `status`, `case_id` | – |
-| `Role` | `name` | – |
+| Node          | Properti Wajib                                        | Properti Opsional |
+| ------------- | ----------------------------------------------------- | ----------------- |
+| `User`        | `mysql_id`, `name`, `email`                           | `institution_id`  |
+| `Institution` | `mysql_id`, `code`, `name`, `type`                    | –                 |
+| `Case`        | `mysql_id`, `case_number`, `tracking_token`, `status` | –                 |
+| `Document`    | `mysql_id`, `document_type`, `status`, `case_id`      | –                 |
+| `Role`        | `name`                                                | –                 |
 
 ### 11.4 Inisialisasi Data Graf (Setelah Seeding MySQL)
 
@@ -1161,7 +1170,7 @@ Jika menjalankan Neo4j secara lokal (bukan Docker):
 
 ---
 
-*Dokumen ini dibuat untuk keperluan Tugas Akhir SiPadu · 2024-2026*
+_Dokumen ini dibuat untuk keperluan Tugas Akhir SiPadu · 2024-2026_
 
 ---
 
@@ -1174,6 +1183,7 @@ Jika menjalankan Neo4j secara lokal (bukan Docker):
 Sistem OCR (Optical Character Recognition) di SiPadu menggunakan **Tesseract 5.x** dengan preprocessing **OpenCV** untuk mengekstrak data terstruktur dari dokumen KTP, KK, dan dokumen identitas lainnya.
 
 **Teknologi:**
+
 - **OCR Engine**: Tesseract 5.x (open-source)
 - **Preprocessing**: OpenCV 4.9 (image enhancement)
 - **Microservice**: Python 3.11 + Flask
@@ -1253,37 +1263,41 @@ Sistem OCR (Optical Character Recognition) di SiPadu menggunakan **Tesseract 5.x
 
 ### 14.3 Features
 
-| Feature | Status | Accuracy |
-|---------|--------|----------|
-| **NIK Extraction** | ✅ Working | 95% |
-| **Nama Extraction** | ✅ Working | 88% |
-| **Tanggal Lahir** | ✅ Working | 92% |
-| **Alamat** | ✅ Working | 81% |
-| **No KK** | ✅ Working | 90% |
-| **Preprocessing** | ✅ Working | – |
-| **Confidence Scoring** | ✅ Working | – |
-| **🆕 Auto-Validation** | ✅ Working | – |
-| **🆕 Field Comparison** | ✅ Working | – |
+| Feature                 | Status     | Accuracy |
+| ----------------------- | ---------- | -------- |
+| **NIK Extraction**      | ✅ Working | 95%      |
+| **Nama Extraction**     | ✅ Working | 88%      |
+| **Tanggal Lahir**       | ✅ Working | 92%      |
+| **Alamat**              | ✅ Working | 81%      |
+| **No KK**               | ✅ Working | 90%      |
+| **Preprocessing**       | ✅ Working | –        |
+| **Confidence Scoring**  | ✅ Working | –        |
+| **🆕 Auto-Validation**  | ✅ Working | –        |
+| **🆕 Field Comparison** | ✅ Working | –        |
 
 ### 14.4 Instalasi Tesseract (Windows)
 
 **Step 1: Download**
+
 ```
 https://github.com/UB-Mannheim/tesseract/wiki
 ```
 
 **Step 2: Install dengan Indonesian language data**
+
 - ✅ Centang "Additional Language Data"
 - ✅ Pilih: **Indonesian (ind)** + English (eng)
 
 **Step 3: Set Environment Variable**
+
 ```powershell
 $tesseractPath = "C:\Program Files\Tesseract-OCR"
-[Environment]::SetEnvironmentVariable("Path", 
+[Environment]::SetEnvironmentVariable("Path",
     $env:Path + ";$tesseractPath", "Machine")
 ```
 
 **Step 4: Update .env**
+
 ```env
 OCR_SERVICE_URL=http://localhost:5001
 OCR_SECRET_KEY=ocr_rahasia_sipadu_2026
@@ -1325,12 +1339,14 @@ curl -X POST http://localhost:5001/ocr/process \
 > **🆕 Fitur Baru (11 Maret 2026)**: Sistem otomatis membandingkan data input manual dengan hasil OCR
 
 **Flow Otomatis:**
+
 ```
-Upload Dokumen → OCR Auto-Trigger → Field Extraction → 
+Upload Dokumen → OCR Auto-Trigger → Field Extraction →
 Auto-Comparison → Dashboard PA Management (Approve/Reject)
 ```
 
 **Perbandingan Data:**
+
 - **NIK** – Harus 100% match (critical field)
 - **Nama** – Threshold 90% similarity
 - **Alamat** – Threshold 85% similarity
@@ -1338,12 +1354,14 @@ Auto-Comparison → Dashboard PA Management (Approve/Reject)
 - **Tempat Lahir, No KK, RT/RW** – String comparison
 
 **Dashboard PA Management:**
+
 - Lihat perbandingan field-by-field
 - Overall match score (0-100%)
 - Visual indicators (✅ Match / ⚠️ Mismatch)
 - Actions: Approve / Reject / Request Correction
 
 **Status Validasi:**
+
 - `MATCH` – ≥95% similarity, semua field cocok
 - `PARTIAL_MATCH` – 80-94% similarity, beberapa field berbeda
 - `MISMATCH` – <80% similarity atau NIK tidak match
@@ -1353,6 +1371,7 @@ Auto-Comparison → Dashboard PA Management (Approve/Reject)
 Setiap dokumen KTP/KK/Akta yang diupload (dari PA Assistant atau Pengaju Publik) akan **otomatis diproses OCR** dan hasilnya langsung dibandingkan dengan data input.
 
 **URL Dashboard:**
+
 ```
 /dashboard/review/cases/{id}  → Lihat validasi OCR
 POST /dashboard/review/cases/{id}/validate → Approve/Reject
@@ -1363,17 +1382,20 @@ POST /dashboard/review/cases/{id}/validate → Approve/Reject
 ### 14.8 Monitoring
 
 **Queue Status:**
+
 ```bash
 php artisan queue:monitor ocr
 ```
 
 **Failed Jobs:**
+
 ```bash
 php artisan queue:failed --queue=ocr
 php artisan queue:retry all
 ```
 
 **Logs:**
+
 ```bash
 tail -f storage/logs/ocr/ocr-service.log
 tail -f storage/logs/laravel.log
@@ -1382,6 +1404,7 @@ tail -f storage/logs/laravel.log
 ### 14.9 Dokumentasi Lengkap
 
 Untuk detail lengkap tentang:
+
 - Preprocessing pipeline (grayscale, denoise, binarization, deskew)
 - Field extraction algorithms
 - Confidence scoring
@@ -1391,12 +1414,13 @@ Untuk detail lengkap tentang:
 - **Validasi Otomatis & Comparison Algorithm**
 
 **Lihat:**
+
 - **[OCR_DESIGN.md](OCR_DESIGN.md)** – Dokumentasi OCR Engine (70+ halaman)
 - **[OCR_VALIDATION_DESIGN.md](OCR_VALIDATION_DESIGN.md)** – Sistem Validasi Otomatis (30+ halaman)
 
 ---
 
-*Dokumen ini dibuat untuk keperluan Tugas Akhir SiPadu · 2024-2026*
+_Dokumen ini dibuat untuk keperluan Tugas Akhir SiPadu · 2024-2026_
 
 ---
 
@@ -1408,37 +1432,38 @@ Untuk detail lengkap tentang:
 
 Menghapus semua file HTML statis di root folder yang hanya berfungsi sebagai mockup/prototype UI saat fase awal development:
 
-| # | File | Keterangan |
-|---|------|------------|
-| 1 | `superadmin.html` | Mockup dashboard super admin → Diganti `resources/views/dashboard/admin/*.blade.php` |
-| 2 | `admin-disdukcapil.html` | Mockup dashboard Disdukcapil → Diganti Laravel Blade dengan role guard |
-| 3 | `admin-pa-assistant.html` | Mockup dashboard PA Assistant → Diganti Laravel Blade |
-| 4 | `admin-pa-management.html` | Mockup dashboard PA Management → Diganti Laravel Blade |
-| 5 | `admin-pa-staff.html` | Mockup dashboard PA Staff → Diganti Laravel Blade |
-| 6 | `dashboard.html` | Mockup dashboard umum → Diganti `resources/views/dashboard/index.blade.php` |
-| 7 | `index.html` | Mockup landing page → Diganti Laravel route + Blade |
-| 8 | `tentang.html` | Mockup halaman tentang → Diganti Laravel route + Blade |
+| #   | File                       | Keterangan                                                                           |
+| --- | -------------------------- | ------------------------------------------------------------------------------------ |
+| 1   | `superadmin.html`          | Mockup dashboard super admin → Diganti `resources/views/dashboard/admin/*.blade.php` |
+| 2   | `admin-disdukcapil.html`   | Mockup dashboard Disdukcapil → Diganti Laravel Blade dengan role guard               |
+| 3   | `admin-pa-assistant.html`  | Mockup dashboard PA Assistant → Diganti Laravel Blade                                |
+| 4   | `admin-pa-management.html` | Mockup dashboard PA Management → Diganti Laravel Blade                               |
+| 5   | `admin-pa-staff.html`      | Mockup dashboard PA Staff → Diganti Laravel Blade                                    |
+| 6   | `dashboard.html`           | Mockup dashboard umum → Diganti `resources/views/dashboard/index.blade.php`          |
+| 7   | `index.html`               | Mockup landing page → Diganti Laravel route + Blade                                  |
+| 8   | `tentang.html`             | Mockup halaman tentang → Diganti Laravel route + Blade                               |
 
 #### B. Penghapusan File Dokumentasi Redundan & Temporary (10 files + 2 folders)
 
-| # | File/Folder | Alasan Penghapusan |
-|---|-------------|-------------------|
-| 1 | `QUICKSTART.txt` | Redundan dengan `PANDUAN.md` yang lebih lengkap |
-| 2 | `FINAL_STATUS_REPORT.md` | Status report temporary dari debugging session |
-| 3 | `OPTIMIZATION.md` | Konten sudah tercakup dalam `PANDUAN.md` |
-| 4 | `OPTIMIZATION_DEPLOYMENT_GUIDE.md` | Redundan dengan section deployment di `PANDUAN.md` |
-| 5 | `OPTIMIZATION_SUMMARY.md` | Summary temporary yang tidak diperlukan lagi |
-| 6 | `PERFORMANCE_STATUS.md` | Status monitoring temporary |
-| 7 | `QUERYOPTIMIZATION_GUIDE.md` | Query optimization sudah tercakup di dokumentasi utama |
-| 8 | `optimize.ps1` | Script optimasi, fungsinya sudah tersedia via `php artisan` commands |
-| 9 | `optimize.sh` | Script optimasi Linux, fungsinya sudah tersedia via `php artisan` commands |
-| 10 | `.env.optimization` | Environment file khusus yang tidak perlu |
-| 11 | `.zencoder/` | Cache IDE/tool, tidak diperlukan di version control |
-| 12 | `.zenflow/` | Cache IDE/tool, tidak diperlukan di version control |
+| #   | File/Folder                        | Alasan Penghapusan                                                         |
+| --- | ---------------------------------- | -------------------------------------------------------------------------- |
+| 1   | `QUICKSTART.txt`                   | Redundan dengan `PANDUAN.md` yang lebih lengkap                            |
+| 2   | `FINAL_STATUS_REPORT.md`           | Status report temporary dari debugging session                             |
+| 3   | `OPTIMIZATION.md`                  | Konten sudah tercakup dalam `PANDUAN.md`                                   |
+| 4   | `OPTIMIZATION_DEPLOYMENT_GUIDE.md` | Redundan dengan section deployment di `PANDUAN.md`                         |
+| 5   | `OPTIMIZATION_SUMMARY.md`          | Summary temporary yang tidak diperlukan lagi                               |
+| 6   | `PERFORMANCE_STATUS.md`            | Status monitoring temporary                                                |
+| 7   | `QUERYOPTIMIZATION_GUIDE.md`       | Query optimization sudah tercakup di dokumentasi utama                     |
+| 8   | `optimize.ps1`                     | Script optimasi, fungsinya sudah tersedia via `php artisan` commands       |
+| 9   | `optimize.sh`                      | Script optimasi Linux, fungsinya sudah tersedia via `php artisan` commands |
+| 10  | `.env.optimization`                | Environment file khusus yang tidak perlu                                   |
+| 11  | `.zencoder/`                       | Cache IDE/tool, tidak diperlukan di version control                        |
+| 12  | `.zenflow/`                        | Cache IDE/tool, tidak diperlukan di version control                        |
 
 **Total file dihapus: 20 items (8 HTML + 12 redundant/temporary files)**
 
 **Alasan pembersihan:**
+
 - Sistem sudah 100% menggunakan Laravel Blade dengan backend terintegrasi
 - Mockup HTML tidak terhubung ke database dan bisa membingungkan developer baru
 - Dokumentasi redundan membuat repository cluttered dan sulit dipelihara
@@ -1447,6 +1472,7 @@ Menghapus semua file HTML statis di root folder yang hanya berfungsi sebagai moc
 - Menghindari kebingungan antara file mockup vs sistem yang aktif
 
 **Struktur folder setelah pembersihan:**
+
 ```
 d:\ProyekTA\
 ├── .env, .env.example, .env.production   (konfigurasi)
@@ -1463,6 +1489,7 @@ d:\ProyekTA\
 ```
 
 **Commands untuk optimasi (menggantikan optimize.ps1/sh):**
+
 ```bash
 # Docker
 docker compose exec app php artisan optimize
@@ -1478,6 +1505,7 @@ php artisan route:cache
 ```
 
 **Sistem aktif sekarang:**
+
 ```
 http://localhost:8000/               → resources/views/welcome-new.blade.php (landing page)
 http://localhost:8000/dashboard      → resources/views/dashboard/index.blade.php (role-based)
@@ -1491,32 +1519,32 @@ http://localhost:8000/pengajuan      → resources/views/pengajuan/publik.blade.
 
 Pemeriksaan penuh terhadap semua konfigurasi mengidentifikasi dan memperbaiki **10 masalah** berikut:
 
-| # | File | Masalah | Perbaikan |
-|---|------|---------|-----------|
-| 1 | `.env` | Password Neo4j `secret` hanya 6 karakter (minimal 8) | Diubah ke `neo4jSecret1` |
-| 2 | `.env` | Banyak variabel penting tidak ada (JWT, NEO4J_HOST, REDIS_HOST, dll) | Ditambahkan semua variabel dari `.env.example` |
-| 3 | `docker-compose.yml` | `version: "3.9"` sudah obsolete dan menyebabkan warning | Field `version` dihapus |
-| 4 | `docker-compose.yml` | Healthcheck Neo4j pakai password hardcoded `password123` | Diganti `${NEO4J_PASSWORD:-neo4jSecret1}` |
-| 5 | `docker-compose.yml` | `NEO4J_AUTH` default `password123` tidak konsisten dengan `.env` | Default diubah ke `neo4jSecret1` |
-| 6 | `docker/mysql/init.sql` | Referensi database `sipadu` (salah nama) | Diganti `pa_disdukcapil` |
-| 7 | `docker/nginx/nginx.conf` | `limit_req_zone` di dalam blok `server` (harus di konteks `http`) | Dipindah ke atas, sebelum blok `server` |
-| 8 | `database/migrations/` | `create_cache_table` berjalan setelah `create_permission_tables` (menyebabkan error FK cache) | Rename timestamp menjadi `173900` dan `173901` |
-| 9 | `composer.json` | Package `php-open-source-saver/jwt-auth` tidak ada | Di-install via `composer require` |
-| 10 | `config/auth.php` | Tidak ada file ini, guard `api` JWT tidak terdefinisi | Publish via `artisan config:publish auth` + tambah guard `api` |
-| 11 | `app/Http/Controllers/Controller.php` | File tidak ada (Laravel 11 tidak membuatnya otomatis) | Dibuat manual |
-| 12 | `public/index.php` | Direktori `public/` tidak ada sama sekali | Dibuat dengan isi standard Laravel 11 |
+| #   | File                                  | Masalah                                                                                       | Perbaikan                                                      |
+| --- | ------------------------------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| 1   | `.env`                                | Password Neo4j `secret` hanya 6 karakter (minimal 8)                                          | Diubah ke `neo4jSecret1`                                       |
+| 2   | `.env`                                | Banyak variabel penting tidak ada (JWT, NEO4J_HOST, REDIS_HOST, dll)                          | Ditambahkan semua variabel dari `.env.example`                 |
+| 3   | `docker-compose.yml`                  | `version: "3.9"` sudah obsolete dan menyebabkan warning                                       | Field `version` dihapus                                        |
+| 4   | `docker-compose.yml`                  | Healthcheck Neo4j pakai password hardcoded `password123`                                      | Diganti `${NEO4J_PASSWORD:-neo4jSecret1}`                      |
+| 5   | `docker-compose.yml`                  | `NEO4J_AUTH` default `password123` tidak konsisten dengan `.env`                              | Default diubah ke `neo4jSecret1`                               |
+| 6   | `docker/mysql/init.sql`               | Referensi database `sipadu` (salah nama)                                                      | Diganti `pa_disdukcapil`                                       |
+| 7   | `docker/nginx/nginx.conf`             | `limit_req_zone` di dalam blok `server` (harus di konteks `http`)                             | Dipindah ke atas, sebelum blok `server`                        |
+| 8   | `database/migrations/`                | `create_cache_table` berjalan setelah `create_permission_tables` (menyebabkan error FK cache) | Rename timestamp menjadi `173900` dan `173901`                 |
+| 9   | `composer.json`                       | Package `php-open-source-saver/jwt-auth` tidak ada                                            | Di-install via `composer require`                              |
+| 10  | `config/auth.php`                     | Tidak ada file ini, guard `api` JWT tidak terdefinisi                                         | Publish via `artisan config:publish auth` + tambah guard `api` |
+| 11  | `app/Http/Controllers/Controller.php` | File tidak ada (Laravel 11 tidak membuatnya otomatis)                                         | Dibuat manual                                                  |
+| 12  | `public/index.php`                    | Direktori `public/` tidak ada sama sekali                                                     | Dibuat dengan isi standard Laravel 11                          |
 
 **Status akhir setelah perbaikan (22 Feb 2026):**
 
-| Container | Status | Port |
-|-----------|--------|------|
-| `pa_disdukcapil_nginx` | ✅ Up | 8000, 8443 |
-| `pa_disdukcapil_app` | ✅ Up | 9000 (internal) |
-| `pa_disdukcapil_worker` | ✅ Up | – |
-| `pa_disdukcapil_mysql` | ✅ Up (healthy) | 3306 |
-| `pa_disdukcapil_redis` | ✅ Up (healthy) | 6379 |
-| `pa_disdukcapil_neo4j` | ✅ Up (healthy) | 7474, 7687 |
-| `pa_disdukcapil_ocr` | ✅ Up | 5001 |
+| Container               | Status          | Port            |
+| ----------------------- | --------------- | --------------- |
+| `pa_disdukcapil_nginx`  | ✅ Up           | 8000, 8443      |
+| `pa_disdukcapil_app`    | ✅ Up           | 9000 (internal) |
+| `pa_disdukcapil_worker` | ✅ Up           | –               |
+| `pa_disdukcapil_mysql`  | ✅ Up (healthy) | 3306            |
+| `pa_disdukcapil_redis`  | ✅ Up (healthy) | 6379            |
+| `pa_disdukcapil_neo4j`  | ✅ Up (healthy) | 7474, 7687      |
+| `pa_disdukcapil_ocr`    | ✅ Up           | 5001            |
 
 **Verifikasi API:** `POST /api/v1/auth/login` → HTTP 200, token JWT berhasil diterima.
 
@@ -1550,14 +1578,14 @@ Kasus resmi (Case) dibuat otomatis, notifikasi WA dikirim ke warga
 
 ### 13.2 Halaman Publik
 
-| URL | Keterangan |
-|-----|------------|
-| `GET /pengajuan` | Form pengajuan publik (tanpa login) |
-| `POST /pengajuan` | Proses simpan pengajuan + kirim WA |
-| `POST /pengajuan/cek-nik` | AJAX cek kuota NIK |
-| `GET /pengajuan/sukses/{token}` | Halaman konfirmasi sukses |
-| `GET /lacak/{token}` | Halaman lacak status via token WA |
-| `GET /tracking` | Halaman lacak umum (form isi token manual) |
+| URL                             | Keterangan                                 |
+| ------------------------------- | ------------------------------------------ |
+| `GET /pengajuan`                | Form pengajuan publik (tanpa login)        |
+| `POST /pengajuan`               | Proses simpan pengajuan + kirim WA         |
+| `POST /pengajuan/cek-nik`       | AJAX cek kuota NIK                         |
+| `GET /pengajuan/sukses/{token}` | Halaman konfirmasi sukses                  |
+| `GET /lacak/{token}`            | Halaman lacak status via token WA          |
+| `GET /tracking`                 | Halaman lacak umum (form isi token manual) |
 
 ### 13.3 Endpoint API Publik
 
@@ -1586,11 +1614,11 @@ PUBLIC_SUBMISSION_WA=true
 
 Sistem mendukung tiga driver WA yang dikonfigurasi via `.env`:
 
-| Driver | Keterangan |
-|--------|------------|
-| `log` | Pesan hanya ditulis ke `laravel.log` (default dev) |
-| `fonnte` | Gateway [Fonnte](https://fonnte.com) |
-| `wablas` | Gateway [Wablas](https://wablas.com) |
+| Driver   | Keterangan                                         |
+| -------- | -------------------------------------------------- |
+| `log`    | Pesan hanya ditulis ke `laravel.log` (default dev) |
+| `fonnte` | Gateway [Fonnte](https://fonnte.com)               |
+| `wablas` | Gateway [Wablas](https://wablas.com)               |
 
 ```dotenv
 # Driver WA (log | fonnte | wablas)
@@ -1621,6 +1649,7 @@ Petugas dengan role `pa_assistant`, `pa_management`, `disdukcapil_staff`, atau `
 ```
 
 **Aksi yang tersedia:**
+
 - **Mulai Tinjau** → ubah status `PENDING` → `REVIEWING`
 - **Setujui & Buat Kasus** → buat `Case` resmi + notifikasi WA ke pemohon
 - **Tolak** → ubah status ke `REJECTED` + notifikasi WA alasan penolakan
@@ -1694,4 +1723,3 @@ curl -X POST http://localhost:8000/api/v1/public/submissions \
 curl http://localhost:8000/api/v1/tracking/PUB-XXXXX
 # Expected: {"type":"public_submission","status":"PENDING",...}
 ```
-

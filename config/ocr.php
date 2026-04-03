@@ -46,6 +46,57 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Document-type-specific preprocessing profiles
+    |--------------------------------------------------------------------------
+    */
+
+    'document_profiles' => [
+        'KTP_SUAMI' => [
+            'grayscale'     => true,
+            'binarize'      => true,
+            'denoise'       => true,
+            'deskew'        => true,
+            'resize_dpi'    => 300,
+            'contrast_boost' => 0.0,  // No  extra boost
+            'adaptive_denoise_strength' => 10,
+            'enable_variants' => true,
+        ],
+        'KTP_ISTRI' => [
+            'grayscale'     => true,
+            'binarize'      => true,
+            'denoise'       => true,
+            'deskew'        => true,
+            'resize_dpi'    => 300,
+            'contrast_boost' => 1.2,  // Boost contrast for spouse cards
+            'adaptive_denoise_strength' => 12,  // Stronger denoise
+            'enable_variants' => true,
+            'extra_upscale' => 1.5,  // Additional upscaling for small text
+            'bilateral_filter' => true,  // Better edge preservation
+        ],
+        'KTP' => [
+            'grayscale'     => true,
+            'binarize'      => true,
+            'denoise'       => true,
+            'deskew'        => true,
+            'resize_dpi'    => 300,
+            'contrast_boost' => 0.0,
+            'adaptive_denoise_strength' => 10,
+            'enable_variants' => true,
+        ],
+        'default' => [
+            'grayscale'     => true,
+            'binarize'      => true,
+            'denoise'       => true,
+            'deskew'        => true,
+            'resize_dpi'    => 300,
+            'contrast_boost' => 0.0,
+            'adaptive_denoise_strength' => 10,
+            'enable_variants' => true,
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Confidence thresholds
     |--------------------------------------------------------------------------
     */

@@ -13,15 +13,31 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        //
+        'auth/logout',       // POST logout - session being destroyed
+        'auth/logout/*',     // Any logout sub-routes
     ];
 
     /**
-     * Handle an incoming request (debug mode for troubleshooting)
+     * Determine if the request has a valid CSRF token.
+     * Override to skip CSRF check for logout routes entirely.
      */
     public function handle($request, \Closure $next)
     {
-        // Log CSRF debug info (remove in production)
+        // Skip CSRF validation for logout routes entirely
+        if ($request->is('auth/logout') || $request->is('auth/logout/*')) {
+            // Log logout attempt
+            if (config('app.debug')) {
+                Log::info('Logout request', [
+                    'path' => $request->path(),
+                    'method' => $request->method(),
+                    'user' => $request->user()?->id,
+                ]);
+            }
+            
+            return $next($request);
+        }
+
+        // For all other routes, apply standard CSRF validation
         if (config('app.debug')) {
             Log::debug('CSRF Check', [
                 'url' => $request->fullUrl(),
@@ -29,10 +45,10 @@ class VerifyCsrfToken extends Middleware
                 'has_session' => $request->hasSession(),
                 'session_token' => $request->session()->token(),
                 'input_token' => $request->input('_token'),
-                'header_token' => $request->header('X-CSRF-TOKEN'),
             ]);
         }
 
         return parent::handle($request, $next);
     }
 }
+

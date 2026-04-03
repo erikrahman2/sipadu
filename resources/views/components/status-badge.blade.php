@@ -22,7 +22,19 @@
     'lg' => 'text-sm px-3 py-1.5',
     default => 'text-xs px-2 py-0.5',
   };
-  $label = config("workflow.states.{$status}") ?? $status;
+  
+  // Get label with role-based conditional
+  $defaultLabel = config("workflow.states.{$status}") ?? $status;
+  $label = $defaultLabel;
+  
+  // Role-based display for OCR_PROCESSED
+  if ($status === 'OCR_PROCESSED' && auth()->check()) {
+    if (auth()->user()->hasRole('pa_assistant')) {
+      $label = 'Submitted';
+    } elseif (auth()->user()->hasRole('pa_management')) {
+      $label = 'Diproses';
+    }
+  }
 @endphp
 <span class="inline-flex items-center rounded-full font-medium {{ $sizeClass }} {{ $colors[$status] ?? 'bg-gray-100 text-gray-600' }}">
   {{ $label }}

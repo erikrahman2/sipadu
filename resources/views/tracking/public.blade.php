@@ -92,11 +92,11 @@ function statusBadge(status, labelOverride) {
 
 function renderPublicSubmission(data) {
   const docs = (data.documents || []).map(d =>
-    `<li class="flex items-center gap-2 text-sm text-gray-700">
-      <i class="fas fa-file text-gray-400"></i>
-      <span>${d.label}</span>
-      <span class="text-xs text-gray-400">(${d.size})</span>
-    </li>`
+    `<div class="text-center">
+      <img src="${d.url}" alt="${d.label}" class="w-full h-auto rounded-lg border border-gray-200 mb-2 object-cover" style="max-height:300px;" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 400 300%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22400%22 height=%22300%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-family=%22Arial%22 font-size=%2216%22 fill=%22%239ca3af%22%3EUnable to load image%3C/text%3E%3C/svg%3E'">
+      <p class="font-medium text-sm text-gray-700">${d.label}</p>
+      <p class="text-xs text-gray-400">${d.size}</p>
+    </div>`
   ).join('');
 
   const caseRow = data.case_number
@@ -119,8 +119,8 @@ function renderPublicSubmission(data) {
         ${data.processed_at ? `<div class="flex justify-between"><span class="text-gray-500">Diproses Pada</span><span class="font-medium">${data.processed_at}</span></div>` : ''}
       </div>
       ${docs ? `<div class="border-t border-gray-100 px-5 py-4">
-        <p class="text-xs font-semibold text-gray-500 uppercase mb-2">Dokumen Diunggah</p>
-        <ul class="space-y-1">${docs}</ul>
+        <p class="text-xs font-semibold text-gray-500 uppercase mb-4">Dokumen Diunggah (${data.documents_count})</p>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">${docs}</div>
       </div>` : ''}
       <div class="bg-blue-50 px-5 py-3 border-t border-blue-100 text-xs text-blue-600">
         <i class="fas fa-info-circle mr-1"></i>

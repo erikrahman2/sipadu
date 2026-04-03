@@ -32,6 +32,11 @@ class ReviewController extends Controller
             });
         }
         
+        // Filter by case status (e.g., NEEDS_REVISION untuk rejected cases)
+        if ($request->filled('case_status')) {
+            $query->where('status', $request->case_status);
+        }
+        
         // Filter by review status
         if ($request->filled('reviewed')) {
             $isReviewed = $request->reviewed === 'done';
@@ -78,7 +83,8 @@ class ReviewController extends Controller
     public function show(int $id)
     {
         $case = CaseModel::with([
-            'publicSubmission',
+            'publicSubmission.documents',
+            'documents',
             'ocrValidations' => function ($query) {
                 $query->with('document', 'ocrResult', 'reviewer')
                       ->orderBy('created_at', 'desc');
@@ -143,26 +149,56 @@ class ReviewController extends Controller
                 ])
                 ->log('OCR validation approved');
             
+            if ($request->wantsJson() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Validasi OCR disetujui. Kasus dapat diproses lebih lanjut.',
+                    'status' => 'approved'
+                ]);
+            }
+            
             return redirect()
                 ->route('dashboard.review.show', $id)
                 ->with('success', 'Validasi OCR disetujui. Kasus dapat diproses lebih lanjut.');
         }
         
         if ($request->action === 'reject') {
+            // 1. Update case status untuk PA Assistant dashboard
             $case->update(['status' => 'NEEDS_REVISION']);
             
+            // 2. Update public submission status untuk tracking page (pemohon notifikasi)
+            if ($case->publicSubmission) {
+                $case->publicSubmission->update(['status' => 'REJECTED']);
+            }
+            
+            // 3. Log activity dengan detail lengkap (untuk audit trail)
             activity()
                 ->performedOn($case)
                 ->causedBy(auth()->user())
                 ->withProperties([
                     'validation_id' => $validation->id,
                     'reason' => $request->notes,
+                    'tracking_token' => $case->publicSubmission?->tracking_token,
+                    'workflow_target' => 'tracking_page_and_pa_dashboard',
+                    'notification_status' => 'pending', // untuk tracking nanti
                 ])
-                ->log('OCR validation rejected');
+                ->log('OCR validation rejected - dual notification sent');
+            
+            if ($request->wantsJson() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Validasi OCR ditolak. Pemohon akan diminta mengunggah ulang dokumen melalui halaman tracking. PA Assistant diberitahu.',
+                    'status' => 'rejected',
+                    'notification_targets' => [
+                        'tracking_page' => true,
+                        'pa_dashboard' => true
+                    ]
+                ]);
+            }
             
             return redirect()
                 ->route('dashboard.review.show', $id)
-                ->with('warning', 'Validasi OCR ditolak. Pemohon akan diminta mengunggah ulang dokumen.');
+                ->with('warning', 'Validasi OCR ditolak. Notifikasi dikirim ke:\n• Halaman Tracking (pemohon bisa reupload dokumen)\n• PA Assistant Dashboard (internal follow-up)');
         }
         
         // request_correction
@@ -174,6 +210,14 @@ class ReviewController extends Controller
                 'notes' => $request->notes,
             ])
             ->log('OCR validation needs correction');
+        
+        if ($request->wantsJson() || $request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Permintaan koreksi dikirim ke PA Assistant.',
+                'status' => 'correction_requested'
+            ]);
+        }
         
         return redirect()
             ->route('dashboard.review.show', $id)
@@ -290,6 +334,15 @@ class ReviewController extends Controller
                 'validation_status' => $newStatus,
             ])
             ->log('OCR result manually corrected by PA Management');
+
+        if ($request->wantsJson() || $request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Koreksi hasil OCR berhasil disimpan dan skor validasi diperbarui.',
+                'overall_match_score' => $overallScore,
+                'validation_status' => $newStatus
+            ]);
+        }
 
         return redirect()
             ->route('dashboard.review.show', $id)

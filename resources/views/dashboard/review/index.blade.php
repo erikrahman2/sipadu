@@ -1,203 +1,243 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
-@section('title', 'Validasi OCR - Daftar Kasus')
+@section('title', 'Review Kasus - PA Management')
+@section('page-title', 'Review Kasus PA')
+
+@section('breadcrumb')
+  <i class="fas fa-home text-primary"></i>
+  <span class="text-gray-700">Dashboard</span>
+  <span class="mx-2">/</span>
+  <i class="fas fa-microscope text-primary"></i>
+  <span class="text-gray-800 font-medium">Review PA</span>
+@endsection
 
 @section('content')
-<div class="container-fluid px-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="space-y-6">
+
+  {{-- Summary Stats --}}
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    {{-- Total Review --}}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+      <div class="flex items-center justify-between">
         <div>
-            <h1 class="h3 mb-1">Validasi OCR - Daftar Kasus</h1>
-            <p class="text-muted">Review dan validasi hasil OCR terhadap data inputan manual</p>
+          <p class="text-gray-500 text-sm font-medium">Menunggu Review</p>
+          @php
+            $reviewCount = \App\Models\CaseModel::where('status', 'PA_REVIEW')->count();
+          @endphp
+          <p class="text-3xl font-bold text-blue-600 mt-2">{{ $reviewCount }}</p>
         </div>
+        <div class="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+          <i class="fas fa-hourglass-start text-2xl text-blue-600"></i>
+        </div>
+      </div>
+    </div>
+
+    {{-- Match --}}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+      <div class="flex items-center justify-between">
         <div>
-            <a href="{{ route('dashboard.review.statistics') }}" class="btn btn-outline-primary">
-                <i class="fas fa-chart-bar"></i> Statistik
-            </a>
+          <p class="text-gray-500 text-sm font-medium">OCR Match</p>
+          <p class="text-3xl font-bold text-green-600 mt-2">{{ $stats['match'] ?? 0 }}</p>
         </div>
+        <div class="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
+          <i class="fas fa-check-circle text-2xl text-green-600"></i>
+        </div>
+      </div>
     </div>
 
-    <!-- Filter Status -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <form method="GET" action="{{ route('dashboard.review.cases') }}" class="row g-3">
-                <div class="col-md-3">
-                    <label for="status" class="form-label">Status Validasi</label>
-                    <select name="status" id="status" class="form-select">
-                        <option value="">Semua Status</option>
-                        <option value="MATCH" {{ request('status') == 'MATCH' ? 'selected' : '' }}>Match</option>
-                        <option value="PARTIAL_MATCH" {{ request('status') == 'PARTIAL_MATCH' ? 'selected' : '' }}>Partial Match</option>
-                        <option value="MANUAL_REVIEW" {{ request('status') == 'MANUAL_REVIEW' ? 'selected' : '' }}>Manual Review</option>
-                        <option value="MISMATCH" {{ request('status') == 'MISMATCH' ? 'selected' : '' }}>Mismatch</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label for="reviewed" class="form-label">Status Review</label>
-                    <select name="reviewed" id="reviewed" class="form-select">
-                        <option value="">Semua</option>
-                        <option value="pending" {{ request('reviewed') == 'pending' ? 'selected' : '' }}>Belum Review</option>
-                        <option value="done" {{ request('reviewed') == 'done' ? 'selected' : '' }}>Sudah Review</option>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label for="search" class="form-label">Cari NIK/Nama</label>
-                    <input type="text" name="search" id="search" class="form-control" placeholder="Masukkan NIK atau Nama" value="{{ request('search') }}">
-                </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="fas fa-filter"></i> Filter
-                    </button>
-                </div>
-            </form>
+    {{-- Partial Match --}}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-500 text-sm font-medium">Partial Match</p>
+          <p class="text-3xl font-bold text-amber-600 mt-2">{{ $stats['partial_match'] ?? 0 }}</p>
         </div>
+        <div class="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center">
+          <i class="fas fa-exclamation-circle text-2xl text-amber-600"></i>
+        </div>
+      </div>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card border-start border-success border-4 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-muted mb-1 small">MATCH</p>
-                            <h4 class="mb-0">{{ $stats['match'] ?? 0 }}</h4>
-                        </div>
-                        <div class="text-success">
-                            <i class="fas fa-check-circle fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    {{-- Mismatch --}}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-500 text-sm font-medium">OCR Mismatch</p>
+          <p class="text-3xl font-bold text-red-600 mt-2">{{ $stats['mismatch'] ?? 0 }}</p>
         </div>
-        <div class="col-md-3">
-            <div class="card border-start border-warning border-4 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-muted mb-1 small">PARTIAL MATCH</p>
-                            <h4 class="mb-0">{{ $stats['partial_match'] ?? 0 }}</h4>
-                        </div>
-                        <div class="text-warning">
-                            <i class="fas fa-exclamation-triangle fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center">
+          <i class="fas fa-times-circle text-2xl text-red-600"></i>
         </div>
-        <div class="col-md-3">
-            <div class="card border-start border-info border-4 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-muted mb-1 small">MANUAL REVIEW</p>
-                            <h4 class="mb-0">{{ $stats['manual_review'] ?? 0 }}</h4>
-                        </div>
-                        <div class="text-info">
-                            <i class="fas fa-user-check fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-start border-danger border-4 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-muted mb-1 small">MISMATCH</p>
-                            <h4 class="mb-0">{{ $stats['mismatch'] ?? 0 }}</h4>
-                        </div>
-                        <div class="text-danger">
-                            <i class="fas fa-times-circle fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+      </div>
+    </div>
+  </div>
+
+  {{-- Filter Bar --}}
+  <form method="GET" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-wrap gap-3 items-end">
+    <div>
+      <label class="block text-xs text-gray-500 mb-1">Cari NIK / Nama</label>
+      <input type="text" name="search" value="{{ request('search') }}" placeholder="3174010101900001..." class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+    </div>
+    
+    <div>
+      <label class="block text-xs text-gray-500 mb-1">Status OCR</label>
+      <select name="status" class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+        <option value="">Semua Status</option>
+        <option value="MATCH" {{ request('status') === 'MATCH' ? 'selected' : '' }}>Match</option>
+        <option value="PARTIAL_MATCH" {{ request('status') === 'PARTIAL_MATCH' ? 'selected' : '' }}>Partial Match</option>
+        <option value="MISMATCH" {{ request('status') === 'MISMATCH' ? 'selected' : '' }}>Mismatch</option>
+        <option value="MANUAL_REVIEW" {{ request('status') === 'MANUAL_REVIEW' ? 'selected' : '' }}>Manual Review</option>
+      </select>
     </div>
 
-    <!-- Cases List -->
-    <div class="card shadow-sm">
-        <div class="card-body">
-            @if($cases->isEmpty())
-                <div class="text-center py-5">
-                    <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
-                    <p class="text-muted mb-0">Tidak ada kasus dengan validasi OCR</p>
+    <div class="flex gap-2 ml-auto">
+      <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+        <i class="fas fa-search mr-1"></i> Filter
+      </button>
+      <a href="{{ route('dashboard.review.cases') }}" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition">
+        Reset
+      </a>
+    </div>
+  </form>
+
+  {{-- Cases Table --}}
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="fas fa-microscope text-primary text-xl"></i>
+        <h3 class="font-semibold text-gray-800">Kasus Menunggu Review PA</h3>
+        <span class="inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
+          {{ $cases->total() }}
+        </span>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="bg-gray-50 text-gray-500 text-left border-b border-gray-100">
+            <th class="px-6 py-3 font-medium">No. Kasus</th>
+            <th class="px-6 py-3 font-medium">Pemohon</th>
+            <th class="px-6 py-3 font-medium">Pasangan</th>
+            <th class="px-6 py-3 font-medium">Status OCR</th>
+            <th class="px-6 py-3 font-medium">Match Score</th>
+            <th class="px-6 py-3 font-medium">Dikirim Pada</th>
+            <th class="px-6 py-3 font-medium text-center">Aksi</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          @forelse($cases as $case)
+            @php
+              $ocrValidation = $case->ocrValidations->first();
+              $matchScore = $ocrValidation?->overall_match_score ?? '-';
+              $validationStatus = $ocrValidation?->validation_status ?? 'UNKNOWN';
+              
+              $statusColor = match($validationStatus) {
+                'MATCH' => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'icon' => 'fa-check'],
+                'PARTIAL_MATCH' => ['bg' => 'bg-amber-100', 'text' => 'text-amber-700', 'icon' => 'fa-exclamation'],
+                'MISMATCH' => ['bg' => 'bg-red-100', 'text' => 'text-red-700', 'icon' => 'fa-times'],
+                'MANUAL_REVIEW' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'icon' => 'fa-eye'],
+                default => ['bg' => 'bg-gray-100', 'text' => 'text-gray-700', 'icon' => 'fa-question'],
+              };
+            @endphp
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4">
+                <span class="font-semibold text-gray-800">{{ $case->case_number }}</span>
+                <br>
+                <span class="text-xs text-gray-400">{{ Str::limit($case->tracking_token, 20) }}</span>
+              </td>
+              <td class="px-6 py-4">
+                <p class="font-medium text-gray-800">{{ $case->petitioner_name }}</p>
+                <p class="text-xs text-gray-500">{{ $case->petitioner_nik }}</p>
+              </td>
+              <td class="px-6 py-4">
+                <p class="font-medium text-gray-800">{{ $case->spouse_name }}</p>
+                <p class="text-xs text-gray-500">{{ $case->spouse_nik }}</p>
+              </td>
+              <td class="px-6 py-4">
+                <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold {{ $statusColor['bg'] }} {{ $statusColor['text'] }}">
+                  <i class="fas {{ $statusColor['icon'] }}"></i> {{ str_replace('_', ' ', $validationStatus) }}
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-2">
+                  <div class="w-32 bg-gray-200 rounded-full h-2">
+                    <div class="bg-primary rounded-full h-2 transition-all" style="width: {{ $matchScore }}%"></div>
+                  </div>
+                  <span class="text-sm font-bold text-gray-800">{{ is_numeric($matchScore) ? round($matchScore) : '-' }}%</span>
                 </div>
-            @else
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>No. Kasus</th>
-                                <th>NIK</th>
-                                <th>Nama Pemohon</th>
-                                <th>Jenis Dokumen</th>
-                                <th>Tanggal OCR</th>
-                                <th>Status Validasi</th>
-                                <th>Match Score</th>
-                                <th>Status Review</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($cases as $case)
-                                @php
-                                    $validation = $case->ocrValidations->first();
-                                @endphp
-                                <tr>
-                                    <td>
-                                        <strong>{{ $case->case_number }}</strong>
-                                    </td>
-                                    <td>
-                                        <code>{{ $case->petitioner_nik ?? $case->publicSubmission->nik ?? '-' }}</code>
-                                    </td>
-                                    <td>{{ $case->petitioner_name ?? $case->publicSubmission->nama_lengkap ?? '-' }}</td>
-                                    <td>
-                                        @if($validation && $validation->document)
-                                            <span class="badge bg-secondary">
-                                                {{ strtoupper(str_replace('_', ' ', $validation->document->document_type)) }}
-                                            </span>
-                                        @else
-                                            <span class="text-muted">-</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if($validation)
-                                            <small>{{ $validation->created_at->format('d M Y H:i') }}</small>
-                                        @else
-                                            <span class="text-muted">-</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if($validation)
-                                            <span class="badge {{ $validation->getStatusBadgeClass() }}">
-                                                {{ $validation->getStatusLabel() }}
-                                            </span>
-                                        @else
-                                            <span class="badge bg-light text-dark">No Validation</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if($validation)
-                                            <div class="d-flex align-items-center">
-                                                <div class="progress flex-grow-1 me-2" style="height: 20px; width: 80px;">
-                                                    <div class="progress-bar {{ $validation->overall_match_score >= 95 ? 'bg-success' : ($validation->overall_match_score >= 80 ? 'bg-warning' : 'bg-danger') }}" 
-                                                         role="progressbar" 
-                                                         style="width: {{ $validation->overall_match_score }}%"
-                                                         aria-valuenow="{{ $validation->overall_match_score }}" 
-                                                         aria-valuemin="0" 
-                                                         aria-valuemax="100">
-                                                    </div>
-                                                </div>
-                                                <small><strong>{{ number_format($validation->overall_match_score, 1) }}%</strong></small>
-                                            </div>
-                                        @else
-                                            <span class="text-muted">-</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if($validation)
-                                            @if($validation->is_reviewed)
+              </td>
+              <td class="px-6 py-4 text-gray-600">
+                {{ $case->submitted_at?->format('d/m/Y H:i') ?? '—' }}
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center justify-center gap-2">
+                  <a href="{{ route('dashboard.review.show', $case->id) }}" 
+                     class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition" 
+                     title="Lihat Detail & Review">
+                    <i class="fas fa-eye text-sm"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          @empty
+            <tr>
+              <td colspan="7" class="text-center py-8 text-gray-400">
+                <i class="fas fa-inbox text-3xl mb-2 block"></i>
+                Tidak ada kasus yang perlu di-review
+              </td>
+            </tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+
+    {{-- Pagination --}}
+    @if($cases->hasPages())
+    <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between text-sm">
+      <div class="text-gray-600">
+        Menampilkan <span class="font-semibold">{{ $cases->firstItem() }}</span> hingga <span class="font-semibold">{{ $cases->lastItem() }}</span> dari <span class="font-semibold">{{ $cases->total() }}</span> kasus
+      </div>
+      <div class="flex gap-2">
+        {{ $cases->links('pagination::simple-bootstrap-4') }}
+      </div>
+    </div>
+    @endif
+  </div>
+
+  {{-- Workflow Information --}}
+  <div class="bg-blue-50 border border-blue-200 rounded-2xl p-6">
+    <div class="flex items-start gap-4">
+      <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+        <i class="fas fa-info-circle text-primary"></i>
+      </div>
+      <div>
+        <h4 class="font-semibold text-blue-900 mb-2">Alur Review PA Management</h4>
+        <ol class="space-y-1 text-sm text-blue-800">
+          <li class="flex items-center gap-2">
+            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-white text-xs font-bold">1</span>
+            Periksa hasil OCR dan kecocokan data
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-white text-xs font-bold">2</span>
+            Lihat detail kasus dan validasi manual jika diperlukan
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-white text-xs font-bold">3</span>
+            Setujui (kirim ke Disdukcapil) atau tolak dengan alasan
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-white text-xs font-bold">4</span>
+            Disdukcapil Staff akan melakukan validasi akhir
+          </li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+</div>
+@endsection
+
                                                 <span class="badge bg-success">
                                                     <i class="fas fa-check"></i> {{ ucfirst($validation->review_action) }}
                                                 </span>

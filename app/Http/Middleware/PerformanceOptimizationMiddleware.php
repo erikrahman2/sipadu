@@ -28,9 +28,11 @@ class PerformanceOptimizationMiddleware
         elseif ($request->is('api/*')) {
             $response->header('Cache-Control', 'public, max-age=300');
         }
-        // Set cache headers for views
+        // Set cache headers for views (no cache for development)
         else {
-            $response->header('Cache-Control', 'public, max-age=3600');
+            $response->header('Cache-Control', 'no-cache, no-store, must-revalidate, private');
+            $response->header('Pragma', 'no-cache');
+            $response->header('Expires', '0');
             $response->header('X-Content-Type-Options', 'nosniff');
             $response->header('X-Frame-Options', 'SAMEORIGIN');
         }

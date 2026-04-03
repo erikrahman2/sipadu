@@ -3,8 +3,14 @@
 namespace App\Services;
 
 use App\Jobs\SendPublicSubmissionNotification;
+use App\Models\CaseModel;
+use App\Models\CaseTransition;
+use App\Models\Document;
+use App\Models\IntegrationQueue;
 use App\Models\PublicSubmission;
 use App\Models\PublicSubmissionDocument;
+use App\Models\User;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -77,19 +83,20 @@ class PublicSubmissionService
      */
     public function create(array $data, array $files, Request $request): PublicSubmission
     {
-        $nik = $data['nik'];
-        $respondentNik = $data['respondent_nik'] ?? null;
+        $nikSuami = $data['nik_suami'] ?? null;
+        $nikIstri = $data['nik_istri'] ?? null;
 
-        // ── Validasi 1: NIK pemohon tidak boleh sama dengan NIK pasangan ──────
-        if (PublicSubmission::isSameNik($nik, $respondentNik)) {
+        // ── Validasi 1: Kedua NIK harus berbeda ────────────────────────────────
+        if ($nikSuami && $nikIstri && $nikSuami === $nikIstri) {
             throw new \RuntimeException(
-                'NIK pemohon tidak boleh sama dengan NIK pasangan.'
+                'NIK Suami tidak boleh sama dengan NIK Istri.'
             );
         }
 
-        // ── Validasi 2: NIK dibekukan jika sedang dalam proses PA/Disdukcapil ─
-        if (PublicSubmission::isNikFrozen($nik)) {
-            $reason = PublicSubmission::getFrozenReason($nik);
+        // ── Validasi 2: Minimal satu NIK harus tidak frozen ────────────────────
+        $nikToCheck = $nikSuami ?? $nikIstri;
+        if ($nikToCheck && PublicSubmission::isNikFrozen($nikToCheck)) {
+            $reason = PublicSubmission::getFrozenReason($nikToCheck);
             
             if ($reason) {
                 $statusLabel = match($reason['status']) {
@@ -115,17 +122,9 @@ class PublicSubmissionService
             }
         }
 
-        // ── Validasi 3: Pasangan NIK tidak boleh sudah ada di Disdukcapil ─────
-        if ($respondentNik && PublicSubmission::hasCoupleInDisdukcapil($nik, $respondentNik)) {
-            throw new \RuntimeException(
-                'Pasangan NIK ini sudah terdaftar dan sedang/telah diproses oleh Disdukcapil. '
-                . 'Silakan hubungi kantor Disdukcapil untuk informasi lebih lanjut.'
-            );
-        }
-
-        // ── Validasi 4: Rate limit (3x per minggu) ────────────────────────────
-        if (! $this->isAllowed($nik)) {
-            $next = $this->nextAllowedDate($nik);
+        // ── Validasi 3: Rate limit (3x per minggu) ────────────────────────────
+        if ($nikToCheck && ! $this->isAllowed($nikToCheck)) {
+            $next = $this->nextAllowedDate($nikToCheck);
             throw new \RuntimeException(
                 'NIK ini telah mencapai batas maksimal ' . PublicSubmission::MAX_SUBMISSIONS
                 . ' pengajuan dalam ' . PublicSubmission::LIMIT_DAYS . ' hari. '
@@ -133,49 +132,98 @@ class PublicSubmissionService
             );
         }
 
-        return DB::transaction(function () use ($data, $files, $request, $nik) {
+        $submission = DB::transaction(function () use ($data, $files, $request, $nikSuami) {
+
+            Log::info('[DEBUG] PublicSubmission.create() started', [
+                'nik_suami' => $nikSuami,
+                'institution_id' => $data['institution_id'],
+                'files_count' => count($files),
+            ]);
 
             // 1. Normalisasi nomor WA
             $data['phone_wa'] = PublicSubmission::normalizePhone($data['phone_wa']);
 
             // 2. Simpan pengajuan baru
             /** @var PublicSubmission $submission */
-            $submission = PublicSubmission::create([
-                'nik'              => $data['nik'],
-                'petitioner_name'  => $data['petitioner_name'],
-                'phone_wa'         => $data['phone_wa'],
-                'respondent_name'  => $data['respondent_name'] ?? null,
-                'respondent_nik'   => $data['respondent_nik'] ?? null,
-                'divorce_date'     => $data['divorce_date'] ?? null,
-                'verdict_number'   => $data['verdict_number'] ?? null,
-                'notes'            => $data['notes'] ?? null,
-                'status'           => 'PENDING',
-                'is_active'        => true,
-                'ip_address'       => $request->ip(),
-                'user_agent'       => substr($request->userAgent() ?? '', 0, 255),
-            ]);
+            try {
+                // Determine petitioner name (use nama_suami as primary, fallback to nama_istri)
+                $petitionerName = $data['nama_suami'] ?? $data['nama_istri'] ?? 'Pemohon';
+
+                $submission = PublicSubmission::create([
+                    'nik'               => $data['nik_suami'] ?? $data['nik_istri'] ?? null,
+                    'petitioner_name'   => $petitionerName,  // REQUIRED field for database
+                    
+                    // Data Suami
+                    'nik_suami'         => $data['nik_suami'] ?? null,
+                    'nama_suami'        => $data['nama_suami'] ?? null,
+                    'alamat_suami'      => $data['alamat_suami'] ?? null,
+                    'rt_rw_suami'       => $data['rt_rw_suami'] ?? null,
+                    'kelurahan_suami'   => $data['kelurahan_suami'] ?? null,
+                    'kecamatan_suami'   => $data['kecamatan_suami'] ?? null,
+
+                    // Data Istri
+                    'nik_istri'         => $data['nik_istri'] ?? null,
+                    'nama_istri'        => $data['nama_istri'] ?? null,
+                    'alamat_istri'      => $data['alamat_istri'] ?? null,
+                    'rt_rw_istri'       => $data['rt_rw_istri'] ?? null,
+                    'kelurahan_istri'   => $data['kelurahan_istri'] ?? null,
+                    'kecamatan_istri'   => $data['kecamatan_istri'] ?? null,
+
+                    'phone_wa'          => $data['phone_wa'],
+                    'institution_id'    => $data['institution_id'] ?? null,
+
+                    'respondent_name'   => $data['respondent_name'] ?? null,
+                    'respondent_nik'    => $data['respondent_nik'] ?? null,
+                    'divorce_date'      => $data['divorce_date'] ?? null,
+                    'verdict_number'    => $data['verdict_number'] ?? null,
+                    'notes'             => $data['notes'] ?? null,
+
+                    'status'            => 'SUBMITTED',  // Public submission status is SUBMITTED, same as PA Assistant cases
+                    'is_active'         => true,
+                    'ip_address'        => $request->ip(),
+                    'user_agent'        => substr($request->userAgent() ?? '', 0, 255),
+                ]);
+
+                Log::info('[DEBUG] PublicSubmission created', [
+                    'id' => $submission->id,
+                    'tracking_token' => $submission->tracking_token,
+                ]);
+
+            } catch (\Exception $e) {
+                Log::error('[DEBUG] PublicSubmission.create() failed', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+                throw $e;
+            }
 
             // 3. Replace data lama dengan NIK yang sama (data lama di-soft delete)
-            $replaced = PublicSubmission::replaceOldSubmissions($nik, $submission->id);
-            if ($replaced > 0) {
-                Log::info("PublicSubmission: Replaced {$replaced} old submission(s) for NIK {$nik}", [
-                    'new_submission_id' => $submission->id,
-                    'nik' => $nik,
-                ]);
+            if ($nikSuami) {
+                $replaced = PublicSubmission::replaceOldSubmissions($nikSuami, $submission->id);
+                if ($replaced > 0) {
+                    Log::info("PublicSubmission: Replaced {$replaced} old submission(s) for NIK {$nikSuami}", [
+                        'new_submission_id' => $submission->id,
+                        'nik' => $nikSuami,
+                    ]);
+                }
             }
 
             // 4. Simpan dokumen yang diupload
+            $hasKtpSuami = false;
+            $hasKtpIstri = false;
+
             foreach ($files as $docType => $file) {
                 if (! ($file instanceof UploadedFile) || ! $file->isValid()) continue;
 
                 $allowed = array_keys(PublicSubmissionDocument::$typeLabels);
                 $docType = strtoupper($docType);
-                if (! in_array($docType, $allowed)) $docType = 'LAINNYA';
+                if (! in_array($docType, $allowed)) $docType = 'OTHER';
 
+                // Store in public disk so files are accessible via /storage/ URL
                 $path = $file->storeAs(
                     'public_submissions/' . $submission->id,
-                    $docType . '_' . time() . '.' . $file->getClientOriginalExtension(),
-                    'local'
+                    $docType . '_' . Str::uuid() . '.' . $file->getClientOriginalExtension(),
+                    'public'  // CHANGED: Use 'public' disk instead of 'local'
                 );
 
                 PublicSubmissionDocument::create([
@@ -186,13 +234,172 @@ class PublicSubmissionService
                     'file_size'            => $file->getSize(),
                     'mime_type'            => $file->getMimeType(),
                 ]);
+
+                if ($docType === 'KTP_SUAMI') {
+                    $hasKtpSuami = true;
+                }
+                if ($docType === 'KTP_ISTRI') {
+                    $hasKtpIstri = true;
+                }
             }
 
-            // 5. Kirim notifikasi WA (asynchronous via job queue)
+            if (! $hasKtpSuami || ! $hasKtpIstri) {
+                throw new \RuntimeException('Dokumen KTP suami dan KTP istri wajib diunggah sebelum pengajuan diproses OCR.');
+            }
+
+            // 5. Samakan alur dengan PA Assistant: langsung buat case resmi + dokumen standar.
+            $submitterId = $this->resolveAutoSubmitterId((int) $submission->institution_id);
+            $case = CaseModel::create([
+                'submitter_id'          => $submitterId,
+                'public_submission_id'  => $submission->id,
+                'source_type'           => 'public',
+                'institution_id'        => $submission->institution_id,
+                'petitioner_nik'        => $submission->nik_suami,
+                'petitioner_name'       => $submission->nama_suami,
+                'petitioner_phone'      => $submission->phone_wa,
+                'petitioner_alamat'     => $submission->alamat_suami,
+                'petitioner_rt_rw'      => $submission->rt_rw_suami,
+                'petitioner_kelurahan'  => $submission->kelurahan_suami,
+                'petitioner_kecamatan'  => $submission->kecamatan_suami,
+                'spouse_nik'            => $submission->nik_istri,
+                'spouse_name'           => $submission->nama_istri,
+                'spouse_alamat'         => $submission->alamat_istri,
+                'spouse_rt_rw'          => $submission->rt_rw_istri,
+                'spouse_kelurahan'      => $submission->kelurahan_istri,
+                'spouse_kecamatan'      => $submission->kecamatan_istri,
+                'divorce_date'          => $submission->divorce_date,
+                'verdict_number'        => $submission->verdict_number,
+                'notes'                 => $submission->notes,
+                'status'                => 'SUBMITTED',
+                'submitted_at'          => now(),
+            ]);
+
+            CaseTransition::create([
+                'case_id'         => $case->id,
+                'from_state'      => 'DRAFT',
+                'to_state'        => 'SUBMITTED',
+                'transitioned_by' => $submitterId,
+                'reason'          => 'Auto-submit dari pengajuan publik.',
+                'metadata'        => ['source' => 'public_submission.create'],
+            ]);
+
+            $submission->update(['case_id' => $case->id]);
+
+            // Mirror dokumen publik ke dokumen case agar OCR/review memakai schema yang sama.
+            foreach ($submission->documents as $pubDoc) {
+                $extension = pathinfo((string) $pubDoc->stored_path, PATHINFO_EXTENSION);
+                $storedName = Str::uuid() . ($extension ? '.' . $extension : '');
+                $document = Document::create([
+                    'case_id'       => $case->id,
+                    'uploaded_by'   => $submitterId,
+                    'original_name' => $pubDoc->original_filename,
+                    'stored_name'   => $storedName,
+                    'disk'          => 'public',
+                    'path'          => $pubDoc->stored_path,
+                    'mime_type'     => $pubDoc->mime_type,
+                    'size_bytes'    => (int) $pubDoc->file_size,
+                    'document_type' => $this->mapPublicDocumentType($pubDoc->document_type),
+                    'checksum'      => file_exists(Storage::disk('public')->path($pubDoc->stored_path))
+                        ? hash_file('sha256', Storage::disk('public')->path($pubDoc->stored_path))
+                        : null,
+                ]);
+
+                event(new \App\Events\DocumentUploaded($document));
+            }
+
+            IntegrationQueue::create([
+                'aggregate_type' => 'Case',
+                'aggregate_id'   => $case->id,
+                'event_type'     => 'created',
+                'payload'        => ['institution_id' => $case->institution_id, 'submitter_id' => $submitterId],
+                'available_at'   => now(),
+            ]);
+
+            // 6. Kirim notifikasi WA (asynchronous via job queue)
             SendPublicSubmissionNotification::dispatch($submission);
+
+            Log::info('[DEBUG] PublicSubmission.create() completing transaction', [
+                'id' => $submission->id,
+                'tracking_token' => $submission->tracking_token,
+            ]);
 
             return $submission->fresh(['documents']);
         });
+
+        return $submission;
+    }
+
+    private function resolveAutoSubmitterId(int $institutionId): int
+    {
+        $submitter = User::query()
+            ->where('institution_id', $institutionId)
+            ->where('status', 'active')
+            ->whereHas('roles', function ($q) {
+                $q->whereIn('name', ['pa_assistant', 'pa_management', 'pa_staff']);
+            })
+            ->orderBy('id')
+            ->first();
+
+        if ($submitter) {
+            return $submitter->id;
+        }
+
+        $fallback = User::query()->where('status', 'active')->orderBy('id')->first();
+        if (! $fallback) {
+            throw new \RuntimeException('Tidak ada user aktif untuk submitter otomatis pengajuan publik.');
+        }
+
+        return $fallback->id;
+    }
+
+    private function mapPublicDocumentType(string $publicType): string
+    {
+        return match ($publicType) {
+            'KTP'                    => 'KTP',
+            'KTP_SUAMI'              => 'KTP_SUAMI',
+            'KTP_ISTRI'              => 'KTP_ISTRI',
+            'KK'                     => 'KK',
+            'AKTA_NIKAH'             => 'AKTA_NIKAH',
+            'AKTA_CERAI'             => 'AKTA_CERAI',
+            'PUTUSAN_PA'             => 'PUTUSAN_PA',
+            'SURAT_PENGANTAR'        => 'SURAT_PENGANTAR',
+            default                  => 'OTHER',
+        };
+    }
+
+    /**
+     * Dispatch OCR processing untuk public submission document.
+     */
+    private function dispatchOcrForPublicDocument(PublicSubmission $submission, PublicSubmissionDocument $doc): void
+    {
+        try {
+            $fileFullPath = Storage::disk('public')->path($doc->stored_path);
+            
+            if (!file_exists($fileFullPath)) {
+                Log::warning('OCR file not found', [
+                    'path' => $fileFullPath,
+                    'document_id' => $doc->id,
+                ]);
+                return;
+            }
+
+            // Send to OCR service asynchronously
+            dispatch(new \App\Jobs\ProcessPublicSubmissionOcr($submission, $doc));
+
+            Log::info('[OCR] Dispatched OCR job for public submission document', [
+                'submission_id' => $submission->id,
+                'document_id' => $doc->id,
+                'document_type' => $doc->document_type,
+                'tracking_token' => $submission->tracking_token,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('[OCR] Failed to dispatch OCR job', [
+                'submission_id' => $submission->id,
+                'document_id' => $doc->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     // ── WA Notification ───────────────────────────────────────────────────────
@@ -270,6 +477,9 @@ class PublicSubmissionService
                 'type'  => $d->document_type,
                 'label' => PublicSubmissionDocument::$typeLabels[$d->document_type] ?? $d->document_type,
                 'size'  => $d->humanFileSize(),
+                'url'   => asset('storage/' . $d->stored_path),          // URL untuk web
+                'path'  => $d->stored_path,                             // Path untuk info
+                'download' => route('public.tracking.token',  $sub->tracking_token),  // Placeholder
             ])->toArray(),
         ];
     }

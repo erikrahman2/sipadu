@@ -10,7 +10,7 @@ return [
 
     'states' => [
         'DRAFT'                    => 'Draft',
-        'SUBMITTED'                => 'Submitted',
+        'SUBMITTED'                => 'Unreviewed',
         'OCR_PROCESSED'            => 'OCR Diproses',
         'PA_REVIEW'                => 'Review PA',
         'DISDUKCAPIL_VALIDATION'   => 'Validasi Disdukcapil',

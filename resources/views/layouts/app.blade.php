@@ -131,7 +131,7 @@
                 <p class="text-sm font-semibold text-gray-800">{{ auth()->user()->name }}</p>
                 <p class="text-xs text-gray-500">{{ auth()->user()->getRoleNames()->first() }}</p>
               </div>
-              <form method="POST" action="{{ route('auth.logout') }}">
+              <form method="POST" action="{{ route('auth.logout') }}" class="contents">
                 @csrf
                 <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-xl transition">
                   <i class="fas fa-sign-out-alt mr-2"></i> Logout

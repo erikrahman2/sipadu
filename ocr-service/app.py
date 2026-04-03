@@ -126,12 +126,22 @@ class Preprocessor:
         denoise:    bool = True,
         deskew:     bool = True,
         target_dpi: int  = 300,
+        contrast_boost: float = 0.0,
+        adaptive_denoise_strength: int = 10,
+        enable_variants: bool = True,
+        extra_upscale: float = 1.0,
+        bilateral_filter: bool = False,
     ):
         self.grayscale  = grayscale
         self.binarize   = binarize
         self.denoise    = denoise
         self.deskew     = deskew
         self.target_dpi = target_dpi
+        self.contrast_boost = contrast_boost
+        self.adaptive_denoise_strength = adaptive_denoise_strength
+        self.enable_variants = enable_variants
+        self.extra_upscale = extra_upscale
+        self.bilateral_filter = bilateral_filter
 
     def process(self, pil_image: Image.Image) -> np.ndarray:
         img = np.array(pil_image.convert("RGB"))
@@ -140,11 +150,20 @@ class Preprocessor:
         if self.grayscale:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
+        # Apply bilateral filtering for better edge preservation (especially for KTP_ISTRI)
+        if self.bilateral_filter and len(img.shape) == 2:
+            img = cv2.bilateralFilter(img, 9, 75, 75)
+
+        # Apply contrast boost if specified
+        if self.contrast_boost > 0.0 and len(img.shape) == 2:
+            img = cv2.convertScaleAbs(img, alpha=1.0 + self.contrast_boost, beta=0)
+            img = np.clip(img, 0, 255).astype(np.uint8)
+
         if self.denoise:
             if len(img.shape) == 2:
-                img = cv2.fastNlMeansDenoising(img, h=10)
+                img = cv2.fastNlMeansDenoising(img, h=self.adaptive_denoise_strength)
             else:
-                img = cv2.fastNlMeansDenoisingColored(img, h=10)
+                img = cv2.fastNlMeansDenoisingColored(img, h=self.adaptive_denoise_strength)
 
         if self.binarize and len(img.shape) == 2:
             img = cv2.adaptiveThreshold(
@@ -155,6 +174,12 @@ class Preprocessor:
 
         if self.deskew and len(img.shape) == 2:
             img = self._deskew(img)
+
+        # Apply extra upscaling if specified (for fine text)
+        if self.extra_upscale > 1.0 and len(img.shape) == 2:
+            h, w = img.shape[:2]
+            img = cv2.resize(img, None, fx=self.extra_upscale, fy=self.extra_upscale, 
+                           interpolation=cv2.INTER_CUBIC)
 
         return img
 
@@ -180,15 +205,36 @@ class Preprocessor:
         eq = cv2.equalizeHist(gray)
         variants.append(("equalized", eq))
 
+        # CLAHE (Contrast Limited Adaptive Histogram Equalization) - better than simple equalization
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        clahe_img = clahe.apply(gray)
+        variants.append(("clahe", clahe_img))
+
         # Upscale fallback for tiny/blurred text.
         upscaled = cv2.resize(gray, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_CUBIC)
         variants.append(("upscaled", upscaled))
+
+        # Extra aggressive upscaling for KTP_ISTRI (spouse cards often have smaller text)
+        if self.extra_upscale > 1.0:
+            upscaled_aggressive = cv2.resize(gray, None, fx=self.extra_upscale, fy=self.extra_upscale, 
+                                           interpolation=cv2.INTER_CUBIC)
+            variants.append(("upscaled_aggressive", upscaled_aggressive))
 
         # Left-panel ROI fallback (KTP text region is usually on the left side).
         h, w = gray.shape[:2]
         left_panel = gray[0:int(h * 0.78), 0:int(w * 0.72)]
         if left_panel.size > 0:
             variants.append(("left_panel", left_panel))
+
+        # Morphological operations for cleaning (especially useful for KTP_ISTRI)
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+        morph_gray = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, kernel)
+        variants.append(("morphological", morph_gray))
+
+        # Bilateral filtering for edge preservation
+        if self.bilateral_filter:
+            bilateral = cv2.bilateralFilter(gray, 9, 75, 75)
+            variants.append(("bilateral", bilateral))
 
         return variants
 
@@ -565,6 +611,66 @@ class OCREngine:
 # Singletons
 # ─────────────────────────────────────────────────────────────────────────────
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Singletons
+# ─────────────────────────────────────────────────────────────────────────────
+
+def get_preprocessor_config(document_type: str = "default") -> dict:
+    """Get preprocessor configuration for the given document type."""
+    # Define document-specific profiles
+    profiles = {
+        'KTP_ISTRI': {
+            'grayscale': True,
+            'binarize': True,
+            'denoise': True,
+            'deskew': True,
+            'target_dpi': app.config["UPLOAD_DPI"],
+            'contrast_boost': 1.2,  # Boost contrast for spouse cards
+            'adaptive_denoise_strength': 12,  # Stronger denoise
+            'enable_variants': True,
+            'extra_upscale': 1.5,  # Additional upscaling for small text
+            'bilateral_filter': True,  # Better edge preservation
+        },
+        'KTP_SUAMI': {
+            'grayscale': True,
+            'binarize': True,
+            'denoise': True,
+            'deskew': True,
+            'target_dpi': app.config["UPLOAD_DPI"],
+            'contrast_boost': 0.0,
+            'adaptive_denoise_strength': 10,
+            'enable_variants': True,
+            'extra_upscale': 1.0,
+            'bilateral_filter': False,
+        },
+        'KTP': {
+            'grayscale': True,
+            'binarize': True,
+            'denoise': True,
+            'deskew': True,
+            'target_dpi': app.config["UPLOAD_DPI"],
+            'contrast_boost': 0.0,
+            'adaptive_denoise_strength': 10,
+            'enable_variants': True,
+            'extra_upscale': 1.0,
+            'bilateral_filter': False,
+        },
+        'default': {
+            'grayscale': True,
+            'binarize': True,
+            'denoise': True,
+            'deskew': True,
+            'target_dpi': app.config["UPLOAD_DPI"],
+            'contrast_boost': 0.0,
+            'adaptive_denoise_strength': 10,
+            'enable_variants': True,
+            'extra_upscale': 1.0,
+            'bilateral_filter': False,
+        },
+    }
+    
+    return profiles.get(document_type, profiles['default'])
+
 preprocessor = Preprocessor(
     grayscale=True,
     binarize=True,
@@ -621,6 +727,9 @@ def ocr_process():
     if not data:
         return jsonify({"error": "Empty file."}), 400
 
+    # Get document type from request header for specialized preprocessing
+    document_type = request.headers.get("X-Document-Type", "generic")
+    
     try:
         images = _load_images(data, mime)
     except Exception as e:
@@ -628,6 +737,15 @@ def ocr_process():
         return jsonify({"error": f"Failed to load image: {e}"}), 422
 
     try:
+        # Create preprocessor with document-type-specific configuration
+        config = get_preprocessor_config(document_type)
+        doc_preprocessor = Preprocessor(**config)
+        
+        logger.info(f"OCR processing document type: {document_type}", extra={
+            "document_type": document_type,
+            "config": config,
+        })
+        
         # Process all pages; merge results (primary = first page)
         results = []
         psm_candidates = [
@@ -638,7 +756,7 @@ def ocr_process():
         for pil_img in images:
             candidates: list[dict] = []
 
-            for variant_name, processed in preprocessor.build_variants(pil_img):
+            for variant_name, processed in doc_preprocessor.build_variants(pil_img):
                 for psm in psm_candidates:
                     cfg = f"--oem 3 --psm {psm}"
                     result = engine.extract(processed, config=cfg)
