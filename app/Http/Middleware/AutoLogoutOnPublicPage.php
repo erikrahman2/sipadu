@@ -23,6 +23,15 @@ class AutoLogoutOnPublicPage
         if (Auth::check()) {
             $user = Auth::user();
 
+            // Jangan auto-logout jika user sudah login sebagai staf/admin
+            if ($user->hasRole('super_admin') ||
+                $user->hasRole('pa_assistant') ||
+                $user->hasRole('pa_management') ||
+                $user->hasRole('pa_staff') ||
+                $user->hasRole('disdukcapil_staff')) {
+                return $next($request);
+            }
+
             // Catat ke audit log
             $this->audit->log($user, 'auth.auto_logout_public_page', 'User', $user?->id,
                 null,

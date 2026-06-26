@@ -86,51 +86,15 @@ class PublicSubmissionService
         $nikSuami = $data['nik_suami'] ?? null;
         $nikIstri = $data['nik_istri'] ?? null;
 
-        // ── Validasi 1: Kedua NIK harus berbeda ────────────────────────────────
+        // ── Validasi: Kedua NIK harus berbeda ────────────────────────────────
         if ($nikSuami && $nikIstri && $nikSuami === $nikIstri) {
             throw new \RuntimeException(
                 'NIK Suami tidak boleh sama dengan NIK Istri.'
             );
         }
 
-        // ── Validasi 2: Minimal satu NIK harus tidak frozen ────────────────────
-        $nikToCheck = $nikSuami ?? $nikIstri;
-        if ($nikToCheck && PublicSubmission::isNikFrozen($nikToCheck)) {
-            $reason = PublicSubmission::getFrozenReason($nikToCheck);
-            
-            if ($reason) {
-                $statusLabel = match($reason['status']) {
-                    'REVIEWING' => 'sedang ditinjau petugas',
-                    'WAITING_OCR' => 'dalam proses verifikasi dokumen',
-                    'APPROVED' => 'sudah disetujui dan dibuat kasus resmi',
-                    'PA_REVIEW' => 'sedang direview oleh Pengadilan Agama',
-                    'DISDUKCAPIL_VALIDATION' => 'sedang divalidasi oleh Disdukcapil',
-                    default => 'dalam proses'
-                };
-
-                $message = "NIK ini tidak dapat mengajukan permohonan baru karena masih ada pengajuan yang {$statusLabel}. ";
-                
-                if ($reason['type'] === 'public_submission') {
-                    $message .= "Token tracking: {$reason['token']}. ";
-                } else {
-                    $message .= "Nomor kasus: {$reason['case_number']}. ";
-                }
-                
-                $message .= "Silakan tunggu hingga proses selesai atau hubungi kantor terkait untuk informasi lebih lanjut.";
-                
-                throw new \RuntimeException($message);
-            }
-        }
-
-        // ── Validasi 3: Rate limit (3x per minggu) ────────────────────────────
-        if ($nikToCheck && ! $this->isAllowed($nikToCheck)) {
-            $next = $this->nextAllowedDate($nikToCheck);
-            throw new \RuntimeException(
-                'NIK ini telah mencapai batas maksimal ' . PublicSubmission::MAX_SUBMISSIONS
-                . ' pengajuan dalam ' . PublicSubmission::LIMIT_DAYS . ' hari. '
-                . ($next ? 'Anda bisa mengajukan kembali mulai ' . $next->translatedFormat('d F Y') . '.' : '')
-            );
-        }
+        // NOTE: Pembatasan duplicate NIK dihapus untuk memungkinkan testing format dokumen
+        // Sistem sekarang bisa menerima pengajuan dengan NIK yang sama berkali-kali
 
         $submission = DB::transaction(function () use ($data, $files, $request, $nikSuami) {
 
@@ -197,18 +161,7 @@ class PublicSubmissionService
                 throw $e;
             }
 
-            // 3. Replace data lama dengan NIK yang sama (data lama di-soft delete)
-            if ($nikSuami) {
-                $replaced = PublicSubmission::replaceOldSubmissions($nikSuami, $submission->id);
-                if ($replaced > 0) {
-                    Log::info("PublicSubmission: Replaced {$replaced} old submission(s) for NIK {$nikSuami}", [
-                        'new_submission_id' => $submission->id,
-                        'nik' => $nikSuami,
-                    ]);
-                }
-            }
-
-            // 4. Simpan dokumen yang diupload
+            // 3. Simpan dokumen yang diupload
             $hasKtpSuami = false;
             $hasKtpIstri = false;
 

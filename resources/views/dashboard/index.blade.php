@@ -224,7 +224,7 @@
   @else
 
   {{-- Welcome Banner --}}
-  @unless(auth()->user()->hasRole('pa_assistant') || auth()->user()->hasRole('pa_management'))
+  @unless(auth()->user()->hasRole('pa_assistant') || auth()->user()->hasRole('pa_management') || auth()->user()->hasRole('pa_staff'))
   <div class="bg-gradient-to-r from-primary-dark to-primary rounded-2xl p-6 text-white shadow-lg">
     <h1 class="text-2xl font-bold">Selamat datang, {{ auth()->user()->name }} 👋</h1>
     <p class="text-blue-200 mt-1">
@@ -319,6 +319,30 @@
         </div>
       </div>
     </div>
+
+    {{-- Right: PA Staff Cards (sejajar dengan stat cards) --}}
+    @role('pa_staff')
+    <div class="lg:col-span-3">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 h-full">
+        <a href="{{ route('dashboard.cases') }}?status=COMPLETED"
+           class="bg-gradient-to-br from-[#D4633C]/80 to-[#D4633C] rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-lg hover:shadow-xl transition-all text-white group">
+          <div class="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+            <i class="fas fa-archive text-white text-2xl"></i>
+          </div>
+          <p class="font-bold text-base">Arsip & Serah-Terima</p>
+          <p class="text-white/80 text-xs mt-1.5">Kasus selesai siap diarsipkan</p>
+        </a>
+        <a href="{{ route('dashboard.cases') }}"
+           class="bg-gradient-to-br from-[#0D1F08]/90 to-[#0D1F08] rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-lg hover:shadow-xl transition-all text-white group">
+          <div class="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+            <i class="fas fa-folder text-white text-2xl"></i>
+          </div>
+          <p class="font-bold text-base">Semua Kasus</p>
+          <p class="text-white/80 text-xs mt-1.5">Pantau dokumen yang beredar</p>
+        </a>
+      </div>
+    </div>
+    @endrole
 
     {{-- Right: Chart Card untuk PA Assistant --}}
     @role('pa_assistant')
@@ -620,71 +644,33 @@
     </div>
     @endrole
   </div>
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-    {{-- ── PA Staff ──────────────────────────────────────────────────── --}}
-    @role('pa_staff')
-      <a href="{{ route('dashboard.cases') }}?status=COMPLETED"
-         class="bg-white border border-dashed border-green-400 rounded-2xl p-6 flex items-center gap-4 hover:bg-green-50 transition group">
-        <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center group-hover:bg-green-200 transition">
-          <i class="fas fa-archive text-green-600 text-xl"></i>
+  {{-- ── Super Admin Cards ────────────────────────────────────────── --}}
+  @role('super_admin')
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+    <a href="{{ route('dashboard.admin.users') }}"
+         class="bg-white border-2 border-brand rounded-2xl p-6 flex items-center gap-4 hover:bg-brand/10 transition group shadow-md">
+        <div class="w-12 h-12 bg-brand rounded-xl flex items-center justify-center group-hover:scale-110 transition">
+          <i class="fas fa-users text-white text-xl"></i>
         </div>
         <div>
-          <p class="font-semibold text-gray-800">Arsip & Serah-Terima</p>
-          <p class="text-xs text-gray-500">Kasus selesai siap diarsipkan</p>
-        </div>
-      </a>
-      <a href="{{ route('dashboard.cases') }}"
-         class="bg-white border border-gray-200 rounded-2xl p-6 flex items-center gap-4 hover:border-green-400 hover:bg-green-50 transition">
-        <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-          <i class="fas fa-folder text-blue-500 text-xl"></i>
-        </div>
-        <div>
-          <p class="font-semibold text-gray-800">Semua Kasus</p>
-          <p class="text-xs text-gray-500">Pantau dokumen yang beredar</p>
-        </div>
-      </a>
-      <a href="{{ route('dashboard.upload') }}"
-         class="bg-white border border-gray-200 rounded-2xl p-6 flex items-center gap-4 hover:border-green-400 hover:bg-green-50 transition">
-        <div class="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center">
-          <i class="fas fa-paper-plane text-teal-500 text-xl"></i>
-        </div>
-        <div>
-          <p class="font-semibold text-gray-800">Kirim Notifikasi</p>
-          <p class="text-xs text-gray-500">Info pengambilan dokumen ke pemohon</p>
-        </div>
-      </a>
-    @endrole
-
-
-
-    {{-- super_admin diarahkan ke /dashboard/admin/users oleh controller,
-         blok ini hanya sebagai fallback jika view ini dirender untuk super_admin --}}
-    @role('super_admin')
-      <a href="{{ route('dashboard.admin.users') }}"
-         class="bg-white border border-dashed border-primary rounded-2xl p-6 flex items-center gap-4 hover:bg-blue-50 transition group">
-        <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center group-hover:bg-purple-200 transition">
-          <i class="fas fa-users text-purple-500 text-xl"></i>
-        </div>
-        <div>
-          <p class="font-semibold text-gray-800">Manajemen User</p>
-          <p class="text-xs text-gray-500">Kelola akun & hak akses</p>
+          <p class="font-semibold text-darktext">Manajemen User</p>
+          <p class="text-xs text-gray-600">Kelola akun & hak akses</p>
         </div>
       </a>
       <a href="{{ route('dashboard.admin.audit') }}"
-         class="bg-white border border-gray-200 rounded-2xl p-6 flex items-center gap-4 hover:border-primary hover:bg-blue-50 transition">
-        <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-          <i class="fas fa-shield-halved text-red-500 text-xl"></i>
+         class="bg-white border-2 border-coral rounded-2xl p-6 flex items-center gap-4 hover:bg-coral/10 transition group shadow-md">
+        <div class="w-12 h-12 bg-coral rounded-xl flex items-center justify-center">
+          <i class="fas fa-shield-halved text-white text-xl"></i>
         </div>
         <div>
-          <p class="font-semibold text-gray-800">Audit Log</p>
-          <p class="text-xs text-gray-500">Pantau aktivitas sistem</p>
+          <p class="font-semibold text-darktext">Audit Log</p>
+          <p class="text-xs text-gray-600">Pantau aktivitas sistem</p>
         </div>
       </a>
       <a href="{{ route('dashboard.admin.logs') }}"
-         class="bg-white border border-gray-200 rounded-2xl p-6 flex items-center gap-4 hover:border-primary hover:bg-blue-50 transition">
-        <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
-          <i class="fas fa-list-check text-gray-500 text-xl"></i>
+         class="bg-white border-2 border-green-sm rounded-2xl p-6 flex items-center gap-4 hover:bg-green-sm/20 transition group shadow-md">
+        <div class="w-12 h-12 bg-green-sm rounded-xl flex items-center justify-center">
+          <i class="fas fa-list-check text-white text-xl"></i>
         </div>
         <div>
           <p class="font-semibold text-gray-800">Access Log</p>
@@ -692,48 +678,48 @@
         </div>
       </a>
     @endrole
-
   </div>
+  {{-- end super admin grid --}}
 
-  {{-- Recent Items Table (Cases + Public Submissions) --}}
+  {{-- Aktivitas Terbaru (shared) --}}
   <div class="bg-white rounded-2xl shadow-sm border border-gray-100">
-    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-      <h2 class="font-semibold text-gray-800"><i class="fas fa-history mr-2 text-primary"></i>Aktivitas Terbaru</h2>
-      <a href="{{ route('dashboard.cases') }}" class="text-sm text-primary hover:underline">Lihat semua →</a>
+    <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="font-semibold text-sm text-gray-800"><i class="fas fa-history mr-2 text-gray-400"></i>Aktivitas Terbaru</h2>
+      <a href="{{ route('dashboard.cases') }}" class="text-xs font-medium text-gray-500 hover:text-gray-800">Lihat semua →</a>
     </div>
     <div class="overflow-x-auto">
       <table class="min-w-full text-sm">
         <thead>
-          <tr class="bg-gray-50 text-gray-600 text-left text-xs">
-            <th class="px-4 py-3 font-semibold">Jenis</th>
-            <th class="px-4 py-3 font-semibold">No/Token</th>
-            <th class="px-4 py-3 font-semibold">Pemohon</th>
-            <th class="px-4 py-3 font-semibold">Status</th>
-            <th class="px-4 py-3 font-semibold">Tanggal</th>
-            <th class="px-4 py-3 font-semibold">Aksi</th>
+          <tr class="bg-gray-50 text-gray-500 text-left text-xs">
+            <th class="px-4 py-3 font-medium">Jenis</th>
+            <th class="px-4 py-3 font-medium">No/Token</th>
+            <th class="px-4 py-3 font-medium">Pemohon</th>
+            <th class="px-4 py-3 font-medium">Status</th>
+            <th class="px-4 py-3 font-medium">Tanggal</th>
+            <th class="px-4 py-3 font-medium">Aksi</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
           @forelse($recentItems as $item)
-          <tr class="hover:bg-blue-50/40 transition">
+          <tr class="hover:bg-gray-50 transition">
             <td class="px-4 py-3">
               @if($item->source_type === 'internal')
-                <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700">
+                <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold bg-gray-800 text-white">
                   <i class="fas fa-briefcase mr-1"></i> Kasus
                 </span>
               @else
-                <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-purple-100 text-purple-700">
+                <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold bg-orange-500 text-white">
                   <i class="fas fa-users mr-1"></i> Publik
                 </span>
               @endif
             </td>
-            <td class="px-4 py-3 font-mono text-xs text-primary">
+            <td class="px-4 py-3 font-mono text-xs font-semibold text-cyan-700">
               {{ Str::limit($item->case_number, 20) }}
               @if($item->source_type === 'public')
                 <div class="text-gray-500 mt-1">{{ Str::limit($item->tracking_token, 20) }}</div>
               @endif
             </td>
-            <td class="px-4 py-3">
+            <td class="px-4 py-3 font-medium text-gray-800">
               {{ $item->petitioner_name ?? '-' }}
             </td>
             <td class="px-4 py-3">
@@ -742,7 +728,7 @@
             <td class="px-4 py-3 text-gray-500 text-xs">{{ $item->updated_at->diffForHumans() }}</td>
             <td class="px-4 py-3">
               <a href="{{ auth()->user()->hasAnyRole(['pa_management', 'super_admin']) ? route('dashboard.review.show', $item->id) : route('dashboard.cases.show', $item->id) }}"
-                 class="text-primary hover:underline text-xs font-medium">
+                 class="font-semibold hover:underline text-xs text-orange-500">
                 <i class="fas fa-eye mr-1"></i>Review
               </a>
             </td>

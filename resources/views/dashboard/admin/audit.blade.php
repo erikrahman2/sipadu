@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="space-y-4">
-  <h1 class="text-xl font-bold text-gray-800"><i class="fas fa-shield-alt mr-2 text-yellow-500"></i>Audit Trail</h1>
+  <h1 class="text-xl font-bold text-stone-800"><i class="fas fa-shield-alt mr-2 text-amber-700"></i>Audit Trail</h1>
 
   <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
     <table class="min-w-full text-sm">

@@ -109,6 +109,10 @@ class GraphService
     // Relationship Upsert
     // ─────────────────────────────────────────────────────────────────────────
 
+    /**
+     * Link User to Institution with WORKS_AT relationship.
+     * (User) -[:WORKS_AT]-> (Institution)
+     */
     public function linkUserToInstitution(int $userId, int $institutionId): void
     {
         $this->run(
@@ -118,15 +122,23 @@ class GraphService
         );
     }
 
+    /**
+     * Link Institution to Case with HAS relationship.
+     * (Institution) -[:HAS]-> (Case)
+     */
     public function linkInstitutionToCase(int $institutionId, int $caseId): void
     {
         $this->run(
             'MATCH (i:Institution {mysql_id: $instId}), (c:Case {mysql_id: $caseId})
-             MERGE (i)-[:MANAGES]->(c)',
+             MERGE (i)-[:HAS]->(c)',
             ['instId' => $institutionId, 'caseId' => $caseId]
         );
     }
 
+    /**
+     * Link User to Case with specified relationship type.
+     * Default: (User) -[:SUBMITTED]-> (Case)
+     */
     public function linkUserToCase(int $userId, int $caseId, string $relType = 'SUBMITTED'): void
     {
         $this->run(
@@ -136,12 +148,57 @@ class GraphService
         );
     }
 
+    /**
+     * Link Case to Document with HAS_DOCUMENT relationship.
+     * (Case) -[:HAS_DOCUMENT]-> (Document)
+     */
     public function linkCaseToDocument(int $caseId, int $documentId): void
     {
         $this->run(
             'MATCH (c:Case {mysql_id: $caseId}), (d:Document {mysql_id: $docId})
-             MERGE (c)-[:HAS]->(d)',
+             MERGE (c)-[:HAS_DOCUMENT]->(d)',
             ['caseId' => $caseId, 'docId' => $documentId]
+        );
+    }
+
+    /**
+     * Link User as verification operator to Case.
+     * (User) -[:VERIFY_OPERATOR]-> (Case)
+     * Used for assigned_pa_user_id and assigned_disdukcapil_user_id
+     */
+    public function linkUserAsVerifyOperator(int $userId, int $caseId): void
+    {
+        $this->run(
+            'MATCH (u:User {mysql_id: $userId}), (c:Case {mysql_id: $caseId})
+             MERGE (u)-[:VERIFY_OPERATOR]->(c)',
+            ['userId' => $userId, 'caseId' => $caseId]
+        );
+    }
+
+    /**
+     * Link User to Case with RELATED_TO relationship.
+     * (User) -[:RELATED_TO]-> (Case)
+     * Generic relationship for users involved with a case
+     */
+    public function linkUserRelatedToCase(int $userId, int $caseId): void
+    {
+        $this->run(
+            'MATCH (u:User {mysql_id: $userId}), (c:Case {mysql_id: $caseId})
+             MERGE (u)-[:RELATED_TO]->(c)',
+            ['userId' => $userId, 'caseId' => $caseId]
+        );
+    }
+
+    /**
+     * Remove User's VERIFY_OPERATOR link from Case.
+     * Called when assignment is removed.
+     */
+    public function unlinkUserAsVerifyOperator(int $userId, int $caseId): void
+    {
+        $this->run(
+            'MATCH (u:User {mysql_id: $userId})-[r:VERIFY_OPERATOR]->(c:Case {mysql_id: $caseId})
+             DELETE r',
+            ['userId' => $userId, 'caseId' => $caseId]
         );
     }
 

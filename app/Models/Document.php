@@ -16,6 +16,59 @@ class Document extends Model
         'status', 'checksum',
     ];
 
+    // ── Boot: Neo4j Sync Events ──────────────────────────────────────────────
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        // Document created → sync to Neo4j
+        static::created(function ($model) {
+            IntegrationQueue::create([
+                'aggregate_type' => 'Document',
+                'aggregate_id'   => $model->id,
+                'event_type'     => 'created',
+                'payload'        => [
+                    'case_id'       => $model->case_id,
+                    'document_type' => $model->document_type,
+                    'status'        => $model->status,
+                ],
+                'available_at'   => now(),
+            ]);
+        });
+
+        // Document updated → sync changes to Neo4j
+        static::updated(function ($model) {
+            IntegrationQueue::create([
+                'aggregate_type' => 'Document',
+                'aggregate_id'   => $model->id,
+                'event_type'     => 'updated',
+                'payload'        => [
+                    'case_id'       => $model->case_id,
+                    'document_type' => $model->document_type,
+                    'status'        => $model->status,
+                ],
+                'available_at'   => now(),
+            ]);
+        });
+
+        // Document deleted → remove from Neo4j
+        static::deleting(function ($model) {
+            if ($model->forceDeleting) {
+                IntegrationQueue::create([
+                    'aggregate_type' => 'Document',
+                    'aggregate_id'   => $model->id,
+                    'event_type'     => 'deleted',
+                    'payload'        => [
+                        'case_id'       => $model->case_id,
+                        'document_type' => $model->document_type,
+                    ],
+                    'available_at'   => now(),
+                ]);
+            }
+        });
+    }
+
     public function case()
     {
         return $this->belongsTo(CaseModel::class, 'case_id');

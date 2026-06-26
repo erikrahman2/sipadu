@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="space-y-4">
-  <h1 class="text-xl font-bold text-gray-800"><i class="fas fa-users mr-2 text-blue-500"></i>Manajemen User</h1>
+  <h1 class="text-xl font-bold text-stone-800"><i class="fas fa-users mr-2 text-amber-700"></i>Manajemen User</h1>
 
   <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
     <table class="min-w-full text-sm">
@@ -26,7 +26,7 @@
           <td class="px-4 py-3 text-gray-500 text-xs">{{ $user->email }}</td>
           <td class="px-4 py-3">
             @foreach($user->roles as $role)
-            <span class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">{{ $role->name }}</span>
+            <span class="bg-stone-200 text-stone-700 text-xs px-2 py-0.5 rounded-full">{{ $role->name }}</span>
             @endforeach
           </td>
           <td class="px-4 py-3 text-xs text-gray-500">{{ $user->institution?->name ?? '-' }}</td>

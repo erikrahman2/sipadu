@@ -72,7 +72,7 @@
       <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
         <span class="step-badge">1</span>
         <h2 class="font-semibold text-gray-800">Input Data Pasangan</h2>
-        <span class="text-xs text-gray-400 ml-auto">Maks. 5 MB per file - JPG, PNG, PDF</span>
+        <span class="text-xs text-gray-400 ml-auto">Maks. 10 MB per file - JPG, PNG, PDF</span>
       </div>
       <div class="p-6 space-y-6">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -285,7 +285,7 @@
       <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
         <span class="step-badge">3</span>
         <h2 class="font-semibold text-gray-800">Upload Berkas Lainnya</h2>
-        <span class="text-xs text-gray-400 ml-auto">Maks. 5 MB per file � JPG, PNG, PDF</span>
+        <span class="text-xs text-gray-400 ml-auto">Maks. 10 MB per file – JPG, PNG, PDF</span>
       </div>
       <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
         @php

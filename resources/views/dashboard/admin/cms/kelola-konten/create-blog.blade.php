@@ -1,0 +1,83 @@
+@extends('layouts.admin')
+
+@section('title', 'Tambah Berita')
+@section('page-title', 'Tambah Berita')
+
+@section('content')
+<a href="{{ route('kelola-konten.index') }}" class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-4">
+    <i class="fas fa-arrow-left"></i> Kembali ke Kelola Konten
+</a>
+
+<form action="{{ route('kelola-konten.blog.store') }}" method="POST" enctype="multipart/form-data"
+      class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
+    @csrf
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Judul Berita *</label>
+        <input type="text" name="title" value="{{ old('title') }}"
+               class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none @error('title') border-red-400 @enderror">
+        @error('title')
+            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+        @enderror
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+        <input type="text" name="slug" value="{{ old('slug') }}" placeholder="auto-generate dari judul"
+               class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none font-mono">
+        <p class="text-xs text-gray-400 mt-1">Kosongkan untuk auto-generate dari judul.</p>
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Excerpt</label>
+        <textarea name="excerpt" rows="2" placeholder="Ringkasan singkat..."
+                  class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">{{ old('excerpt') }}</textarea>
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Konten *</label>
+        <textarea name="content" rows="10" placeholder="Isi berita lengkap..."
+                  class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none @error('content') border-red-400 @enderror">{{ old('content') }}</textarea>
+        @error('content')
+            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+        @enderror
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Cover Image</label>
+            <input type="file" name="cover_image" accept="image/jpeg,image/png,image/jpg,image/webp"
+                   class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">
+            <p class="text-xs text-gray-400 mt-1">JPEG, PNG, JPG, WebP. Maks 5MB.</p>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Author Name</label>
+            <input type="text" name="author_name" value="{{ old('author_name', auth()->user()->name ?? '') }}"
+                   class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select name="status" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">
+                <option value="DRAFT" {{ old('status','DRAFT') === 'DRAFT' ? 'selected' : '' }}>Draft</option>
+                <option value="PUBLISHED" {{ old('status') === 'PUBLISHED' ? 'selected' : '' }}>Published</option>
+            </select>
+        </div>
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Published At</label>
+        <input type="datetime-local" name="published_at"
+               value="{{ old('published_at', now()->format('Y-m-d\TH:i')) }}"
+               class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">
+    </div>
+
+    <div class="flex gap-3 pt-4 border-t border-gray-100">
+        <button type="submit" class="px-6 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition shadow-sm">
+            <i class="fas fa-save mr-1"></i> Simpan
+        </button>
+        <a href="{{ route('kelola-konten.index') }}" class="px-6 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-200 transition">
+            Batal
+        </a>
+    </div>
+</form>
+@endsection

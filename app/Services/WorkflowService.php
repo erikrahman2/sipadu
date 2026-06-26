@@ -165,5 +165,28 @@ class WorkflowService
         if (in_array('submitter', $targets) && $case->submitter) {
             $case->submitter->notify(new CaseStatusChanged($case));
         }
+
+        // Notify PA Staff for COMPLETED cases
+        if (in_array('pa_staff', $targets)) {
+            $paStaffUsers = User::role('pa_staff')->get();
+            foreach ($paStaffUsers as $user) {
+                $user->notify(new CaseStatusChanged($case));
+            }
+        }
+
+        // Add more targets as needed
+        if (in_array('pa_management', $targets)) {
+            $paManagementUsers = User::role('pa_management')->get();
+            foreach ($paManagementUsers as $user) {
+                $user->notify(new CaseStatusChanged($case));
+            }
+        }
+
+        if (in_array('disdukcapil_staff', $targets)) {
+            $disdukcapilUsers = User::role('disdukcapil_staff')->get();
+            foreach ($disdukcapilUsers as $user) {
+                $user->notify(new CaseStatusChanged($case));
+            }
+        }
     }
 }

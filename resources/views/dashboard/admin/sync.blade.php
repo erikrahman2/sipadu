@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="space-y-6">
-  <h1 class="text-xl font-bold text-gray-800"><i class="fas fa-sync mr-2 text-blue-500"></i>Graph Sync Status</h1>
+  <h1 class="text-xl font-bold text-stone-800"><i class="fas fa-sync mr-2 text-amber-700"></i>Graph Sync Status</h1>
 
   {{-- Stats --}}
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4">

@@ -2,279 +2,203 @@
 
 @section('title', 'Berita & Pengumuman - SiPadu')
 
+@push('styles')
+<style>
+  .fade-up {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s cubic-bezier(.22,.61,.36,1),
+                transform 0.7s cubic-bezier(.22,.61,.36,1);
+  }
+  .fade-up.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .fade-up-delay-1 { transition-delay: 0.1s; }
+  .fade-up-delay-2 { transition-delay: 0.2s; }
+  .fade-up-delay-3 { transition-delay: 0.3s; }
+  .observe-fade {
+    will-change: opacity, transform;
+  }
+</style>
+@endpush
+
 @section('content')
+{{-- Hero Banner --}}
+<section class="relative bg-[#0D1F08] text-[#F7F4EB] py-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
+  {{-- Decorative gradient blurs --}}
+  <div class="absolute inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-white/5 blur-[120px]"></div>
+    <div class="absolute -bottom-32 -left-32 w-[400px] h-[400px] rounded-full bg-[#FFF0C4]/5 blur-[100px]"></div>
+  </div>
+  <div class="max-w-7xl mx-auto relative">
+    <div class="max-w-3xl">
+      <h1 class="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.15] observe-fade fade-up">
+        Berita <span class="italic font-light">&amp;</span> Pengumuman
+      </h1>
+      <p class="mt-5 text-base/7 text-[#FFF0C4]/80 max-w-xl observe-fade fade-up fade-up-delay-1">
+        Informasi terbaru seputar layanan SiPadu, pengumuman penting, dan update sistem pembaruan dokumen pasca perceraian.
+      </p>
+    </div>
 
-{{-- ═══════════════════════════════════════════════════════════════════════════
-    HEADER SECTION
-    ═══════════════════════════════════════════════════════════════════════════ --}}
-<section class="gradient-dark text-white py-16 px-4 sm:px-6 lg:px-8">
-  <div class="max-w-7xl mx-auto">
-    <h1 class="text-5xl md:text-6xl font-bold">Blog & Insights</h1>
-    <p class="text-gray-400 text-lg mt-2">Tips, trik, dan panduan terkini seputar pembaruan dokumen</p>
+    {{-- Search & Filter Bar --}}
+    <div class="mt-8 flex flex-col sm:flex-row gap-3 max-w-2xl observe-fade fade-up">
+      <div class="flex-1 relative">
+        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#31110F]/40">
+          <i class="fas fa-search"></i>
+        </span>
+        <input type="text" placeholder="Cari berita..." id="searchInput"
+          class="w-full pl-11 pr-4 py-3 rounded-xl bg-white text-[#31110F] placeholder:text-[#31110F]/30 border-0 focus:ring-2 focus:ring-[#0D1F08]/30 outline-none text-sm">
+      </div>
+      <div class="relative">
+        <select id="categoryFilter"
+          class="appearance-none w-full sm:w-52 pl-4 pr-10 py-3 rounded-xl bg-white text-[#31110F] border-0 focus:ring-2 focus:ring-[#0D1F08]/30 outline-none text-sm cursor-pointer">
+          <option value="">Semua Kategori</option>
+          <option value="Pengumuman">Pengumuman</option>
+          <option value="Update Sistem">Update Sistem</option>
+          <option value="Informasi">Informasi</option>
+          <option value="Regulasi">Regulasi</option>
+        </select>
+        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[#31110F]/40 pointer-events-none">
+          <i class="fas fa-chevron-down text-xs"></i>
+        </span>
+      </div>
+    </div>
   </div>
 </section>
 
-{{-- ═══════════════════════════════════════════════════════════════════════════
-    FEATURED ARTICLE
-    ═══════════════════════════════════════════════════════════════════════════ --}}
-<section class="px-4 sm:px-6 lg:px-8 py-12">
+{{-- Blog Posts Grid --}}
+<section class="py-16 px-4 sm:px-6 lg:px-8 bg-[#F7F4EB]">
   <div class="max-w-7xl mx-auto">
-    <article class="gradient-dark text-white rounded-2xl overflow-hidden shadow-2xl">
-      <div class="grid lg:grid-cols-2 min-h-96">
-        
-        {{-- Featured Image --}}
-        <div class="bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center p-8">
-          <div class="space-y-4 text-center">
-            <i class="fas fa-rocket text-6xl mb-4"></i>
-            <div>
-              <div class="text-xs font-semibold uppercase tracking-widest text-blue-200 mb-2">FEATURED</div>
-              <p class="text-sm text-gray-200">Peluncuran Sistem SiPadu v1.0</p>
+    @if($posts->isNotEmpty())
+    <div class="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+      @foreach($posts as $post)
+      <article class="break-inside-avoid group observe-fade fade-up {{ $loop->odd ? 'fade-up-delay-1' : ($loop->index >= 3 ? 'fade-up-delay-2' : '') }}">
+        <div class="rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 bg-white">
+          {{-- Card Image --}}
+          @if($post->cover_image)
+          <div class="relative overflow-hidden">
+            <img src="{{ asset('storage/' . $post->cover_image) }}" alt="{{ $post->title }}"
+              class="w-full object-cover group-hover:scale-105 transition-transform duration-500">
+          </div>
+          @else
+          <div class="w-full h-48 bg-brand/5 flex items-center justify-center">
+            <span class="text-brand/20 text-5xl"><i class="fas fa-newspaper"></i></span>
+          </div>
+          @endif
+
+          {{-- Card Content --}}
+          <div class="p-5">
+            {{-- Meta row --}}
+            <div class="flex items-center gap-3 mb-3">
+              @if($post->category_name)
+              <span class="px-2.5 py-1 bg-brand text-white text-[10px] font-semibold uppercase tracking-wider rounded-lg">
+                {{ $post->category_name }}
+              </span>
+              @endif
+              <span class="text-xs text-[#31110F]/50">
+                {{ $post->published_at ? $post->published_at->format('d M Y') : 'Draft' }}
+              </span>
+            </div>
+
+            {{-- Title --}}
+            <h3 class="text-base font-bold text-[#31110F] leading-snug mb-2 group-hover:text-brand transition-colors">
+              <a href="{{ route('berita.detail', $post->slug) }}">{{ $post->title }}</a>
+            </h3>
+
+            {{-- Excerpt --}}
+            @if($post->excerpt)
+            <p class="text-sm text-[#31110F]/60 leading-relaxed line-clamp-3">{{ Str::limit($post->excerpt, 150) }}</p>
+            @endif
+
+            {{-- Read more --}}
+            <div class="mt-4">
+              <a href="{{ route('berita.detail', $post->slug) }}"
+                class="inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:gap-2.5 transition-all">
+                Baca Selengkapnya <i class="fas fa-arrow-right text-xs"></i>
+              </a>
             </div>
           </div>
         </div>
+      </article>
+      @endforeach
+    </div>
 
-        {{-- Featured Content --}}
-        <div class="p-8 md:p-12 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center gap-3 mb-4">
-              <span class="inline-block px-3 py-1 bg-orange-500 text-white text-xs font-semibold rounded-full">Pengumuman</span>
-              <span class="text-gray-400 text-sm">24 Februari 2026</span>
-            </div>
-            <h2 class="text-3xl md:text-4xl font-bold mb-4 leading-tight">
-              Peluncuran Sistem SiPadu Versi 1.0
-            </h2>
-            <p class="text-gray-300 leading-relaxed">
-              Platform terintegrasi pembaruan dokumen kependudukan pasca perceraian telah resmi diluncurkan dengan fitur OCR otomatis, verifikasi berlapis, dan pelacakan real-time.
-            </p>
-          </div>
-          <a href="#" class="inline-flex items-center gap-2 mt-8 text-white font-semibold hover:gap-3 transition-all">
-            Read more <i class="fas fa-arrow-right"></i>
-          </a>
-        </div>
+    {{-- Pagination --}}
+    @if($posts->hasPages())
+    <div class="mt-12 flex justify-center">
+      {{ $posts->links() }}
+    </div>
+    @endif
 
+    @else
+    {{-- Empty State --}}
+    <div class="text-center py-20 observe-fade fade-up">
+      <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-brand/5 flex items-center justify-center">
+        <i class="fas fa-newspaper text-3xl text-brand/20"></i>
       </div>
-    </article>
+      <h3 class="text-xl font-bold text-[#31110F] mb-2">Belum Ada Berita</h3>
+      <p class="text-[#31110F]/50 text-sm max-w-md mx-auto">
+        Saat ini belum ada berita yang dipublikasikan. Periksa kembali nanti atau hubungi administrator untuk informasi lebih lanjut.
+      </p>
+    </div>
+    @endif
   </div>
 </section>
 
-{{-- ═══════════════════════════════════════════════════════════════════════════
-    RECENT ARTICLES
-    ═══════════════════════════════════════════════════════════════════════════ --}}
-<section class="px-4 sm:px-6 lg:px-8 py-20 bg-gray-50">
-  <div class="max-w-7xl mx-auto">
-    <h2 class="text-4xl font-bold text-gray-900 mb-12">Recent articles</h2>
+{{-- Load Font Awesome --}}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-    {{-- Articles Grid --}}
-    <div class="grid md:grid-cols-3 gap-8 mb-12">
-      
-      {{-- Article Card 1 --}}
-      <article class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all group cursor-pointer">
-        <div class="bg-gradient-to-br from-purple-400 to-pink-400 h-48 flex items-center justify-center relative overflow-hidden">
-          <div class="text-center">
-            <i class="fas fa-briefcase text-5xl text-white opacity-70"></i>
-          </div>
-          <div class="absolute top-4 left-4 flex items-center gap-1 text-xs font-semibold text-white bg-black/40 backdrop-blur-sm px-2 py-1 rounded">
-            <i class="fas fa-circle text-purple-300"></i> <span>INSIGHTS</span>
-          </div>
-        </div>
-        <div class="p-6">
-          <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-            SEPTEMBER 24, 2025 · INSIGHTS
-          </div>
-          <h3 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-brand transition-colors">
-            Bahasa Komunikasi dalam Perubahan Organisasi
-          </h3>
-          <p class="text-gray-600 text-sm leading-relaxed mb-4">
-            Memahami cara yang jelas dan berkesan menjelaskan perubahan organisasi kepada semua stakeholder untuk hasil optimal.
-          </p>
-          <a href="#" class="text-brand font-semibold text-sm hover:gap-1 inline-flex items-center gap-0 transition-all">
-            Read more <i class="fas fa-arrow-right"></i>
-          </a>
-        </div>
-      </article>
+{{-- Search & Filter Script --}}
+<script>
+(function() {
+  const searchInput = document.getElementById('searchInput');
+  const categoryFilter = document.getElementById('categoryFilter');
+  const articles = document.querySelectorAll('article');
 
-      {{-- Article Card 2 --}}
-      <article class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all group cursor-pointer">
-        <div class="bg-gradient-to-br from-orange-400 to-red-400 h-48 flex items-center justify-center relative overflow-hidden">
-          <div class="text-center">
-            <i class="fas fa-handshake text-5xl text-white opacity-70"></i>
-          </div>
-          <div class="absolute top-4 left-4 flex items-center gap-1 text-xs font-semibold text-white bg-black/40 backdrop-blur-sm px-2 py-1 rounded">
-            <i class="fas fa-circle text-red-300"></i> <span>INSIGHTS</span>
-          </div>
-        </div>
-        <div class="p-6">
-          <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-            SEPTEMBER 24, 2025 · INSIGHTS
-          </div>
-          <h3 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-brand transition-colors">
-            Struktur Sebelum Gaya: Perspektif Konsultan
-          </h3>
-          <p class="text-gray-600 text-sm leading-relaxed mb-4">
-            Mengapa struktur organisasi yang baik harus menjadi prioritas sebelum mengembangkan gaya komunikasi perusahaan.
-          </p>
-          <a href="#" class="text-brand font-semibold text-sm hover:gap-1 inline-flex items-center gap-0 transition-all">
-            Read more <i class="fas fa-arrow-right"></i>
-          </a>
-        </div>
-      </article>
+  function filterArticles() {
+    const searchTerm = searchInput.value.toLowerCase();
+    const selectedCategory = categoryFilter.value;
 
-      {{-- Article Card 3 --}}
-      <article class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all group cursor-pointer">
-        <div class="bg-gradient-to-br from-yellow-400 to-amber-400 h-48 flex items-center justify-center relative overflow-hidden">
-          <div class="text-center">
-            <i class="fas fa-chart-line text-5xl text-white opacity-70"></i>
-          </div>
-          <div class="absolute top-4 left-4 flex items-center gap-1 text-xs font-semibold text-white bg-black/40 backdrop-blur-sm px-2 py-1 rounded">
-            <i class="fas fa-circle text-yellow-300"></i> <span>INSIGHTS</span>
-          </div>
-        </div>
-        <div class="p-6">
-          <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-            SEPTEMBER 24, 2025 · INSIGHTS
-          </div>
-          <h3 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-brand transition-colors">
-            Restrukturisasi Tanpa Kehilangan Kepercayaan
-          </h3>
-          <p class="text-gray-600 text-sm leading-relaxed mb-4">
-            Strategi untuk melakukan restrukturisasi organisasi sambil mempertahankan kepercayaan karyawan dan stakeholder.
-          </p>
-          <a href="#" class="text-brand font-semibold text-sm hover:gap-1 inline-flex items-center gap-0 transition-all">
-            Read more <i class="fas fa-arrow-right"></i>
-          </a>
-        </div>
-      </article>
+    articles.forEach(article => {
+      const title = article.querySelector('h3')?.textContent.toLowerCase() || '';
+      const excerpt = article.querySelector('p')?.textContent.toLowerCase() || '';
+      const category = article.querySelector('span[class*="bg-brand"]')?.textContent.trim() || '';
 
-    </div>
+      const matchesSearch = !searchTerm || title.includes(searchTerm) || excerpt.includes(searchTerm);
+      const matchesCategory = !selectedCategory || category.includes(selectedCategory);
 
-    {{-- Second Row --}}
-    <div class="grid md:grid-cols-2 gap-8">
-      
-      {{-- Article Card 4 --}}
-      <article class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all group cursor-pointer">
-        <div class="bg-gradient-to-br from-green-400 to-emerald-400 h-40 flex items-center justify-center relative overflow-hidden">
-          <div class="text-center">
-            <i class="fas fa-book text-5xl text-white opacity-70"></i>
-          </div>
-          <div class="absolute top-4 left-4 flex items-center gap-1 text-xs font-semibold text-white bg-black/40 backdrop-blur-sm px-2 py-1 rounded">
-            <i class="fas fa-circle text-green-300"></i> <span>INSIGHTS</span>
-          </div>
-        </div>
-        <div class="p-6">
-          <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-            SEPTEMBER 24, 2025 · INSIGHTS
-          </div>
-          <h3 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-brand transition-colors">
-            Dari Krisis hingga Kredibilitas: Mendukung Perusahaan Tech
-          </h3>
-          <p class="text-gray-600 text-sm leading-relaxed mb-4">
-            Bagaimana komunikasi strategis dapat membantu perusahaan teknologi untuk bangkit dari krisis dan membangun kembali kredibilitas.
-          </p>
-          <a href="#" class="text-brand font-semibold text-sm hover:gap-1 inline-flex items-center gap-0 transition-all">
-            Read more <i class="fas fa-arrow-right"></i>
-          </a>
-        </div>
-      </article>
+      article.style.display = (matchesSearch && matchesCategory) ? '' : 'none';
+    });
+  }
 
-      {{-- Article Card 5 --}}
-      <article class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all group cursor-pointer">
-        <div class="bg-gradient-to-br from-indigo-400 to-blue-400 h-40 flex items-center justify-center relative overflow-hidden">
-          <div class="text-center">
-            <i class="fas fa-star text-5xl text-white opacity-70"></i>
-          </div>
-          <div class="absolute top-4 left-4 flex items-center gap-1 text-xs font-semibold text-white bg-black/40 backdrop-blur-sm px-2 py-1 rounded">
-            <i class="fas fa-circle text-blue-300"></i> <span>INSIGHTS</span>
-          </div>
-        </div>
-        <div class="p-6">
-          <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-            SEPTEMBER 24, 2025 · INSIGHTS
-          </div>
-          <h3 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-brand transition-colors">
-            Reputasi Dibangun dalam Hal-hal Kecil
-          </h3>
-          <p class="text-gray-600 text-sm leading-relaxed mb-4">
-            Detail kecil dalam komunikasi dan tindakan yang konsisten adalah kunci untuk membangun reputasi perusahaan yang kuat dan terpercaya.
-          </p>
-          <a href="#" class="text-brand font-semibold text-sm hover:gap-1 inline-flex items-center gap-0 transition-all">
-            Read more <i class="fas fa-arrow-right"></i>
-          </a>
-        </div>
-      </article>
+  if (searchInput) searchInput.addEventListener('input', filterArticles);
+  if (categoryFilter) categoryFilter.addEventListener('change', filterArticles);
+})();
+</script>
 
-    </div>
+@push('scripts')
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var els = document.querySelectorAll('.observe-fade.fade-up');
+    if (!els.length) return;
 
-    {{-- Load More Button --}}
-    <div class="mt-12 text-center">
-      <button class="px-8 py-3 border-2 border-gray-300 text-gray-900 font-semibold rounded-lg hover:border-brand hover:text-brand transition-colors inline-flex items-center gap-2">
-        <i class="fas fa-chevron-right"></i> Lihat Lebih Banyak
-      </button>
-    </div>
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.15,
+      rootMargin: '0px 0px -40px 0px'
+    });
 
-  </div>
-</section>
-
-{{-- ═══════════════════════════════════════════════════════════════════════════
-    NEWSLETTER SUBSCRIPTION
-    ═══════════════════════════════════════════════════════════════════════════ --}}
-<section class="gradient-dark text-white py-16 px-4 sm:px-6 lg:px-8">
-  <div class="max-w-2xl mx-auto text-center">
-    <h2 class="text-3xl md:text-4xl font-bold mb-4">Tetap Update dengan Insight Terbaru</h2>
-    <p class="text-gray-400 mb-8 text-lg">
-      Dapatkan tips, panduan, dan berita terbaru langsung di email Anda. Jangan lewatkan update penting lainnya.
-    </p>
-    <form class="flex flex-col sm:flex-row gap-3">
-      <input type="email" placeholder="Email Anda" class="flex-1 px-4 py-3 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand">
-      <button type="submit" class="px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors">
-        Subscribe
-      </button>
-    </form>
-  </div>
-</section>
-
-{{-- ═══════════════════════════════════════════════════════════════════════════
-    CTA SECTIONS
-    ═══════════════════════════════════════════════════════════════════════════ --}}
-<section class="px-4 sm:px-6 lg:px-8 py-20">
-  <div class="max-w-7xl mx-auto">
-    <h2 class="text-4xl font-bold text-gray-900 mb-12">Bagaimana Kami Memulai</h2>
-
-    <div class="grid lg:grid-cols-2 gap-8">
-      
-      {{-- CTA 1: Konsultasi --}}
-      <div class="gradient-dark text-white p-12 rounded-xl flex flex-col justify-between min-h-80">
-        <div>
-          <div class="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center mb-6">
-            <i class="fas fa-message text-xl"></i>
-          </div>
-          <h3 class="text-2xl font-bold mb-4">Konsultasi Gratis</h3>
-          <p class="text-gray-300 leading-relaxed">
-            Belum puas dengan solusi yang ada? Mari kita diskusikan kebutuhan spesifik Anda dan temukan cara terbaik untuk memproses dokumen Anda.
-          </p>
-        </div>
-        <a href="#" class="mt-8 inline-flex items-center gap-2 text-white font-semibold hover:gap-3 transition-all">
-          Booking a consultation <i class="fas fa-arrow-right"></i>
-        </a>
-      </div>
-
-      {{-- CTA 2: Layanan --}}
-      <div class="bg-gradient-to-br from-rose-400 to-orange-400 text-white p-12 rounded-xl flex flex-col justify-between min-h-80">
-        <div>
-          <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mb-6">
-            <i class="fas fa-cog text-xl"></i>
-          </div>
-          <h3 class="text-2xl font-bold mb-4">Jelajahi Layanan Kami</h3>
-          <p class="text-white/90 leading-relaxed">
-            Temukan berbagai layanan yang kami sediakan untuk memenuhi kebutuhan pembaruan dokumen kependudukan Anda dengan mudah dan cepat.
-          </p>
-        </div>
-        <a href="#" class="mt-8 inline-flex items-center gap-2 text-white font-semibold hover:gap-3 transition-all">
-          Lihat layanan <i class="fas fa-arrow-right"></i>
-        </a>
-      </div>
-
-    </div>
-  </div>
-</section>
-
+    els.forEach(function (el) {
+      observer.observe(el);
+    });
+  });
+</script>
+@endpush
 @endsection

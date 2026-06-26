@@ -3,502 +3,452 @@
 @section('title', 'Detail Kasus ' . $case->case_number)
 
 @section('content')
-<div class="max-w-5xl mx-auto" x-data="caseDetail({{ $case->id }})">
+<div class="max-w-6xl mx-auto" x-data="caseDetail({{ $case->id }})">
 
   {{-- Breadcrumb --}}
-  <nav class="text-sm text-gray-500 mb-5">
-    <span class="text-gray-700">Kotak Masuk</span>
-    <span class="mx-2">/</span>
-    <span class="font-mono text-gray-900 font-medium">{{ $case->case_number }}</span>
+  <nav class="text-xs text-gray-500 mb-3">
+    <span class="text-gray-600">Kotak Masuk</span>
+    <span class="mx-1">/</span>
+    <span class="font-mono text-gray-800 font-medium">{{ $case->case_number }}</span>
   </nav>
 
   {{-- Notifikasi --}}
   @if(session('success'))
-    <div class="mb-4 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-emerald-700 text-sm flex items-center gap-2">
+    <div class="mb-3 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-emerald-700 text-xs flex items-center gap-2">
       <i class="fas fa-check-circle"></i>
       <span>{{ session('success') }}</span>
     </div>
   @endif
   @if(session('error'))
-    <div class="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm flex items-center gap-2">
+    <div class="mb-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-red-700 text-xs flex items-center gap-2">
       <i class="fas fa-exclamation-circle"></i>
       <span>{{ session('error') }}</span>
     </div>
   @endif
 
-  {{-- Token & Status Card --}}
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-5">
-    <div class="text-xs text-gray-500 uppercase tracking-wide mb-2">Token Tracking</div>
-    <div class="font-mono text-lg font-bold text-blue-700 mb-3">{{ $case->tracking_token }}</div>
-
-    @php
-      $statusColors = [
-        'DRAFT' => ['bg' => 'bg-gray-100', 'text' => 'text-gray-800', 'label' => 'Draft'],
-        'SUBMITTED' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'label' => 'Dikirim'],
-        'OCR_PROCESSED' => ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-800', 'label' => 'OCR Selesai'],
-        'PA_REVIEW' => ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-800', 'label' => 'Review PA'],
-        'DISDUKCAPIL_VALIDATION' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'label' => 'Validasi Disdukcapil'],
-        'COMPLETED' => ['bg' => 'bg-emerald-100', 'text' => 'text-emerald-800', 'label' => 'Selesai'],
-        'REJECTED' => ['bg' => 'bg-red-100', 'text' => 'text-red-800', 'label' => 'Ditolak'],
-      ];
-      $status = $statusColors[$case->status] ?? ['bg' => 'bg-gray-100', 'text' => 'text-gray-800', 'label' => $case->status];
-    @endphp
-
-    <span class="inline-block px-4 py-1.5 rounded-full text-sm font-semibold {{ $status['bg'] }} {{ $status['text'] }}">
-      {{ $status['label'] }}
-    </span>
-
-    <div class="mt-4 flex items-center gap-2 text-sm text-gray-600">
-      <i class="far fa-clock text-gray-400"></i>
-      <span>Dibuat</span>
-      <span class="text-gray-800 font-medium">{{ $case->created_at->translatedFormat('d M Y, H:i') }}</span>
+  {{-- Header Card (Compact) --}}
+  <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4 mb-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div class="flex-1">
+        <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Token Tracking</div>
+        <div class="font-mono text-sm font-bold text-blue-700 mb-2">{{ $case->tracking_token }}</div>
+        @php
+          $statusColors = [
+            'DRAFT' => ['bg' => 'bg-gray-100', 'text' => 'text-gray-800', 'label' => 'Draft'],
+            'SUBMITTED' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'label' => 'Dikirim'],
+            'OCR_PROCESSED' => ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-800', 'label' => 'OCR Selesai'],
+            'PA_REVIEW' => ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-800', 'label' => 'Review PA'],
+            'DISDUKCAPIL_VALIDATION' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'label' => 'Validasi Disdukcapil'],
+            'COMPLETED' => ['bg' => 'bg-emerald-100', 'text' => 'text-emerald-800', 'label' => 'Selesai'],
+            'REJECTED' => ['bg' => 'bg-red-100', 'text' => 'text-red-800', 'label' => 'Ditolak'],
+          ];
+          $status = $statusColors[$case->status] ?? ['bg' => 'bg-gray-100', 'text' => 'text-gray-800', 'label' => $case->status];
+        @endphp
+        <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $status['bg'] }} {{ $status['text'] }}">
+          {{ $status['label'] }}
+        </span>
+      </div>
+      <div class="text-right text-xs text-gray-600">
+        <div><strong>Dibuat:</strong> {{ $case->created_at->format('d M Y, H:i') }}</div>
+        @if($case->submitted_at)
+        <div><strong>Dikirim:</strong> {{ $case->submitted_at->format('d M Y, H:i') }}</div>
+        @endif
+      </div>
     </div>
-
-    @if($case->submitted_at)
-    <div class="mt-2 flex items-center gap-2 text-sm text-gray-600">
-      <i class="far fa-paper-plane text-gray-400"></i>
-      <span>Dikirim</span>
-      <span class="text-gray-800 font-medium">{{ $case->submitted_at->translatedFormat('d M Y, H:i') }}</span>
-    </div>
-    @endif
-
-    {{-- Draft Actions --}}
-    @if($case->status === 'DRAFT' && $case->submitter_id === auth()->id())
-    <div class="mt-5 flex gap-3">
-      <a href="{{ route('dashboard.cases.edit-draft', $case->id) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition">
-        <i class="fas fa-edit"></i> Edit Draft
-      </a>
-    </div>
-    @endif
   </div>
 
-  {{-- Informasi Kasus --}}
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-5">
-    <h3 class="font-semibold text-gray-800 text-base mb-4">
-      <i class="fas fa-info-circle mr-2 text-blue-500"></i>Informasi Kasus
-    </h3>
-    <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-      <div>
-        <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Nomor Kasus</dt>
-        <dd class="font-mono text-base font-semibold text-gray-900">{{ $case->case_number }}</dd>
-      </div>
-      <div>
-        <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Pemohon</dt>
-        <dd class="text-base font-medium text-gray-900">{{ $case->submitter?->name }}</dd>
-      </div>
-      <div>
-        <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Institusi</dt>
-        <dd class="text-base text-gray-900">{{ $case->institution?->name }}</dd>
-      </div>
-      <div>
-        <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Status</dt>
-        <dd class="text-base text-gray-900">{{ $status['label'] }}</dd>
-      </div>
-    </dl>
+  {{-- ACTION BUTTONS: Draft Management --}}
+  @if($case->status === 'DRAFT' && ($case->submitter_id === auth()->id() || auth()->user()->hasRole('super_admin')))
+  <div class="flex gap-2 mb-4 flex-wrap">
+    <a href="{{ route('dashboard.cases.edit-draft', $case->id) }}" 
+       class="px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 transition flex items-center gap-2">
+      <i class="fas fa-edit"></i>
+      Edit Draft
+    </a>
+    <a href="{{ route('dashboard.cases.edit-draft', $case->id) }}#submit" 
+       class="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition flex items-center gap-2">
+      <i class="fas fa-paper-plane"></i>
+      Kirim Pengajuan
+    </a>
+    <a href="{{ route('dashboard.cases') }}" 
+       class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition">
+      Kembali
+    </a>
+  </div>
+  @endif
+
+  {{-- Info Grid Ringkas --}}
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-3">
+      <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">No. Kasus</div>
+      <div class="font-mono text-sm font-bold text-gray-900">{{ $case->case_number }}</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-3">
+      <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Pemohon</div>
+      <div class="text-sm font-medium text-gray-900">{{ $case->submitter?->name ?? '-' }}</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-3">
+      <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Institusi</div>
+      <div class="text-sm text-gray-900">{{ $case->institution?->name ?? '-' }}</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-3">
+      <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Tanggal Cerai</div>
+      <div class="text-sm font-mono text-gray-900">{{ $case->divorce_date ? $case->divorce_date->format('d M Y') : '-' }}</div>
+    </div>
   </div>
 
-  {{-- Data Pasangan (Grid 2 Kolom) --}}
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+  {{-- Data Suami & Istri (Bersih) --}}
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-4">
     {{-- Data Suami --}}
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      <div class="bg-gradient-to-r from-blue-50 to-blue-100/50 px-6 py-4 border-b border-blue-200">
-        <h3 class="font-semibold text-gray-800 text-base">Data Suami</h3>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+      <div class="bg-blue-50 px-4 py-2 border-b border-blue-200 flex items-center gap-2">
+        <i class="fas fa-male text-blue-600 text-sm"></i>
+        <h3 class="font-semibold text-gray-800 text-sm">Data Suami</h3>
+        @if($suami_ocr['is_available'] && $suami_ocr['is_reviewed'])
+        <span class="ml-auto text-xs px-2 py-1 rounded bg-green-100 text-green-700">✓ Sudah Divalidasi</span>
+        @elseif($suami_ocr['is_available'])
+        <span class="ml-auto text-xs px-2 py-1 rounded bg-amber-100 text-amber-700">OCR</span>
+        @endif
       </div>
-      <div class="p-6">
-        <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+      <div class="p-3 space-y-3 text-xs">
+        <div>
+          <div class="text-gray-500 uppercase tracking-wide mb-0.5">NIK</div>
+          <div class="font-mono font-bold text-gray-900">{{ $suami_ocr['is_available'] ? ($suami_ocr['nik'] ?? '-') : ($case->petitioner_nik ?? '-') }}</div>
+        </div>
+        <div>
+          <div class="text-gray-500 uppercase tracking-wide mb-0.5">Nama</div>
+          <div class="font-medium text-gray-900">{{ $suami_ocr['is_available'] ? ($suami_ocr['nama'] ?? '-') : ($case->petitioner_name ?? '-') }}</div>
+        </div>
+        <div>
+          <div class="text-gray-500 uppercase tracking-wide mb-0.5">Telepon</div>
+          <div class="font-mono text-gray-900">{{ $case->petitioner_phone ?? '-' }}</div>
+        </div>
+        <div>
+          <div class="text-gray-500 uppercase tracking-wide mb-0.5">Alamat</div>
+          <div class="text-gray-900">{{ $suami_ocr['is_available'] ? ($suami_ocr['alamat'] ?? '-') : ($case->petitioner_alamat ?? '-') }}</div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
           <div>
-            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">NIK</dt>
-            <dd class="font-mono text-base font-semibold text-gray-900">{{ $case->petitioner_nik ?? '-' }}</dd>
+            <div class="text-gray-500 uppercase tracking-wide mb-0.5">RT/RW</div>
+            <div class="font-mono text-gray-900">{{ $suami_ocr['is_available'] ? ($suami_ocr['rt_rw'] ?? '-') : ($case->petitioner_rt_rw ?? '-') }}</div>
           </div>
           <div>
-            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Nama Lengkap</dt>
-            <dd class="text-base font-medium text-gray-900">{{ $case->petitioner_name ?? '-' }}</dd>
+            <div class="text-gray-500 uppercase tracking-wide mb-0.5">Kelurahan</div>
+            <div class="text-gray-900">{{ $suami_ocr['is_available'] ? ($suami_ocr['kelurahan'] ?? '-') : ($case->petitioner_kelurahan ?? '-') }}</div>
           </div>
-          <div>
-            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Nomor Telepon</dt>
-            <dd class="font-mono text-base text-gray-900">{{ $case->petitioner_phone ?? '-' }}</dd>
-          </div>
-          <div>
-            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Alamat</dt>
-            <dd class="text-base text-gray-900">{{ $case->petitioner_alamat ?? '-' }}</dd>
-          </div>
-          <div>
-            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">RT/RW</dt>
-            <dd class="font-mono text-base text-gray-900">{{ $case->petitioner_rt_rw ?? '-' }}</dd>
-          </div>
-          <div>
-            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Kelurahan</dt>
-            <dd class="text-base text-gray-900">{{ $case->petitioner_kelurahan ?? '-' }}</dd>
-          </div>
-          <div>
-            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Kecamatan</dt>
-            <dd class="text-base text-gray-900">{{ $case->petitioner_kecamatan ?? '-' }}</dd>
-          </div>
-        </dl>
+        </div>
+        <div>
+          <div class="text-gray-500 uppercase tracking-wide mb-0.5">Kecamatan</div>
+          <div class="text-gray-900">{{ $suami_ocr['is_available'] ? ($suami_ocr['kecamatan'] ?? '-') : ($case->petitioner_kecamatan ?? '-') }}</div>
+        </div>
       </div>
     </div>
 
     {{-- Data Istri --}}
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      <div class="bg-gradient-to-r from-teal-50 to-teal-100/50 px-6 py-4 border-b border-teal-200">
-        <h3 class="font-semibold text-gray-800 text-base">Data Istri</h3>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+      <div class="bg-teal-50 px-4 py-2 border-b border-teal-200 flex items-center gap-2">
+        <i class="fas fa-female text-teal-600 text-sm"></i>
+        <h3 class="font-semibold text-gray-800 text-sm">Data Istri</h3>
+        @if($istri_ocr['is_available'] && $istri_ocr['is_reviewed'])
+        <span class="ml-auto text-xs px-2 py-1 rounded bg-green-100 text-green-700">✓ Sudah Divalidasi</span>
+        @elseif($istri_ocr['is_available'])
+        <span class="ml-auto text-xs px-2 py-1 rounded bg-amber-100 text-amber-700">OCR</span>
+        @endif
       </div>
-      <div class="p-6">
-        <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+      <div class="p-3 space-y-3 text-xs">
+        <div>
+          <div class="text-gray-500 uppercase tracking-wide mb-0.5">NIK</div>
+          <div class="font-mono font-bold text-gray-900">{{ $istri_ocr['is_available'] ? ($istri_ocr['nik'] ?? '-') : ($case->spouse_nik ?? '-') }}</div>
+        </div>
+        <div>
+          <div class="text-gray-500 uppercase tracking-wide mb-0.5">Nama</div>
+          <div class="font-medium text-gray-900">{{ $istri_ocr['is_available'] ? ($istri_ocr['nama'] ?? '-') : ($case->spouse_name ?? '-') }}</div>
+        </div>
+        <div>
+          <div class="text-gray-500 uppercase tracking-wide mb-0.5">Alamat</div>
+          <div class="text-gray-900">{{ $istri_ocr['is_available'] ? ($istri_ocr['alamat'] ?? '-') : ($case->spouse_alamat ?? '-') }}</div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
           <div>
-            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">NIK</dt>
-            <dd class="font-mono text-base font-semibold text-gray-900">{{ $case->spouse_nik ?? '-' }}</dd>
+            <div class="text-gray-500 uppercase tracking-wide mb-0.5">RT/RW</div>
+            <div class="font-mono text-gray-900">{{ $istri_ocr['is_available'] ? ($istri_ocr['rt_rw'] ?? '-') : ($case->spouse_rt_rw ?? '-') }}</div>
           </div>
           <div>
-            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Nama Lengkap</dt>
-            <dd class="text-base font-medium text-gray-900">{{ $case->spouse_name ?? '-' }}</dd>
+            <div class="text-gray-500 uppercase tracking-wide mb-0.5">Kelurahan</div>
+            <div class="text-gray-900">{{ $istri_ocr['is_available'] ? ($istri_ocr['kelurahan'] ?? '-') : ($case->spouse_kelurahan ?? '-') }}</div>
           </div>
-          <div>
-            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Alamat</dt>
-            <dd class="text-base text-gray-900">{{ $case->spouse_alamat ?? '-' }}</dd>
-          </div>
-          <div>
-            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">RT/RW</dt>
-            <dd class="font-mono text-base text-gray-900">{{ $case->spouse_rt_rw ?? '-' }}</dd>
-          </div>
-          <div>
-            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Kelurahan</dt>
-            <dd class="text-base text-gray-900">{{ $case->spouse_kelurahan ?? '-' }}</dd>
-          </div>
-          <div>
-            <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Kecamatan</dt>
-            <dd class="text-base text-gray-900">{{ $case->spouse_kecamatan ?? '-' }}</dd>
-          </div>
-        </dl>
+        </div>
+        <div>
+          <div class="text-gray-500 uppercase tracking-wide mb-0.5">Kecamatan</div>
+          <div class="text-gray-900">{{ $istri_ocr['is_available'] ? ($istri_ocr['kecamatan'] ?? '-') : ($case->spouse_kecamatan ?? '-') }}</div>
+        </div>
       </div>
     </div>
   </div>
 
   {{-- Data Perceraian --}}
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-5">
-    <div class="bg-gradient-to-r from-purple-50 to-purple-100/50 px-6 py-4 border-b border-purple-200">
-      <h3 class="font-semibold text-gray-800 text-base">Data Perceraian</h3>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-3">
+      <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Tanggal Cerai</div>
+      <div class="text-sm font-mono font-bold text-gray-900">{{ $case->divorce_date ? $case->divorce_date->format('d M Y') : '-' }}</div>
     </div>
-    <div class="p-6">
-      <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
-        <div>
-          <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Tanggal Cerai</dt>
-          <dd class="text-base text-gray-900">{{ $case->divorce_date?->translatedFormat('d F Y') ?? '-' }}</dd>
-        </div>
-        <div>
-          <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Nomor Putusan PA</dt>
-          <dd class="text-base text-gray-900">{{ $case->verdict_number ?? '-' }}</dd>
-        </div>
-        @if($case->notes)
-        <div class="col-span-2">
-          <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Catatan</dt>
-          <dd class="text-sm text-gray-700 bg-gray-50 rounded-lg p-4 whitespace-pre-wrap leading-relaxed">{{ $case->notes }}</dd>
-        </div>
-        @endif
-      </dl>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-3">
+      <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">No. Putusan PA</div>
+      <div class="text-sm font-mono text-gray-900">{{ $case->verdict_number ?? '-' }}</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-3">
+      <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Catatan</div>
+      <div class="text-sm text-gray-900">{{ $case->notes ? substr($case->notes, 0, 30) . '...' : '-' }}</div>
     </div>
   </div>
 
-  {{-- Dokumen Diunggah --}}
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-5">
-    <div class="bg-gradient-to-r from-emerald-50 to-emerald-100/50 px-6 py-4 border-b border-emerald-200">
-      <h3 class="font-semibold text-gray-800 text-base">Dokumen Diunggah ({{ $case->documents->count() }})</h3>
+  {{-- Dokumen Diunggah (Compact) --}}
+  @if($case->documents->isNotEmpty())
+  <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden mb-4">
+    <div class="bg-emerald-50 px-4 py-2 border-b border-emerald-200 flex items-center gap-2">
+      <i class="fas fa-file-pdf text-emerald-600 text-sm"></i>
+      <h3 class="font-semibold text-gray-800 text-sm">Dokumen Diunggah ({{ $case->documents->count() }})</h3>
     </div>
-    <div class="p-6">
-      @forelse($case->documents as $doc)
-        @if($loop->first)
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        @endif
-            <div class="group relative bg-gray-50 rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition">
-              <a href="{{ asset('storage/' . $doc->path) }}" target="_blank" class="block aspect-video bg-gray-100 flex items-center justify-center overflow-hidden">
-                @if(str_contains($doc->mime_type, 'image'))
-                  <img src="{{ asset('storage/' . $doc->path) }}" alt="{{ $doc->original_name }}" class="w-full h-full object-cover">
-                @else
-                  <div class="flex flex-col items-center justify-center w-full h-full bg-gradient-to-br from-gray-100 to-gray-200">
-                    <i class="fas fa-file-pdf text-4xl text-red-500 mb-2"></i>
-                    <span class="text-xs text-gray-600">PDF</span>
-                  </div>
-                @endif
-              </a>
-              <div class="p-3 bg-white">
-                <div class="text-xs font-medium text-emerald-700 mb-1">
-                  {{ $doc->document_type }}
-                </div>
-                <div class="text-xs text-gray-700 font-medium mb-1 truncate">{{ $doc->original_name }}</div>
-                <div class="text-xs text-gray-500">{{ $doc->humanFileSize() }}</div>
-              </div>
-            </div>
-        @if($loop->last)
+    <div class="p-3">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        @foreach($case->documents as $doc)
+        @php
+          $isImage = in_array($doc->mime_type, ['image/jpeg', 'image/png', 'image/tiff', 'image/webp']);
+          $storageUrl = asset('storage/' . $doc->path);
+        @endphp
+        <div class="rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition cursor-pointer group"
+             onclick="openDocPreview('{{ $doc->id }}', '{{ $doc->document_type }}', '{{ $storageUrl }}')">
+          @if($isImage)
+          <div class="w-full h-32 bg-gray-100 overflow-hidden">
+            <img src="{{ $storageUrl }}" alt="{{ $doc->document_type }}" 
+                 class="w-full h-full object-cover group-hover:scale-105 transition">
           </div>
-        @endif
-      @empty
-        <div class="flex flex-col items-center justify-center py-12 text-gray-400">
-          <i class="far fa-folder-open text-4xl mb-3 opacity-30"></i>
-          <div class="text-sm">Tidak ada dokumen</div>
+          @else
+          <div class="w-full h-32 bg-gradient-to-br from-red-100 to-red-50 flex items-center justify-center">
+            <i class="fas fa-file-pdf text-red-500 text-4xl"></i>
+          </div>
+          @endif
+          <div class="p-2 bg-white">
+            <div class="font-medium text-gray-900 text-xs truncate">{{ $doc->document_type }}</div>
+            <div class="text-gray-500 text-xs">{{ number_format($doc->size_bytes / 1024, 1) }}KB</div>
+            <a href="{{ $storageUrl }}" target="_blank" 
+               class="text-xs text-emerald-600 hover:underline mt-1 inline-block"
+               onclick="event.stopPropagation()">
+              <i class="fas fa-download mr-1"></i>Download
+            </a>
+          </div>
         </div>
-      @endforelse
+        @endforeach
+      </div>
     </div>
   </div>
 
-  {{-- Hasil Validasi OCR (PA Management Only) --}}
+  {{-- Document Preview Modal --}}
+  <div id="docPreviewModal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4" onclick="closeDocPreview()">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-auto" onclick="event.stopPropagation()">
+      <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <h3 class="font-semibold text-gray-900 text-lg" id="previewTitle">Document Preview</h3>
+        <button onclick="closeDocPreview()" class="text-gray-500 hover:text-gray-700">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      <div class="p-6 flex items-center justify-center">
+        <img id="previewImage" src="" alt="Document preview" class="max-w-full max-h-[70vh] rounded-lg">
+      </div>
+      <div class="border-t border-gray-200 px-6 py-4 flex gap-2 justify-end">
+        <button onclick="closeDocPreview()" class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition">Tutup</button>
+        <a id="previewDownloadBtn" href="#" target="_blank" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition">
+          <i class="fas fa-download mr-1"></i>Download
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  function openDocPreview(docId, docType, url) {
+    document.getElementById('previewTitle').textContent = 'Preview: ' + docType;
+    document.getElementById('previewImage').src = url;
+    document.getElementById('previewDownloadBtn').href = url;
+    document.getElementById('docPreviewModal').classList.remove('hidden');
+  }
+
+  function closeDocPreview() {
+    document.getElementById('docPreviewModal').classList.add('hidden');
+  }
+
+  // Close modal on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeDocPreview();
+  });
+  </script>
+  @endif
+
+  {{-- OCR Validation Summary --}}
   @if(auth()->user()->hasAnyRole(['pa_management', 'super_admin']) && $case->ocrValidations->isNotEmpty())
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-5">
-    <div class="bg-gradient-to-r from-indigo-50 to-indigo-100/50 px-6 py-4 border-b border-indigo-200 flex items-center justify-between">
-      <h3 class="font-semibold text-gray-800 text-base">
-        <i class="fas fa-microscope mr-2 text-indigo-600"></i>Hasil Validasi OCR
-        <span class="ml-2 text-xs font-normal text-gray-600">({{ $case->ocrValidations->count() }} dokumen)</span>
-      </h3>
+  <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4 mb-4">
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center gap-2">
+        <i class="fas fa-microscope text-indigo-600 text-lg"></i>
+        <h3 class="font-semibold text-gray-800">OCR Validation ({{ $case->ocrValidations->count() }})</h3>
+      </div>
       <a href="{{ route('dashboard.review.show', $case->id) }}" 
-         class="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
-        <i class="fas fa-external-link-alt mr-1"></i>Detail Lengkap
+         class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-lg font-medium hover:bg-indigo-200">
+        Review Detail →
       </a>
     </div>
     
-    <div class="divide-y divide-gray-100">
-      @foreach($case->ocrValidations as $validation)
-        <div class="p-6 hover:bg-gray-50/50 transition">
-          {{-- Header Validation --}}
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                <i class="fas fa-file-alt text-indigo-600"></i>
-              </div>
-              <div>
-                <div class="text-sm font-semibold text-gray-900">
-                  {{ $validation->document ? strtoupper(str_replace('_', ' ', $validation->document->document_type)) : 'Unknown' }}
-                </div>
-                <div class="text-xs text-gray-500">
-                  {{ $validation->created_at->translatedFormat('d M Y, H:i') }}
-                </div>
-              </div>
-            </div>
-            
-            <div class="flex items-center gap-2">
-              {{-- Status Badge --}}
-              @php
-                $statusBadge = match($validation->validation_status) {
-                  'MATCH' => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'icon' => 'check-circle', 'label' => 'Match'],
-                  'PARTIAL_MATCH' => ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-700', 'icon' => 'exclamation-triangle', 'label' => 'Partial Match'],
-                  'MANUAL_REVIEW' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'icon' => 'user-check', 'label' => 'Manual Review'],
-                  'MISMATCH' => ['bg' => 'bg-red-100', 'text' => 'text-red-700', 'icon' => 'times-circle', 'label' => 'Mismatch'],
-                  default => ['bg' => 'bg-gray-100', 'text' => 'text-gray-700', 'icon' => 'question-circle', 'label' => 'Unknown'],
-                };
-              @endphp
-              <span class="px-3 py-1 rounded-full text-xs font-medium {{ $statusBadge['bg'] }} {{ $statusBadge['text'] }}">
-                <i class="fas fa-{{ $statusBadge['icon'] }} mr-1"></i>
-                {{ $statusBadge['label'] }}
-              </span>
-              
-              {{-- Match Score --}}
-              <div class="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-full">
-                <span class="text-xs text-gray-600">Score:</span>
-                <span class="text-sm font-bold {{ $validation->overall_match_score >= 95 ? 'text-green-600' : ($validation->overall_match_score >= 80 ? 'text-yellow-600' : 'text-red-600') }}">
-                  {{ number_format($validation->overall_match_score, 1) }}%
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {{-- Field Comparison Summary --}}
-          <div class="bg-gray-50 rounded-xl p-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              @php
-                $fieldLabels = [
-                  'nik' => 'NIK',
-                  'nama' => 'Nama',
-                  'tempat_lahir' => 'Tempat Lahir',
-                  'tgl_lahir' => 'Tanggal Lahir',
-                  'alamat' => 'Alamat',
-                ];
-                $comparisonResults = $validation->comparison_results ?? [];
-                $displayFields = array_slice($fieldLabels, 0, 6, true); // Tampilkan 6 field utama
-              @endphp
-              
-              @foreach($displayFields as $fieldKey => $fieldLabel)
-                @php
-                  $inputValue = $validation->{"input_$fieldKey"} ?? null;
-                  $ocrValue = $validation->{"ocr_$fieldKey"} ?? null;
-                  
-                  // Defensive extraction: handle various data structures
-                  $fieldData = data_get($comparisonResults, $fieldKey, []);
-                  $similarityRaw = is_array($fieldData) ? ($fieldData['similarity'] ?? 0) : 0;
-                  
-                  // Ensure similarity is numeric
-                  if (is_array($similarityRaw)) {
-                    $similarityRaw = $similarityRaw[0] ?? 0;
-                  }
-                  
-                  $similarity = (float) $similarityRaw;
-                  $matchScore = round($similarity * 100, 1);
-                  $isMatch = $matchScore >= 95;
-                  $isMismatch = $matchScore < 80;
-                @endphp
-                
-                @if($inputValue || $ocrValue)
-                <div class="flex items-start gap-2">
-                  {{-- Icon Status --}}
-                  <div class="mt-0.5">
-                    @if($isMatch)
-                      <i class="fas fa-check-circle text-green-500 text-sm"></i>
-                    @elseif($isMismatch)
-                      <i class="fas fa-exclamation-circle text-red-500 text-sm"></i>
-                    @else
-                      <i class="fas fa-minus-circle text-yellow-500 text-sm"></i>
-                    @endif
-                  </div>
-                  
-                  {{-- Field Info --}}
-                  <div class="flex-1 min-w-0">
-                    <div class="text-xs font-medium text-gray-600 mb-1">
-                      {{ $fieldLabel }}
-                      @if($fieldKey === 'nik')
-                        <span class="ml-1 px-1.5 py-0.5 bg-red-100 text-red-600 text-[10px] rounded font-bold">CRITICAL</span>
-                      @endif
-                    </div>
-                    <div class="flex items-center gap-2">
-                      {{-- Input Value --}}
-                      <div class="flex-1 min-w-0">
-                        <div class="text-xs text-gray-500 mb-0.5">Input:</div>
-                        <div class="text-sm {{ $isMismatch ? 'text-red-600 font-medium' : 'text-gray-900' }} truncate">
-                          {{ $inputValue ?: '-' }}
-                        </div>
-                      </div>
-                      
-                      {{-- Arrow --}}
-                      <i class="fas fa-arrow-right text-xs text-gray-300 flex-shrink-0"></i>
-                      
-                      {{-- OCR Value --}}
-                      <div class="flex-1 min-w-0">
-                        <div class="text-xs text-gray-500 mb-0.5">OCR:</div>
-                        <div class="text-sm {{ $isMismatch ? 'text-red-600 font-medium' : 'text-gray-900' }} truncate">
-                          {{ $ocrValue ?: '-' }}
-                        </div>
-                      </div>
-                      
-                      {{-- Match Score --}}
-                      <div class="flex-shrink-0 text-right">
-                        <div class="text-xs font-bold {{ $isMatch ? 'text-green-600' : ($isMismatch ? 'text-red-600' : 'text-yellow-600') }}">
-                          {{ number_format($matchScore, 0) }}%
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                @endif
-              @endforeach
-            </div>
-          </div>
-
-          {{-- Review Status --}}
-          @if($validation->is_reviewed)
-            <div class="mt-4 flex items-start gap-3 bg-green-50 border border-green-200 rounded-lg p-3">
-              <i class="fas fa-check-circle text-green-600 mt-0.5"></i>
-              <div class="flex-1 min-w-0">
-                <div class="text-sm font-medium text-green-800">
-                  Sudah Direview - {{ ucfirst($validation->review_action) }}
-                </div>
-                <div class="text-xs text-green-700 mt-1">
-                  <span class="font-medium">{{ $validation->reviewer->name ?? 'Unknown' }}</span>
-                  · {{ $validation->reviewed_at?->translatedFormat('d M Y, H:i') ?? '-' }}
-                </div>
-                @if($validation->review_notes)
-                  <div class="text-xs text-green-700 mt-2 italic">
-                    "{{ $validation->review_notes }}"
-                  </div>
-                @endif
-              </div>
-            </div>
-          @else
-            <div class="mt-4 flex items-center justify-between bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              <div class="flex items-center gap-2 text-yellow-800">
-                <i class="fas fa-clock"></i>
-                <span class="text-sm font-medium">Menunggu Review PA Management</span>
-              </div>
-              <a href="{{ route('dashboard.review.show', $case->id) }}" 
-                 class="text-sm text-yellow-700 hover:text-yellow-800 font-medium">
-                Review Sekarang →
-              </a>
-            </div>
-          @endif
+    <div class="space-y-2">
+      @foreach($case->ocrValidations as $v)
+      <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg text-xs">
+        <div class="flex items-center gap-2 flex-1">
+          @php
+            $badge = match($v->validation_status) {
+              'MATCH' => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'label' => '✓ Match'],
+              'PARTIAL_MATCH' => ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-700', 'label' => '~ Partial'],
+              'MISMATCH' => ['bg' => 'bg-red-100', 'text' => 'text-red-700', 'label' => '✗ Mismatch'],
+              default => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'label' => 'Review'],
+            };
+          @endphp
+          <span class="font-medium text-gray-900">{{ $v->document->document_type }}</span>
+          <span class="px-2 py-0.5 rounded {{ $badge['bg'] }} {{ $badge['text'] }} font-medium">
+            {{ $badge['label'] }}
+          </span>
         </div>
+        <div class="font-bold {{ $v->overall_match_score >= 90 ? 'text-green-600' : ($v->overall_match_score >= 75 ? 'text-yellow-600' : 'text-red-600') }}">
+          {{ number_format($v->overall_match_score, 0) }}%
+        </div>
+      </div>
       @endforeach
     </div>
   </div>
   @endif
 
-  {{-- Timeline --}}
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-5">
-    <h3 class="font-semibold text-gray-800 text-base mb-4">
-      <i class="fas fa-history mr-2 text-purple-500"></i>Timeline Proses
+  {{-- Timeline (Compact) --}}
+  @if($case->transitions->isNotEmpty())
+  <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4 mb-4">
+    <h3 class="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2">
+      <i class="fas fa-history text-purple-500 text-sm"></i>Timeline
     </h3>
-    <ol class="relative border-l border-gray-200 space-y-4 ml-3">
-      @forelse($case->transitions as $t)
-      <li class="ml-4">
-        <span class="absolute -left-1.5 mt-1 w-3 h-3 bg-blue-600 rounded-full border-2 border-white"></span>
-        <div>
-          <p class="text-xs text-gray-500">{{ $t->created_at->translatedFormat('d M Y, H:i') }}</p>
-          <p class="text-sm font-medium mt-1">
-            <span class="text-gray-500">{{ $t->from_state }}</span>
-            <i class="fas fa-arrow-right text-xs mx-1 text-gray-400"></i>
-            <span class="text-blue-700">{{ $t->to_state }}</span>
-          </p>
-          @if($t->reason)
-          <p class="text-xs text-gray-600 mt-1 italic bg-gray-50 rounded px-2 py-1 inline-block">"{{ $t->reason }}"</p>
-          @endif
-          <p class="text-xs text-gray-500 mt-1">oleh {{ $t->actor?->name }}</p>
-        </div>
-      </li>
-      @empty
-      <li class="ml-4 text-sm text-gray-400 py-4">Belum ada aktivitas</li>
-      @endforelse
-    </ol>
-  </div>
-
-  {{-- Tindakan --}}
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-    <h3 class="font-semibold text-gray-800 text-base mb-4">Tindakan</h3>
-
-    <div class="flex flex-col sm:flex-row gap-3">
-      @if(in_array($case->status, ['DRAFT', 'SUBMITTED']))
-        <div class="w-full py-3 px-4 text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-xl">
-          Data dan dokumen sudah dikirim. Kasus diproses otomatis tanpa tombol submit manual.
-        </div>
+    <div class="space-y-1 text-xs">
+      @foreach($case->transitions->take(5) as $t)
+      <div class="flex items-center gap-2 pb-2 border-b border-gray-100 last:border-0">
+        <span class="text-gray-500 font-mono">{{ $t->created_at->format('d M H:i') }}</span>
+        <span class="text-gray-600">{{ $t->from_state }}</span>
+        <i class="fas fa-arrow-right text-xs text-gray-300"></i>
+        <span class="font-bold text-blue-700">{{ $t->to_state }}</span>
+        @if($t->reason)
+        <span class="text-gray-600 italic">{{ substr($t->reason, 0, 20) }}...</span>
+        @endif
+      </div>
+      @endforeach
+      @if($case->transitions->count() > 5)
+      <div class="text-gray-500 text-center py-2">+{{ $case->transitions->count() - 5 }} lebih</div>
       @endif
+    </div>
+  </div>
+  @endif
 
+  {{-- Actions (Compact) --}}
+  <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+    <h3 class="font-semibold text-gray-800 text-sm mb-3">Tindakan</h3>
+
+    @if(in_array($case->status, ['SUBMITTED', 'OCR_PROCESSED', 'PA_REVIEW']))
+    <div class="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 mb-3">
+      <i class="fas fa-info-circle mr-1"></i>Kasus sedang diproses otomatis
+    </div>
+    @endif
+
+    <div class="flex flex-col sm:flex-row gap-2">
       {{-- PA Review --}}
       @if($case->status === 'PA_REVIEW' && auth()->user()->hasAnyRole(['pa_management','pa_staff']))
         <button @click="review('approve')"
-          class="flex-1 py-3 text-sm font-semibold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition flex items-center justify-center gap-2">
-          <i class="fas fa-check"></i>
-          <span>Setujui (PA)</span>
+          class="flex-1 py-2 text-xs font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition">
+          <i class="fas fa-check"></i> Setujui
         </button>
         <button @click="showRejectModal = true"
-          class="flex-1 py-3 text-sm font-semibold border-2 border-red-300 text-red-600 rounded-xl hover:bg-red-50 transition flex items-center justify-center gap-2">
-          <i class="fas fa-times"></i>
-          <span>Tolak</span>
+          class="flex-1 py-2 text-xs font-semibold border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition">
+          <i class="fas fa-times"></i> Tolak
         </button>
       @endif
 
       {{-- Disdukcapil Validate --}}
       @if($case->status === 'DISDUKCAPIL_VALIDATION' && auth()->user()->hasRole('disdukcapil_staff'))
-        <button @click="validate('validate')"
-          class="flex-1 py-3 text-sm font-semibold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition flex items-center justify-center gap-2">
-          <i class="fas fa-stamp"></i>
-          <span>Validasi Disdukcapil</span>
-        </button>
-        <button @click="showRejectModal = true"
-          class="flex-1 py-3 text-sm font-semibold border-2 border-red-300 text-red-600 rounded-xl hover:bg-red-50 transition flex items-center justify-center gap-2">
-          <i class="fas fa-times"></i>
-          <span>Tolak</span>
-        </button>
+        <div x-show="!showUploadForm" class="flex gap-2 w-full">
+          <button @click="showUploadForm = true"
+            class="flex-1 py-2 text-xs font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition">
+            <i class="fas fa-stamp"></i> Validasi
+          </button>
+          <button @click="showRejectModal = true"
+            class="flex-1 py-2 text-xs font-semibold border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition">
+            <i class="fas fa-times"></i> Tolak
+          </button>
+        </div>
+
+        {{-- Upload Form (Hidden by default) --}}
+        <form x-show="showUploadForm" x-cloak style="display: none" @submit.prevent="submitUpload" class="space-y-3">
+          {{-- BAST File --}}
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-2">
+              <i class="fas fa-file-pdf mr-1 text-red-600"></i>File BAST
+              <span class="text-red-600">*</span>
+            </label>
+            <input type="file" 
+              x-model="uploadForm.bast_file"
+              @change="uploadForm.bast_file = $event.target.files[0]"
+              accept=".pdf,.doc,.docx"
+              required
+              class="w-full text-xs border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <div class="text-xs text-gray-500 mt-1">Format: PDF, DOC, DOCX (max 10MB)</div>
+          </div>
+
+          {{-- Digital Documents --}}
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-2">
+              <i class="fas fa-images mr-1 text-blue-600"></i>Dokumen Digital
+              <span class="text-red-600">*</span>
+            </label>
+            <input type="file" 
+              x-ref="digitalFiles"
+              @change="uploadForm.digital_files = Array.from($event.target.files)"
+              accept=".pdf,.jpg,.jpeg,.png"
+              multiple
+              required
+              class="w-full text-xs border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <div class="text-xs text-gray-500 mt-1">Format: PDF, JPG, PNG (max 10MB per file)</div>
+          </div>
+
+          {{-- Notes --}}
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-2">
+              <i class="fas fa-sticky-note mr-1 text-amber-600"></i>Catatan (Opsional)
+            </label>
+            <textarea x-model="uploadForm.notes"
+              rows="2"
+              class="w-full text-xs border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              placeholder="Tambahkan catatan jika diperlukan..."></textarea>
+          </div>
+
+          {{-- Buttons --}}
+          <div class="flex gap-2 pt-2">
+            <button type="submit" 
+              :disabled="isUploading"
+              class="flex-1 py-2 text-xs font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1">
+              <span x-show="!isUploading"><i class="fas fa-check"></i> Selesaikan Validasi</span>
+              <span x-show="isUploading"><i class="fas fa-spinner fa-spin"></i> Sedang Upload...</span>
+            </button>
+            <button type="button" 
+              @click="showUploadForm = false; resetForm()"
+              class="flex-1 py-2 text-xs font-semibold border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+              Batal
+            </button>
+          </div>
+        </form>
       @endif
 
-      @if(!in_array($case->status, ['COMPLETED', 'REJECTED']))
-        @if(!$case->status === 'DRAFT' && !$case->status === 'PA_REVIEW' && !$case->status === 'DISDUKCAPIL_VALIDATION')
-          <div class="text-sm text-gray-500 text-center py-3">
-            Status saat ini: <span class="font-semibold">{{ $status['label'] }}</span>
-          </div>
-        @endif
+      @if(!in_array($case->status, ['PA_REVIEW', 'DISDUKCAPIL_VALIDATION']))
+        <div class="text-xs text-gray-500 text-center py-2 w-full">
+          Status: <span class="font-semibold text-gray-800">{{ $status['label'] }}</span>
+        </div>
       @endif
     </div>
   </div>
@@ -529,6 +479,68 @@ function caseDetail(caseId) {
     caseId,
     showRejectModal: false,
     rejectReason: '',
+    showUploadForm: false,
+    isUploading: false,
+    uploadForm: {
+      bast_file: null,
+      digital_files: [],
+      notes: ''
+    },
+
+    resetForm() {
+      this.uploadForm = {
+        bast_file: null,
+        digital_files: [],
+        notes: ''
+      };
+    },
+
+    async submitUpload() {
+      if (!this.uploadForm.bast_file) {
+        alert('File BAST harus diupload');
+        return;
+      }
+      if (this.uploadForm.digital_files.length === 0) {
+        alert('Minimal satu dokumen digital harus diupload');
+        return;
+      }
+
+      this.isUploading = true;
+      const formData = new FormData();
+      formData.append('bast_file', this.uploadForm.bast_file);
+      
+      this.uploadForm.digital_files.forEach((file, index) => {
+        formData.append(`digital_files[${index}]`, file);
+      });
+      
+      if (this.uploadForm.notes) {
+        formData.append('notes', this.uploadForm.notes);
+      }
+
+      try {
+        const res = await fetch(`/dashboard/disdukcapil/cases/${caseId}/process`, {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json',
+          },
+          body: formData
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          alert('Validasi selesai! Kasus telah dikirim ke PA untuk diproses.');
+          location.reload();
+        } else {
+          const error = await res.json();
+          alert('Gagal upload: ' + (error.message || 'Terjadi kesalahan'));
+        }
+      } catch (err) {
+        alert('Gagal upload: ' + err.message);
+      } finally {
+        this.isUploading = false;
+      }
+    },
 
     async review(decision) {
       const res = await this.apiCall('POST', '/api/v1/review/pa', { case_id: caseId, decision });

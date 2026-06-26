@@ -18,12 +18,24 @@ class OCRJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int    $tries         = 3;
-    public int    $timeout       = 120;
-    public array  $backoff       = [10, 30, 60];
-    public bool   $failOnTimeout = true;
+    public int    $tries         = 1;
+    public int    $timeout       = 600;
+    public array  $backoff       = [];
 
-    public function __construct(private readonly Document $document) {}
+    // ─ Only these document types can be OCR processed
+    protected const ALLOWED_DOCUMENT_TYPES = ['KTP', 'KTP_SUAMI', 'KTP_ISTRI'];
+
+    public function __construct(private readonly Document $document)
+    {
+        // Skip non-KTP documents
+        if (!in_array($document->document_type, self::ALLOWED_DOCUMENT_TYPES)) {
+            Log::channel('ocr')->info('OCRJob skipped - non-KTP document', [
+                'document_id' => $document->id,
+                'document_type' => $document->document_type,
+            ]);
+            throw new \Exception("OCR hanya untuk KTP. Document type: {$document->document_type} tidak didukung.");
+        }
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
 

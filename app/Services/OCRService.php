@@ -136,7 +136,7 @@ class OCRService
         // Get document instance context
         $documentHint = null;
         if (isset($this->currentDocument) && $this->currentDocument instanceof Document) {
-            $documentHint = $this->currentDocument->type;
+            $documentHint = $this->currentDocument->document_type;
         }
         
         $response = Http::withHeaders([
@@ -234,37 +234,31 @@ class OCRService
 
     /**
      * Adjust OCR confidence scores based on document type.
-     * KTP_ISTRI documents benefit from aggressive preprocessing, so we can be more strict.
+     * KTP spouse documents share the same quality policy.
      */
     private function adjustConfidenceByDocumentType(Document $document, float $overall, array $confidence): float
     {
-        $documentType = $document->type ?? 'unknown';
+        $documentType = $document->document_type ?? 'unknown';
         
         switch ($documentType) {
             case 'KTP_ISTRI':
-                // For KTP_ISTRI (spouse KTP), apply stricter confidence thresholds
-                // since we're using enhanced preprocessing with contrast boost and bilateral filtering
-                
-                // If critical fields are present with decent confidence, slightly boost overall
+            case 'KTP_SUAMI':
+            case 'KTP':
+                // Apply identical scoring gates for all KTP categories.
                 $hasNik = !empty($confidence['nik']) && $confidence['nik'] >= 0.75;
                 $hasNama = !empty($confidence['nama']) && $confidence['nama'] >= 0.70;
                 $hasTanggalLahir = !empty($confidence['tgl_lahir']) && $confidence['tgl_lahir'] >= 0.70;
                 
                 if ($hasNik && $hasNama && $hasTanggalLahir) {
-                    // Bonus points for having all critical fields
                     $overall = min($overall + 0.05, 1.0);
                 }
                 
-                Log::channel('ocr')->info('KTP_ISTRI confidence adjustment', [
+                Log::channel('ocr')->info('KTP confidence adjustment', [
                     'document_id' => $document->id,
+                    'document_type' => $documentType,
                     'original_confidence' => $overall - 0.05,
                     'adjusted_confidence' => $overall,
                 ]);
-                break;
-                
-            case 'KTP_SUAMI':
-            case 'KTP':
-                // Standard KTP processing, no special adjustment
                 break;
                 
             default:

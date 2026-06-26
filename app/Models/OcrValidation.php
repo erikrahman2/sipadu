@@ -98,7 +98,6 @@ class OcrValidation extends Model
             'MATCH' => 'success',
             'PARTIAL_MATCH' => 'warning',
             'MISMATCH' => 'danger',
-            'MANUAL_REVIEW' => 'info',
             default => 'secondary',
         };
     }
@@ -112,7 +111,6 @@ class OcrValidation extends Model
             'MATCH' => 'Match',
             'PARTIAL_MATCH' => 'Partial Match',
             'MISMATCH' => 'Mismatch',
-            'MANUAL_REVIEW' => 'Manual Review',
             default => 'Unknown',
         };
     }
@@ -133,7 +131,7 @@ class OcrValidation extends Model
      */
     public function needsReview(): bool
     {
-        return !$this->is_reviewed && in_array($this->validation_status, ['PARTIAL_MATCH', 'MANUAL_REVIEW', 'MISMATCH']);
+        return !$this->is_reviewed && in_array($this->validation_status, ['PARTIAL_MATCH', 'MISMATCH']);
     }
 
     /**

@@ -48,6 +48,74 @@ class CaseModel extends Model
                 $model->case_number = 'CASE-' . now()->format('Ymd') . '-' . strtoupper(Str::random(8));
             }
         });
+
+        // ── Neo4j Sync Events ─────────────────────────────────────────────────
+
+        // New case created → sync to Neo4j
+        static::created(function ($model) {
+            IntegrationQueue::create([
+                'aggregate_type' => 'Case',
+                'aggregate_id'   => $model->id,
+                'event_type'     => 'created',
+                'payload'        => [
+                    'case_number'    => $model->case_number,
+                    'tracking_token' => $model->tracking_token,
+                    'status'         => $model->status,
+                    'institution_id' => $model->institution_id,
+                    'submitter_id'   => $model->submitter_id,
+                ],
+                'available_at'   => now(),
+            ]);
+        });
+
+        // Case updated → sync changes to Neo4j
+        static::updated(function ($model) {
+            IntegrationQueue::create([
+                'aggregate_type' => 'Case',
+                'aggregate_id'   => $model->id,
+                'event_type'     => 'updated',
+                'payload'        => [
+                    'case_number'                  => $model->case_number,
+                    'status'                       => $model->status,
+                    'institution_id'               => $model->institution_id,
+                    'assigned_pa_user_id'          => $model->assigned_pa_user_id,
+                    'assigned_disdukcapil_user_id' => $model->assigned_disdukcapil_user_id,
+                ],
+                'available_at'   => now(),
+            ]);
+        });
+
+        // Case deleted/soft deleted → remove from Neo4j
+        static::deleting(function ($model) {
+            // Only create delete event if this is a permanent delete, not soft delete
+            // For soft deletes, check if the model is actually being hard deleted
+            if ($model->forceDeleting || !$model->softDelete()) {
+                IntegrationQueue::create([
+                    'aggregate_type' => 'Case',
+                    'aggregate_id'   => $model->id,
+                    'event_type'     => 'deleted',
+                    'payload'        => [
+                        'case_number' => $model->case_number,
+                        'timestamp'   => now()->toIso8601String(),
+                    ],
+                    'available_at'   => now(),
+                ]);
+            }
+        });
+
+        // Case restored from soft delete → re-sync to Neo4j
+        static::restored(function ($model) {
+            IntegrationQueue::create([
+                'aggregate_type' => 'Case',
+                'aggregate_id'   => $model->id,
+                'event_type'     => 'restored',
+                'payload'        => [
+                    'case_number' => $model->case_number,
+                    'status'      => $model->status,
+                ],
+                'available_at'   => now(),
+            ]);
+        });
     }
 
     // ── Relations ─────────────────────────────────────────────────────────────

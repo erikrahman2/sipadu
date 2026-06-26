@@ -5,62 +5,87 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\CmsAboutSection;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class CmsAboutSectionController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $sections = CmsAboutSection::ordered()->get();
+        return view('dashboard.admin.cms.about.index', compact('sections'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return view('dashboard.admin.cms.about.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $data = $request->validate([
+            'section_key'   => 'required|string|max:100|unique:cms_about_sections,section_key|regex:/^[a-z0-9_]+$/',
+            'title'         => 'required|string|max:255',
+            'content'       => 'required|string',
+            'image_path'    => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'display_order' => 'nullable|integer|min:0',
+            'is_active'     => 'sometimes|boolean',
+        ]);
+
+        if ($request->hasFile('image_path')) {
+            $data['image_path'] = $request->file('image_path')->store('cms/about', 'public');
+        }
+
+        $data['is_active']     = $request->boolean('is_active');
+        $data['updated_by']    = optional($request->user())->id;
+        $data['display_order'] = $data['display_order'] ?? 0;
+
+        CmsAboutSection::create($data);
+
+        return redirect()->route('dashboard.admin.cms.about.index')
+            ->with('success', 'About section berhasil ditambahkan.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(CmsAboutSection $cmsAboutSection)
+    public function edit(CmsAboutSection $about)
     {
-        //
+        return view('dashboard.admin.cms.about.edit', ['section' => $about]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(CmsAboutSection $cmsAboutSection)
+    public function update(Request $request, CmsAboutSection $about)
     {
-        //
+        $data = $request->validate([
+            'section_key'   => 'required|string|max:100|unique:cms_about_sections,section_key,' . $about->id . '|regex:/^[a-z0-9_]+$/',
+            'title'         => 'required|string|max:255',
+            'content'       => 'required|string',
+            'image_path'    => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'display_order' => 'nullable|integer|min:0',
+            'is_active'     => 'sometimes|boolean',
+        ]);
+
+        if ($request->hasFile('image_path')) {
+            if ($about->image_path) {
+                Storage::disk('public')->delete($about->image_path);
+            }
+            $data['image_path'] = $request->file('image_path')->store('cms/about', 'public');
+        }
+
+        $data['is_active']     = $request->boolean('is_active');
+        $data['updated_by']    = optional($request->user())->id;
+        $data['display_order'] = $data['display_order'] ?? 0;
+
+        $about->update($data);
+
+        return redirect()->route('dashboard.admin.cms.about.index')
+            ->with('success', 'About section berhasil diperbarui.');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, CmsAboutSection $cmsAboutSection)
+    public function destroy(CmsAboutSection $about)
     {
-        //
-    }
+        if ($about->image_path) {
+            Storage::disk('public')->delete($about->image_path);
+        }
+        $about->delete();
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(CmsAboutSection $cmsAboutSection)
-    {
-        //
+        return redirect()->route('dashboard.admin.cms.about.index')
+            ->with('success', 'About section berhasil dihapus.');
     }
 }

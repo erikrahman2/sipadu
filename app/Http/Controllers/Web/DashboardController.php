@@ -38,6 +38,8 @@ class DashboardController extends Controller
                 ->with('info', $message);
         }
 
+
+
         $stats = $this->buildStats($user);
         
         // Ambil data grafik untuk PA Assistant (7 bulan terakhir)
@@ -47,14 +49,36 @@ class DashboardController extends Controller
         }
         
         // Gunakan schema yang sama (CaseModel) untuk internal + public, bedanya hanya source_type.
-        $recentItems = CaseModel::with('institution:id,name', 'submitter:id,name')
-            ->forUser($user)
-            ->selectRaw('id, case_number, tracking_token, petitioner_name, status, institution_id, submitter_id, source_type, created_at, updated_at')
-            ->orderByDesc('updated_at')
+        // Disdukcapil staff hanya lihat DISDUKCAPIL_VALIDATION cases
+        $recentItemsQuery = CaseModel::with('institution:id,name', 'submitter:id,name')
+            ->selectRaw('id, case_number, tracking_token, petitioner_name, status, institution_id, submitter_id, source_type, created_at, updated_at, completed_at');
+
+        if ($user->hasRole('disdukcapil_staff')) {
+            $recentItemsQuery->where('status', 'DISDUKCAPIL_VALIDATION');
+        } else {
+            $recentItemsQuery->forUser($user);
+        }
+
+        $recentItems = $recentItemsQuery->orderByDesc('updated_at')
             ->limit(8)
             ->get();
-        
-        return view('dashboard.index', compact('user', 'stats', 'recentItems', 'chartData'));
+
+        // Arsip terbaru untuk PA Staff (kasus selesai)
+        $recentArchives = collect();
+        $archiveCounts = ['completed' => 0, 'archived' => 0];
+        if ($user->hasRole('pa_staff')) {
+            $recentArchives = CaseModel::with('institution:id,name', 'submitter:id,name')
+                ->whereIn('status', ['COMPLETED', 'ARCHIVED'])
+                ->forUser($user)
+                ->selectRaw('id, case_number, tracking_token, petitioner_name, spouse_name, status, source_type, completed_at, updated_at')
+                ->orderByDesc('completed_at')
+                ->limit(5)
+                ->get();
+            $archiveCounts['completed'] = CaseModel::forUser($user)->where('status', 'COMPLETED')->count();
+            $archiveCounts['archived']  = CaseModel::forUser($user)->where('status', 'ARCHIVED')->count();
+        }
+
+        return view('dashboard.index', compact('user', 'stats', 'recentItems', 'chartData', 'recentArchives', 'archiveCounts'));
     }
 
     public function cases(Request $request): \Illuminate\Http\RedirectResponse|View
@@ -70,10 +94,20 @@ class DashboardController extends Controller
         $status = $request->query('status');
         
         // Semua data dashboard mengikuti schema kasus yang sama.
-        $casesQuery = CaseModel::query()
-            ->with('institution:id,name', 'submitter:id,name')
-            ->forUser($user)
-            ->selectRaw('id, case_number, tracking_token, petitioner_name, status, institution_id, submitter_id, spouse_name, divorce_date, source_type, created_at, updated_at');
+        if ($user->hasRole('disdukcapil_staff')) {
+            // Disdukcapil staff: ONLY see cases in DISDUKCAPIL_VALIDATION status
+            // (They receive cases from PA Management after OCR approval)
+            $casesQuery = CaseModel::query()
+                ->where('status', 'DISDUKCAPIL_VALIDATION')
+                ->with('institution:id,name', 'submitter:id,name')
+                ->selectRaw('id, case_number, tracking_token, petitioner_name, status, institution_id, submitter_id, spouse_name, divorce_date, source_type, created_at, updated_at');
+        } else {
+            // Other roles: use forUser scope
+            $casesQuery = CaseModel::query()
+                ->with('institution:id,name', 'submitter:id,name')
+                ->forUser($user)
+                ->selectRaw('id, case_number, tracking_token, petitioner_name, status, institution_id, submitter_id, spouse_name, divorce_date, source_type, created_at, updated_at');
+        }
         
         if ($status) {
             $casesQuery->byStatus($status);
@@ -95,12 +129,22 @@ class DashboardController extends Controller
         }
         
         // Count statistics
+        if ($user->hasRole('disdukcapil_staff')) {
+            // Disdukcapil staff sees ONLY DISDUKCAPIL_VALIDATION cases
+            $baseQuery = CaseModel::where('status', 'DISDUKCAPIL_VALIDATION');
+        } else {
+            $baseQuery = CaseModel::forUser($user);
+        }
+        
         $counts = [
-            'all' => CaseModel::forUser($user)->count(),
-            'cases' => CaseModel::forUser($user)->where('source_type', 'internal')->count(),
-            'public' => CaseModel::forUser($user)->where('source_type', 'public')->count(),
-            'submitted' => CaseModel::forUser($user)->where('status', 'SUBMITTED')->count(),
-            'approved' => CaseModel::forUser($user)->where('status', 'OCR_PROCESSED')->count(),
+            'all' => (clone $baseQuery)->count(),
+            'cases' => (clone $baseQuery)->where('source_type', 'internal')->count(),
+            'public' => (clone $baseQuery)->where('source_type', 'public')->count(),
+            'submitted' => (clone $baseQuery)->where('status', 'SUBMITTED')->count(),
+            'approved' => (clone $baseQuery)->where('status', 'OCR_PROCESSED')->count(),
+            'validation_pending' => (clone $baseQuery)->where('status', 'DISDUKCAPIL_VALIDATION')->count(),
+            'validation_completed' => (clone $baseQuery)->where('status', 'COMPLETED')->count(),
+            'validation_rejected' => (clone $baseQuery)->where('status', 'REJECTED')->count(),
         ];
         
         return view('dashboard.cases.index', ['cases' => $allItems, 'counts' => $counts, 'currentType' => $type]);
@@ -164,10 +208,10 @@ class DashboardController extends Controller
             'documents.KTP_ISTRI.required' => 'Dokumen KTP istri wajib diunggah.',
             'documents.KTP_SUAMI.mimes' => 'Format file KTP suami harus JPG, PNG, atau PDF.',
             'documents.KTP_ISTRI.mimes' => 'Format file KTP istri harus JPG, PNG, atau PDF.',
-            'documents.KTP_SUAMI.max' => 'Ukuran file KTP suami maksimal 5 MB.',
-            'documents.KTP_ISTRI.max' => 'Ukuran file KTP istri maksimal 5 MB.',
+            'documents.KTP_SUAMI.max' => 'Ukuran file KTP suami maksimal 10 MB.',
+            'documents.KTP_ISTRI.max' => 'Ukuran file KTP istri maksimal 10 MB.',
             'documents.*.mimes'      => 'Format file harus JPG, PNG, atau PDF.',
-            'documents.*.max'        => 'Ukuran file maksimal 5 MB.',
+            'documents.*.max'        => 'Ukuran file maksimal 10 MB.',
         ]);
 
         // === Validasi Business Logic (menggunakan PublicSubmission methods) ===
@@ -789,16 +833,75 @@ class DashboardController extends Controller
         ])->findOrFail($id);
 
         // ReBAC: PA Management dan Super Admin bisa lihat semua case
-        if (!auth()->user()->hasAnyRole(['pa_management', 'super_admin'])) {
+        if (!auth()->user()->hasAnyRole(['pa_management', 'super_admin', 'disdukcapil_staff'])) {
             $this->rebac->enforce(auth()->user(), 'view', 'Case', $id);
         }
 
         // PA Management and Super Admin should use dedicated OCR review page.
-        if (auth()->user()->hasAnyRole(['pa_management', 'super_admin'])) {
+        if (auth()->user()->hasAnyRole(['pa_management', 'super_admin']) && $case->status !== 'DISDUKCAPIL_VALIDATION') {
             return redirect()->route('dashboard.review.show', $id);
         }
 
-        return view('dashboard.cases.show', compact('case'));
+        // ✨ Prepare corrected OCR data from PA Management review
+        $suami_ocr = $this->extractCorrectedOcrData($case, 'KTP_SUAMI');
+        $istri_ocr = $this->extractCorrectedOcrData($case, 'KTP_ISTRI');
+
+        return view('dashboard.cases.show', compact('case', 'suami_ocr', 'istri_ocr'));
+    }
+
+    /**
+     * Extract corrected OCR data from OcrValidation for a specific document type
+     * Returns the final validated/corrected values from PA Management review
+     */
+    private function extractCorrectedOcrData($case, string $documentType): array
+    {
+        $data = [
+            'nik' => null,
+            'nama' => null,
+            'tempat_lahir' => null,
+            'tgl_lahir' => null,
+            'alamat' => null,
+            'rt_rw' => null,
+            'kelurahan' => null,
+            'kecamatan' => null,
+            'is_available' => false,
+            'validation_status' => null,
+        ];
+
+        // Find document with this type
+        $document = $case->documents->firstWhere('document_type', $documentType);
+        if (!$document) {
+            return $data;
+        }
+
+        // Get the latest OCR validation for this document
+        $validation = $case->ocrValidations
+            ->filter(fn($v) => $v->document_id === $document->id)
+            ->first();
+
+        if (!$validation) {
+            return $data;
+        }
+
+        // Extract corrected OCR data (from PA Management review)
+        // Prioritize reviewed/corrected values, fall back to OCR extracted
+        $data = [
+            'nik' => $validation->ocr_nik,
+            'nama' => $validation->ocr_nama,
+            'tempat_lahir' => $validation->ocr_tempat_lahir,
+            'tgl_lahir' => $validation->ocr_tgl_lahir,
+            'alamat' => $validation->ocr_alamat,
+            'rt_rw' => $validation->ocr_rt_rw,
+            'kelurahan' => $validation->ocr_kelurahan,
+            'kecamatan' => $validation->ocr_kecamatan,
+            'is_available' => true,
+            'validation_status' => $validation->validation_status,
+            'match_score' => $validation->overall_match_score,
+            'is_reviewed' => $validation->is_reviewed,
+            'reviewed_at' => $validation->reviewed_at,
+        ];
+
+        return $data;
     }
 
     public function upload(): View
@@ -809,9 +912,336 @@ class DashboardController extends Controller
         return view('dashboard.upload', compact('cases'));
     }
 
+    /**
+     * Halaman Arsip untuk PA Staff
+     * Menampilkan kasus yang sudah selesai (COMPLETED / ARCHIVED) untuk diarsipkan.
+     */
+    public function arsip(Request $request): View
+    {
+        $user = auth()->user();
+
+        $q = $request->query('q');
+        $year = $request->query('year');
+
+        $query = CaseModel::with('institution:id,name', 'submitter:id,name')
+            ->whereIn('status', ['COMPLETED', 'ARCHIVED'])
+            ->selectRaw('id, case_number, tracking_token, petitioner_name, spouse_name, status, institution_id, submitter_id, source_type, divorce_date, completed_at, updated_at');
+
+        if ($user->hasRole('disdukcapil_staff')) {
+            $query->where('status', 'COMPLETED');
+        } else {
+            $query->forUser($user);
+        }
+
+        if ($q) {
+            $query->where(function ($sub) use ($q) {
+                $sub->where('case_number', 'like', "%{$q}%")
+                    ->orWhere('petitioner_name', 'like', "%{$q}%")
+                    ->orWhere('spouse_name', 'like', "%{$q}%")
+                    ->orWhere('tracking_token', 'like', "%{$q}%");
+            });
+        }
+
+        if ($year) {
+            $query->whereYear('completed_at', $year);
+        }
+
+        $arsipItems = $query->orderByDesc('completed_at')->paginate(15)->withQueryString();
+
+        $years = CaseModel::whereIn('status', ['COMPLETED', 'ARCHIVED'])
+            ->whereNotNull('completed_at')
+            ->selectRaw('DISTINCT YEAR(completed_at) as year')
+            ->orderByDesc('year')
+            ->pluck('year');
+
+        $counts = [
+            'completed' => CaseModel::forUser($user)->where('status', 'COMPLETED')->count(),
+            'archived'  => CaseModel::forUser($user)->where('status', 'ARCHIVED')->count(),
+        ];
+
+        return view('dashboard.staff.arsip.index', [
+            'arsipItems' => $arsipItems,
+            'counts' => $counts,
+            'years' => $years,
+            'currentYear' => $year,
+        ]);
+    }
+
     public function tracking(): View
     {
         return view('dashboard.tracking');
+    }
+
+    /**
+     * Halaman Aktivitas untuk PA Staff
+     * Menampilkan log/aktivitas terbaru yang relevan dengan staff (case transitions,
+     * dokumen baru, validasi, dsb).
+     */
+    public function aktivitas(Request $request): View
+    {
+        $user = auth()->user();
+        $filter = $request->query('filter', 'all');
+
+        $query = AuditLog::with('user:id,name')
+            ->whereIn('action', [
+                'case.created', 'case.updated', 'case.submitted',
+                'case.approved', 'case.rejected', 'case.completed',
+                'case.archived', 'case.restored',
+                'document.uploaded', 'document.downloaded',
+                'ocr.processed', 'ocr.validated',
+                'public_submission.created', 'public_submission.reviewed',
+                'public_submission.approved', 'public_submission.rejected',
+            ]);
+
+        // Filter by activity type (case, document, ocr, public_submission, system)
+        if ($filter === 'case') {
+            $query->where('action', 'like', 'case.%');
+        } elseif ($filter === 'document') {
+            $query->where('action', 'like', 'document.%');
+        } elseif ($filter === 'ocr') {
+            $query->where('action', 'like', 'ocr.%');
+        } elseif ($filter === 'public_submission') {
+            $query->where('action', 'like', 'public_submission.%');
+        } elseif ($filter === 'system') {
+            $query->whereNotIn('action', [
+                'case.created', 'case.updated', 'case.submitted',
+                'case.approved', 'case.rejected', 'case.completed',
+                'case.archived', 'case.restored',
+                'document.uploaded', 'document.downloaded',
+                'ocr.processed', 'ocr.validated',
+                'public_submission.created', 'public_submission.reviewed',
+                'public_submission.approved', 'public_submission.rejected',
+            ]);
+        }
+
+        $activities = $query->latest('created_at')->paginate(20)->withQueryString();
+
+        $stats = [
+            'today'    => AuditLog::whereDate('created_at', today())->count(),
+            'week'     => AuditLog::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
+            'month'    => AuditLog::whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year)
+                ->count(),
+        ];
+
+        return view('dashboard.staff.aktivitas', [
+            'activities' => $activities,
+            'filter'     => $filter,
+            'stats'      => $stats,
+        ]);
+    }
+
+    /**
+     * Alias: redirect terbaru ke aktivitas (teruntuk user lama)
+     */
+    public function aktivitasTerbaru(Request $request): View
+    {
+        return $this->aktivitas($request);
+    }
+    /**
+     * Halaman Aktivitas untuk PA Staff.
+     */
+    public function staffAktivitas(Request $request): View
+    {
+        return $this->aktivitas($request);
+    }
+
+    /**
+     * Halaman Arsip untuk PA Staff.
+     */
+    public function staffArsip(Request $request): View
+    {
+        $user = auth()->user();
+
+        $year = $request->query('year');
+        $statusFilter = $request->query('status');
+
+        $query = CaseModel::with('institution:id,name', 'submitter:id,name')
+            ->whereIn('status', ['COMPLETED', 'ARCHIVED'])
+            ->forUser($user)
+            ->selectRaw('id, case_number, tracking_token, petitioner_name, spouse_name, status, source_type, completed_at, updated_at')
+            ->orderByDesc('completed_at');
+
+        if ($year) {
+            $query->whereYear('completed_at', $year);
+        }
+        if ($statusFilter) {
+            $query->where('status', $statusFilter);
+        }
+
+        $arsipItems = $query->paginate(20)->withQueryString();
+
+        $years = CaseModel::whereIn('status', ['COMPLETED', 'ARCHIVED'])
+            ->whereNotNull('completed_at')
+            ->selectRaw('DISTINCT YEAR(completed_at) as year')
+            ->orderByDesc('year')
+            ->pluck('year');
+
+        $counts = [
+            'completed' => CaseModel::forUser($user)->where('status', 'COMPLETED')->count(),
+            'archived'  => CaseModel::forUser($user)->where('status', 'ARCHIVED')->count(),
+        ];
+
+        return view('dashboard.staff.arsip.index', [
+            'arsipItems' => $arsipItems,
+            'counts'     => $counts,
+            'years'      => $years,
+            'currentYear'=> $year,
+        ]);
+    }
+
+    /**
+     * Detail item arsip
+     */
+    public function staffArsipShow(int $id): View
+    {
+        $user = auth()->user();
+
+        $case = CaseModel::with([
+            'institution:id,name,code,type',
+            'submitter:id,name,email',
+            'assignedPaUser:id,name',
+            'assignedDisdukcapilUser:id,name',
+            'documents' => function ($q) {
+                $q->orderByDesc('created_at');
+            },
+            'transitions' => function ($q) {
+                $q->with('actor:id,name')->orderBy('created_at');
+            },
+            'latestTransition',
+        ])->findOrFail($id);
+
+        if (! $user->hasRole('super_admin') && ! $user->hasRole('disdukcapil_staff')) {
+            if ($case->institution_id !== $user->institution_id) {
+                abort(403);
+            }
+        }
+
+        return view('dashboard.staff.arsip.show', [
+            'case' => $case,
+        ]);
+    }
+
+    /**
+     * Restore kasus dari arsip ke status aktif (SUBMITTED).
+     */
+    public function restoreArsip(int $id)
+    {
+        $user = auth()->user();
+        $case = CaseModel::with('documents')->findOrFail($id);
+
+        if ($case->status !== 'ARCHIVED') {
+            return back()->with('error', 'Hanya kasus berstatus ARCHIVED yang bisa di-restore.');
+        }
+
+        if (!$user->hasRole('super_admin')) {
+            if ($case->institution_id !== $user->institution_id) {
+                abort(403);
+            }
+        }
+
+        DB::transaction(function () use ($case, $user) {
+            $case->update(['status' => 'SUBMITTED', 'completed_at' => null]);
+
+            \App\Models\CaseTransition::create([
+                'case_id'         => $case->id,
+                'from_state'      => 'ARCHIVED',
+                'to_state'        => 'SUBMITTED',
+                'transitioned_by' => $user->id,
+                'reason'          => 'Restore dari arsip oleh PA Staff',
+                'metadata'        => ['source' => 'dashboard.restoreArsip'],
+            ]);
+
+            \App\Models\IntegrationQueue::create([
+                'aggregate_type' => 'Case',
+                'aggregate_id'   => $case->id,
+                'event_type'     => 'restored',
+                'payload'        => ['institution_id' => $case->institution_id, 'restored_by' => $user->id],
+                'available_at'   => now(),
+            ]);
+        });
+
+        AuditLog::create([
+            'user_id'        => $user->id,
+            'action'         => 'case.restored',
+            'subject_type'   => CaseModel::class,
+            'subject_id'     => $case->id,
+            'metadata'       => ['case_number' => $case->case_number, 'source' => 'staff.arsip.restore'],
+            'ip_address'     => request()->ip(),
+        ]);
+
+        return redirect()->route('dashboard.staff.arsip')
+            ->with('success', 'Kasus berhasil di-restore dari arsip.');
+    }
+
+    /**
+     * Download dokumen arsip (hanya untuk PA Staff/Admin yang punya akses).
+     */
+    public function staffArsipDownload(int $caseId, int $documentId)
+    {
+        $user = auth()->user();
+
+        $case = CaseModel::findOrFail($caseId);
+
+        if (! $user->hasRole('super_admin') && $case->institution_id !== $user->institution_id) {
+            abort(403);
+        }
+
+        $document = Document::where('case_id', $caseId)
+            ->where('id', $documentId)
+            ->firstOrFail();
+
+        $disk = \Storage::disk(config('ocr.storage.disk', 'public'));
+
+        if (! $disk->exists($document->file_path)) {
+            abort(404, 'File tidak ditemukan di storage.');
+        }
+
+        AuditLog::create([
+            'user_id' => $user->id,
+            'action'  => 'document.downloaded',
+            'subject_type' => Document::class,
+            'subject_id'   => $document->id,
+            'metadata'     => ['case_id' => $case->id, 'source' => 'staff.arsip'],
+            'ip_address'   => request()->ip(),
+        ]);
+
+        return $disk->download($document->file_path, $document->original_name ?? basename($document->file_path));
+    }
+
+    /**
+     * Halaman Kelola Blog untuk PA Staff.
+     * Menampilkan daftar blog posts di cms_blog_posts dengan aksi sederhana.
+     */
+    public function staffKelolaBlog(Request $request): View
+    {
+        $query = \App\Models\CmsBlogPost::query();
+
+        if ($status = $request->query('status')) {
+            $query->where('status', strtoupper($status));
+        }
+
+        if ($q = $request->query('q')) {
+            $query->where(function ($sub) use ($q) {
+                $sub->where('title', 'like', "%{$q}%")
+                    ->orWhere('slug', 'like', "%{$q}%")
+                    ->orWhere('excerpt', 'like', "%{$q}%");
+            });
+        }
+
+        $posts = $query->orderByDesc('updated_at')->paginate(15)->withQueryString();
+
+        $stats = [
+            'draft'     => \App\Models\CmsBlogPost::where('status', 'DRAFT')->count(),
+            'published' => \App\Models\CmsBlogPost::where('status', 'PUBLISHED')->count(),
+            'archived'  => \App\Models\CmsBlogPost::where('status', 'ARCHIVED')->count(),
+        ];
+
+        return view('dashboard.staff.kelola-blog', [
+            'posts' => $posts,
+            'stats' => $stats,
+            'statusFilter' => $status,
+        ]);
     }
 
     public function ocrResult(int $id): View
@@ -952,32 +1382,52 @@ class DashboardController extends Controller
 
     private function buildStats(\App\Models\User $user): array
     {
-        $q = CaseModel::forUser($user);
+        // For Disdukcapil staff, base query is ONLY DISDUKCAPIL_VALIDATION cases
+        if ($user->hasRole('disdukcapil_staff')) {
+            $q = CaseModel::where('status', 'DISDUKCAPIL_VALIDATION');
+        } else {
+            $q = CaseModel::forUser($user);
+        }
+        
         $publicPending = PublicSubmission::whereIn('status', ['SUBMITTED', 'APPROVED'])->count();
         
         // Calculate public submissions and internal cases for PA Assistant
         $publicSubmissionsCount = PublicSubmission::count();
         $internalCasesCount = (clone $q)->count();
         
-        // Calculate match/mismatch for PA Management
-        $ocrValidations = \App\Models\OcrValidation::all();
+        // Calculate match/mismatch for PA Management - ALL KTP_SUAMI + KTP_ISTRI documents (public + internal)
+        $ocrValidations = \App\Models\OcrValidation::whereHas('document', function ($q) {
+            $q->whereIn('document_type', ['KTP_SUAMI', 'KTP_ISTRI']);
+        })->get();
         $matchCount = $ocrValidations->where('validation_status', 'MATCH')->count();
+        $partialCount = $ocrValidations->where('validation_status', 'PARTIAL_MATCH')->count();
         $mismatchCount = $ocrValidations->where('validation_status', 'MISMATCH')->count();
         
-        // Calculate stats for Disdukcapil Staff
-        $disdukcapilValidation = (clone $q)->byStatus('DISDUKCAPIL_VALIDATION')->count();
+        // Calculate stats for Disdukcapil Staff - show assigned + all pending validation
+        if ($user->hasRole('disdukcapil_staff')) {
+            $disdukcapilValidation = (clone $q)->count();  // All DISDUKCAPIL_VALIDATION cases
+            $disdukcapilCompleted = CaseModel::where('status', 'COMPLETED')->count();
+            $disdukcapilRejected = CaseModel::where('status', 'REJECTED')->count();
+        } else {
+            $disdukcapilValidation = (clone $q)->where('status', 'DISDUKCAPIL_VALIDATION')->count();
+            $disdukcapilCompleted = (clone $q)->where('status', 'COMPLETED')->count();
+            $disdukcapilRejected = (clone $q)->where('status', 'REJECTED')->count();
+        }
         
         return [
-            'total'       => (clone $q)->count() + $publicPending,
-            'draft'       => (clone $q)->byStatus('DRAFT')->count(),
-            'in_progress' => (clone $q)->whereNotIn('status', ['DRAFT','COMPLETED','ARCHIVED','REJECTED'])->count() + $publicPending,
-            'completed'   => (clone $q)->byStatus('COMPLETED')->count(),
-            'rejected'    => (clone $q)->byStatus('REJECTED')->count() + PublicSubmission::where('status', 'REJECTED')->count(),
-            'public_submissions' => $publicSubmissionsCount,
+            'total'       => (clone $q)->count() + ($user->hasRole('disdukcapil_staff') ? 0 : $publicPending),
+            'draft'       => $user->hasRole('disdukcapil_staff') ? 0 : (clone $q)->byStatus('DRAFT')->count(),
+            'in_progress' => $user->hasRole('disdukcapil_staff') ? (clone $q)->count() : ((clone $q)->whereNotIn('status', ['DRAFT','COMPLETED','ARCHIVED','REJECTED'])->count() + $publicPending),
+            'completed'   => $user->hasRole('disdukcapil_staff') ? 0 : (clone $q)->byStatus('COMPLETED')->count(),
+            'rejected'    => $user->hasRole('disdukcapil_staff') ? 0 : ((clone $q)->byStatus('REJECTED')->count() + PublicSubmission::where('status', 'REJECTED')->count()),
+            'public_submissions' => $user->hasRole('disdukcapil_staff') ? 0 : $publicSubmissionsCount,
             'internal_cases' => $internalCasesCount,
             'ocr_match' => $matchCount,
+            'ocr_partial' => $partialCount,
             'ocr_mismatch' => $mismatchCount,
             'validation_pending' => $disdukcapilValidation,
+            'validation_completed' => $disdukcapilCompleted,
+            'validation_rejected' => $disdukcapilRejected,
         ];
     }
 }

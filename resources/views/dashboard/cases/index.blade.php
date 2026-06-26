@@ -1,20 +1,64 @@
 @extends('layouts.admin')
 
-@section('title', 'Daftar Kasus')
-@section('page-title', 'Daftar Kasus')
+@php
+  $statusLabel = request('status') ? (config('workflow.states')[request('status')] ?? request('status')) : 'Semua';
+  $isValidation = request('status') === 'DISDUKCAPIL_VALIDATION';
+  $isCompleted = request('status') === 'COMPLETED';
+  $isRejected = request('status') === 'REJECTED';
+  $isDisdukcapil = auth()->user()->hasRole('disdukcapil_staff');
+  
+  $pageTitle = 'Daftar Kasus';
+  if ($isDisdukcapil && $isValidation) {
+    $pageTitle = 'List Validasi';
+  } elseif ($isDisdukcapil && $isCompleted) {
+    $pageTitle = 'List Kelola';
+  } elseif ($isDisdukcapil && $isRejected) {
+    $pageTitle = 'Kasus Ditolak';
+  }
+@endphp
+
+@section('title', $pageTitle)
+@section('page-title', $pageTitle)
 
 @section('breadcrumb')
   <a href="{{ route('dashboard.index') }}" class="hover:text-primary"><i class="fas fa-home"></i></a>
   <i class="fas fa-chevron-right text-xs"></i>
-  <span class="text-gray-800 font-medium">Kasus</span>
+  <a href="{{ route('dashboard.cases') }}" class="hover:text-primary">Kasus</a>
+  @if(request('status'))
+    <i class="fas fa-chevron-right text-xs"></i>
+    <span class="text-gray-800 font-medium">{{ $statusLabel }}</span>
+  @endif
 @endsection
 
 @section('content')
 <div class="space-y-4">
 
+  {{-- Status Banner (jika filter) --}}
+  @if(request('status'))
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+      <i class="fas fa-info-circle text-blue-600 text-lg flex-shrink-0 mt-0.5"></i>
+      <div>
+        <p class="font-semibold text-blue-900">Filter Status Aktif: <span class="text-blue-700">{{ $statusLabel }}</span></p>
+        <p class="text-sm text-blue-700 mt-1">Menampilkan kasus dengan status "<strong>{{ $statusLabel }}</strong>"</p>
+      </div>
+    </div>
+  @endif
+
   {{-- Header --}}
   <div class="flex items-center justify-between">
-    <h1 class="text-xl font-bold text-gray-800"><i class="fas fa-folder mr-2 text-primary"></i>Manajemen Kasus</h1>
+    <div>
+      <h1 class="text-xl font-bold text-gray-800">
+        @if($isDisdukcapil && $isValidation)
+          <i class="fas fa-hourglass-half text-amber-600 mr-2"></i>List Validasi
+        @elseif($isDisdukcapil && $isCompleted)
+          <i class="fas fa-check-circle text-green-600 mr-2"></i>List Kelola
+        @elseif($isDisdukcapil && $isRejected)
+          <i class="fas fa-times-circle text-red-600 mr-2"></i>Kasus Ditolak
+        @else
+          <i class="fas fa-folder mr-2 text-primary"></i>{{ $pageTitle }}
+        @endif
+      </h1>
+    </div>
     @role('pa_assistant')
     <a href="{{ route('dashboard.cases.create') }}"
        class="bg-primary text-white rounded-xl px-4 py-2 text-sm font-medium hover:bg-primary-dark transition flex items-center gap-2">
@@ -22,6 +66,27 @@
     </a>
     @endrole
   </div>
+
+  {{-- Tab Navigation untuk Disdukcapil Staff --}}
+  @role('disdukcapil_staff')
+  <div class="flex gap-2 border-b border-gray-200">
+    <a href="{{ route('dashboard.cases', ['status' => 'DISDUKCAPIL_VALIDATION']) }}"
+       class="px-4 py-3 text-sm font-medium transition border-b-2 {{ $isValidation ? 'border-amber-500 text-amber-600' : 'border-transparent text-gray-600 hover:text-gray-800' }}">
+      <i class="fas fa-hourglass-half mr-1"></i>Validasi
+      <span class="bg-amber-100 text-amber-700 rounded-full px-2 py-0.5 text-xs font-bold ml-1">{{ $counts['validation_pending'] ?? 0 }}</span>
+    </a>
+    <a href="{{ route('dashboard.cases', ['status' => 'COMPLETED']) }}"
+       class="px-4 py-3 text-sm font-medium transition border-b-2 {{ $isCompleted ? 'border-green-500 text-green-600' : 'border-transparent text-gray-600 hover:text-gray-800' }}">
+      <i class="fas fa-check-circle mr-1"></i>Kelola
+      <span class="bg-green-100 text-green-700 rounded-full px-2 py-0.5 text-xs font-bold ml-1">{{ $counts['validation_completed'] ?? 0 }}</span>
+    </a>
+    <a href="{{ route('dashboard.cases', ['status' => 'REJECTED']) }}"
+       class="px-4 py-3 text-sm font-medium transition border-b-2 {{ $isRejected ? 'border-red-500 text-red-600' : 'border-transparent text-gray-600 hover:text-gray-800' }}">
+      <i class="fas fa-times-circle mr-1"></i>Ditolak
+      <span class="bg-red-100 text-red-700 rounded-full px-2 py-0.5 text-xs font-bold ml-1">{{ $counts['validation_rejected'] ?? 0 }}</span>
+    </a>
+  </div>
+  @endrole
 
   {{-- Filter Bar --}}
   <form method="GET" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-wrap gap-3 items-end">
@@ -108,9 +173,23 @@
         </tr>
         @empty
         <tr>
-          <td colspan="6" class="text-center py-12 text-gray-400">
-            <i class="fas fa-folder-open text-4xl mb-3 block"></i>
-            Belum ada data.
+          <td colspan="6" class="text-center py-12">
+            @if($isValidation)
+              <i class="fas fa-inbox text-4xl mb-3 block text-amber-200"></i>
+              <p class="text-gray-400 font-medium">Tidak ada kasus yang menunggu validasi</p>
+              <p class="text-gray-300 text-xs mt-1">Semua kasus sudah diproses atau belum ada pengiriman dari PA Management</p>
+            @elseif($isCompleted)
+              <i class="fas fa-check-circle text-4xl mb-3 block text-green-200"></i>
+              <p class="text-gray-400 font-medium">Tidak ada kasus yang sudah divalidasi</p>
+              <p class="text-gray-300 text-xs mt-1">Belum ada kasus yang berhasil divalidasi</p>
+            @elseif($isRejected)
+              <i class="fas fa-ban text-4xl mb-3 block text-red-200"></i>
+              <p class="text-gray-400 font-medium">Tidak ada kasus yang ditolak</p>
+              <p class="text-gray-300 text-xs mt-1">Semua kasus berhasil melalui proses validasi</p>
+            @else
+              <i class="fas fa-folder-open text-4xl mb-3 block text-gray-300"></i>
+              <p class="text-gray-400 font-medium">Belum ada data kasus</p>
+            @endif
           </td>
         </tr>
         @endforelse

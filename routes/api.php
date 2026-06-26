@@ -31,6 +31,8 @@ Route::prefix('v1')->group(function () {
     // Public tracking (no auth)
     Route::get('tracking/{token}', [TrackingController::class, 'track'])
          ->middleware('throttle:30,1');
+    Route::get('tracking/{token}/download/{documentId}', [TrackingController::class, 'downloadDocument'])
+         ->middleware('throttle:60,1');
 
     // Pengajuan publik (no auth) — rate limit per IP
     Route::prefix('public')->middleware('throttle:20,1')->group(function () {

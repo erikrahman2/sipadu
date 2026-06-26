@@ -25,6 +25,56 @@ class User extends Authenticatable implements JWTSubject
         'password'          => 'hashed',
     ];
 
+    // ── Boot: Neo4j Sync Events ──────────────────────────────────────────────
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        // User created → sync to Neo4j
+        static::created(function ($model) {
+            IntegrationQueue::create([
+                'aggregate_type' => 'User',
+                'aggregate_id'   => $model->id,
+                'event_type'     => 'created',
+                'payload'        => [
+                    'name'            => $model->name,
+                    'email'           => $model->email,
+                    'institution_id'  => $model->institution_id,
+                ],
+                'available_at'   => now(),
+            ]);
+        });
+
+        // User updated → sync changes to Neo4j
+        static::updated(function ($model) {
+            IntegrationQueue::create([
+                'aggregate_type' => 'User',
+                'aggregate_id'   => $model->id,
+                'event_type'     => 'updated',
+                'payload'        => [
+                    'name'           => $model->name,
+                    'email'          => $model->email,
+                    'institution_id' => $model->institution_id,
+                ],
+                'available_at'   => now(),
+            ]);
+        });
+
+        // User deleted → remove from Neo4j
+        static::deleting(function ($model) {
+            if ($model->forceDeleting) {
+                IntegrationQueue::create([
+                    'aggregate_type' => 'User',
+                    'aggregate_id'   => $model->id,
+                    'event_type'     => 'deleted',
+                    'payload'        => ['email' => $model->email],
+                    'available_at'   => now(),
+                ]);
+            }
+        });
+    }
+
     // ── JWT ──────────────────────────────────────────────────────────────────
 
     public function getJWTIdentifier(): mixed

@@ -22,7 +22,7 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'max_file_size_mb'      => (int) env('PUBLIC_SUBMISSION_MAX_FILE_MB', 5),
+    'max_file_size_mb'      => (int) env('PUBLIC_SUBMISSION_MAX_FILE_MB', 10),
     'max_files_per_type'    => 1,
     'allowed_mimes'         => ['jpg', 'jpeg', 'png', 'pdf'],
 

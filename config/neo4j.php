@@ -42,15 +42,17 @@ return [
     */
 
     'relationships' => [
-        'works_at'    => 'WORKS_AT',
-        'issues'      => 'ISSUES',
-        'verifies'    => 'VERIFIES',
-        'manages'     => 'MANAGES',
-        'same_case'   => 'SAME_CASE',
-        'related_to'  => 'RELATED_TO',
-        'has'         => 'HAS',
-        'member_of'   => 'MEMBER_OF',
-        'submitted'   => 'SUBMITTED',
+        'works_at'          => 'WORKS_AT',           // User -> Institution
+        'has'               => 'HAS',                // Institution -> Case
+        'has_document'      => 'HAS_DOCUMENT',       // Case -> Document
+        'verify_operator'   => 'VERIFY_OPERATOR',   // User -> Case (assigned operator)
+        'related_to'        => 'RELATED_TO',        // User -> Case (general relationship)
+        'submitted'         => 'SUBMITTED',         // User -> Case (submitter)
+        'issues'            => 'ISSUES',            // Legacy
+        'verifies'          => 'VERIFIES',          // Legacy
+        'manages'           => 'MANAGES',           // Legacy (deprecated, use HAS)
+        'same_case'         => 'SAME_CASE',         // Legacy
+        'member_of'         => 'MEMBER_OF',         // Legacy
     ],
 
     /*

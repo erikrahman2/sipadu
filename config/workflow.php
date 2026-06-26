@@ -27,7 +27,7 @@ return [
 
     'transitions' => [
         'DRAFT'                  => ['SUBMITTED'],
-        'SUBMITTED'              => ['OCR_PROCESSED', 'REJECTED'],
+        'SUBMITTED'              => ['OCR_PROCESSED', 'PA_REVIEW', 'DISDUKCAPIL_VALIDATION', 'REJECTED'],
         'OCR_PROCESSED'          => ['PA_REVIEW', 'REJECTED'],
         'PA_REVIEW'              => ['DISDUKCAPIL_VALIDATION', 'REJECTED'],
         'DISDUKCAPIL_VALIDATION' => ['COMPLETED', 'REJECTED'],
@@ -47,6 +47,8 @@ return [
         'DRAFT->SUBMITTED'                           => ['pa_assistant'],
         // PA Assistant: teruskan ke PA Review setelah OCR selesai
         'SUBMITTED->OCR_PROCESSED'                   => ['system', 'pa_assistant'],
+        'SUBMITTED->PA_REVIEW'                       => ['pa_assistant', 'pa_management'],
+        'SUBMITTED->DISDUKCAPIL_VALIDATION'          => ['pa_management'],
         'OCR_PROCESSED->PA_REVIEW'                   => ['pa_assistant', 'pa_management'],
         // PA Management: approve (ke Disdukcapil) atau reject pengajuan
         'PA_REVIEW->DISDUKCAPIL_VALIDATION'          => ['pa_management'],

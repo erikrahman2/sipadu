@@ -71,12 +71,12 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <p class="text-muted mb-1 small">NEED REVIEW</p>
-                            <h2 class="mb-0">{{ $stats['needs_review'] }}</h2>
-                            <small class="text-danger">Manual + Mismatch</small>
+                            <p class="text-muted mb-1 small">MISMATCH</p>
+                            <h2 class="mb-0">{{ $stats['mismatch'] }}</h2>
+                            <small class="text-danger">{{ $stats['total'] > 0 ? number_format(($stats['mismatch'] / $stats['total']) * 100, 1) : 0 }}%</small>
                         </div>
                         <div class="text-danger">
-                            <i class="fas fa-user-check fa-3x opacity-50"></i>
+                            <i class="fas fa-times-circle fa-3x opacity-50"></i>
                         </div>
                     </div>
                 </div>
@@ -133,13 +133,6 @@
                                 PARTIAL_MATCH
                             </span>
                             <span class="badge bg-warning rounded-pill">{{ $stats['partial_match'] }}</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                            <span>
-                                <i class="fas fa-user-check text-info me-2"></i>
-                                MANUAL_REVIEW
-                            </span>
-                            <span class="badge bg-info rounded-pill">{{ $stats['manual_review'] }}</span>
                         </div>
                         <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                             <span>
@@ -363,18 +356,16 @@ document.addEventListener('DOMContentLoaded', function() {
     new Chart(statusCtx, {
         type: 'doughnut',
         data: {
-            labels: ['MATCH', 'PARTIAL MATCH', 'MANUAL REVIEW', 'MISMATCH'],
+            labels: ['MATCH', 'PARTIAL MATCH', 'MISMATCH'],
             datasets: [{
                 data: [
                     {{ $stats['match'] }},
                     {{ $stats['partial_match'] }},
-                    {{ $stats['manual_review'] }},
                     {{ $stats['mismatch'] }}
                 ],
                 backgroundColor: [
                     'rgba(25, 135, 84, 0.8)',
                     'rgba(255, 193, 7, 0.8)',
-                    'rgba(13, 202, 240, 0.8)',
                     'rgba(220, 53, 69, 0.8)'
                 ],
                 borderWidth: 2,

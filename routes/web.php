@@ -1,9 +1,20 @@
-<?php
+﻿<?php
 
+use App\Models\CmsBlogPost;
+use App\Models\CmsAboutSection;
+use App\Models\CmsHomeSection;
+use App\Http\Controllers\Web\ContentController;
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\PublicSubmissionController;
 use App\Http\Controllers\Web\PublicSubmissionStaffController;
+use App\Http\Controllers\Web\StaffController;
+use App\Http\Controllers\Web\PagesController;
+use App\Http\Controllers\Admin\CMSKelolaKontenController;
+use App\Http\Controllers\Admin\CmsBlogPostController;
+use App\Http\Controllers\Admin\CmsHomeSectionController;
+use App\Http\Controllers\Admin\CmsAboutSectionController;
+use App\Http\Controllers\Web\PublicPageController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,10 +28,38 @@ if (config('app.debug')) {
     require __DIR__ . '/debug.php';
 }
 
-Route::get('/', fn() => view('welcome-new'))->middleware('auto.logout')->name('home');
+// Load homepage with CMS data
+Route::get('/', function () {
+    $blogPosts = CmsBlogPost::published()
+        ->orderByDesc('published_at')
+        ->take(10)
+        ->get();
+    $sections = CmsHomeSection::where('is_active', 1)->orderBy('display_order')->get()->keyBy('section_key');
+
+    // Prepare each section with fallbacks
+    $sHero       = $sections->get('hero')       ?? (object)['title'=>'','subtitle'=>'','cta_label'=>'','cta_url'=>null];
+    $sAbout      = $sections->get('about_header') ?? $sections->get('fitur_unggulan') ?? (object)['title'=>'Apa itu SiPadu?','subtitle'=>'','content'=>''];
+    $sProses     = $sections->get('proses_metodologi') ?? (object)['title'=>'Proses','subtitle'=>'','content'=>''];
+    $sFitur      = $sections->get('fitur_unggulan') ?? (object)['title'=>'','subtitle'=>'','content'=>''];
+    $sStatistik  = $sections->get('statistik') ?? (object)['title'=>'','content'=>''];
+    $sCta        = $sections->get('cta_footer') ?? (object)['title'=>'Siap Mulai?','subtitle'=>'','cta_label'=>'','cta_url'=>null];
+    $sBlog       = $sections->get('blog_header') ?? (object)['title'=>''];
+    $sSeo        = $sections->get('home_seo') ?? (object)['title'=>'','subtitle'=>'','content'=>''];
+
+    return view('welcome-new', compact(
+        'blogPosts', 'sections',
+        'sHero', 'sAbout', 'sProses', 'sFitur', 'sStatistik', 'sCta', 'sBlog', 'sSeo'
+    ));
+})->middleware('auto.logout')->name('home');
+
+// Halaman Layanan / Services
+Route::get('/layanan', function () {
+    return view('services');
+})->middleware('auto.logout')->name('services');
+
 Route::redirect('/login', '/auth/login')->name('login');
 
-// ── Pengajuan Publik (tanpa autentikasi) ─────────────────────────────────────
+// Pengajuan Publik (tanpa autentikasi)
 // auto.logout: jika ada staf yang sudah login, otomatis logout sebelum lanjut
 Route::prefix('pengajuan')
      ->name('public.submit.')
@@ -32,7 +71,7 @@ Route::prefix('pengajuan')
          Route::get('/sukses/{token}', [PublicSubmissionController::class, 'success'])->name('success');
      });
 
-// ── Public Tracking ──────────────────────────────────────────────────────────
+// Public Tracking
 Route::middleware('auto.logout')->group(function () {
     Route::get('/tracking', fn() => view('tracking.public'))->name('tracking.public');
     Route::get('/tracking/{token}', fn(string $token) => view('tracking.public', ['token' => $token]))
@@ -41,13 +80,14 @@ Route::middleware('auto.logout')->group(function () {
          ->name('public.tracking.token');
 });
 
-// ── Tentang & Berita ─────────────────────────────────────────────────────────
+// Tentang & Berita
 Route::middleware('auto.logout')->group(function () {
-    Route::get('/tentang', fn() => view('tentang'))->name('tentang');
-    Route::get('/berita', fn() => view('berita'))->name('berita');
+    Route::get('/tentang', [ContentController::class, 'aboutPage'])->name('tentang');
+    Route::get('/berita', [ContentController::class, 'blogPage'])->name('berita');
+    Route::get('/berita/{slug}', [ContentController::class, 'blogPost'])->name('berita.detail');
 });
 
-// ── Auth ────────────────────────────────────────────────────────────────────
+// Auth
 Route::prefix('auth')->name('auth.')->middleware('web')->group(function () {
     Route::get('login',  [AuthController::class, 'showLogin'])->name('login');
     Route::post('login', [AuthController::class, 'login'])->name('login.post');
@@ -55,13 +95,13 @@ Route::prefix('auth')->name('auth.')->middleware('web')->group(function () {
     Route::get('logout',  [AuthController::class, 'logout'])->name('logout.get')->middleware('auth');
 });
 
-// ── Dashboard (protected) ────────────────────────────────────────────────────
+// Dashboard (protected)
 Route::middleware(['auth', 'security.headers', 'access.log'])->prefix('dashboard')->name('dashboard.')->group(function () {
 
-    // Dashboard utama – semua role yang terautentikasi
+    // Dashboard utama â€“ semua role yang terautentikasi
     Route::get('/', [DashboardController::class, 'index'])->name('index');
 
-    // Kasus – hanya petugas lapangan (bukan super_admin)
+    // Kasus â€“ hanya petugas lapangan (bukan super_admin)
     // PENTING: cases/create harus didefinisikan sebelum cases/{id}
     // agar string "create" tidak ditangkap sebagai parameter {id} dinamis
     Route::middleware('role:pa_assistant|pa_management|pa_staff|disdukcapil_staff')
@@ -80,19 +120,19 @@ Route::middleware(['auth', 'security.headers', 'access.log'])->prefix('dashboard
     Route::middleware('role:pa_assistant|pa_management|pa_staff|disdukcapil_staff')
          ->get('/cases/{id}', [DashboardController::class, 'showCase'])->name('cases.show');
 
-    // Upload dokumen – PA Assistant & PA Staff
+    // Upload dokumen â€“ PA Assistant & PA Staff
     Route::middleware('role:pa_assistant|pa_staff')
          ->get('/upload', [DashboardController::class, 'upload'])->name('upload');
 
-    // Tracking – semua petugas lapangan (bukan super_admin)
+    // Tracking â€“ semua petugas lapangan (bukan super_admin)
     Route::middleware('role:pa_assistant|pa_management|pa_staff|disdukcapil_staff')
          ->get('/tracking', [DashboardController::class, 'tracking'])->name('tracking');
 
-    // OCR viewer – semua petugas lapangan (bukan super_admin)
+    // OCR viewer â€“ semua petugas lapangan (bukan super_admin)
     Route::middleware('role:pa_assistant|pa_management|pa_staff|disdukcapil_staff')
          ->get('/ocr/{id}', [DashboardController::class, 'ocrResult'])->name('ocr.result');
 
-    // Admin – super_admin only
+    // Admin â€“ super_admin only
     Route::middleware('role:super_admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/users',  [DashboardController::class, 'users'])->name('users');
         Route::get('/sync',   [DashboardController::class, 'syncStatus'])->name('sync');
@@ -100,8 +140,75 @@ Route::middleware(['auth', 'security.headers', 'access.log'])->prefix('dashboard
         Route::get('/logs',   [DashboardController::class, 'logs'])->name('logs');
     });
 
-    // Kotak masuk pengajuan publik – PA Assistant, PA Management, Disdukcapil, PA Staff
-    // (super_admin dikecualikan: tugas super_admin hanya monitoring pengguna & audit)
+    // CMS â€“ CRUD halaman publik (Blog, Home, About)
+    Route::middleware('role:pa_staff|pa_management|super_admin')->prefix('admin/cms')->name('admin.cms.')->group(function () {
+        // Blog / Berita
+        Route::get('/blog',          [CmsBlogPostController::class, 'index'])->name('blog.index');
+        Route::get('/blog/create',   [CmsBlogPostController::class, 'create'])->name('blog.create');
+        Route::post('/blog',         [CmsBlogPostController::class, 'store'])->name('blog.store');
+        Route::get('/blog/{post}',   [CmsBlogPostController::class, 'edit'])->name('blog.edit');
+        Route::patch('/blog/{post}', [CmsBlogPostController::class, 'update'])->name('blog.update');
+        Route::delete('/blog/{post}', [CmsBlogPostController::class, 'destroy'])->name('blog.destroy');
+
+        // Home Sections
+        Route::get('/home',          [CmsHomeSectionController::class, 'index'])->name('home.index');
+        Route::get('/home/create',   [CmsHomeSectionController::class, 'create'])->name('home.create');
+        Route::post('/home',         [CmsHomeSectionController::class, 'store'])->name('home.store');
+        Route::get('/home/{home}/edit', [CmsHomeSectionController::class, 'edit'])->name('home.edit');
+        Route::patch('/home/{home}',  [CmsHomeSectionController::class, 'update'])->name('home.update');
+        Route::delete('/home/{home}', [CmsHomeSectionController::class, 'destroy'])->name('home.destroy');
+
+        // About Sections
+        Route::get('/about',         [CmsAboutSectionController::class, 'index'])->name('about.index');
+        Route::get('/about/create',  [CmsAboutSectionController::class, 'create'])->name('about.create');
+        Route::post('/about',        [CmsAboutSectionController::class, 'store'])->name('about.store');
+        Route::get('/about/{about}/edit', [CmsAboutSectionController::class, 'edit'])->name('about.edit');
+        Route::patch('/about/{about}',  [CmsAboutSectionController::class, 'update'])->name('about.update');
+        Route::delete('/about/{about}', [CmsAboutSectionController::class, 'destroy'])->name('about.destroy');
+
+        // Kelola Konten – card index (homepage, tentang, berita)
+        Route::get('/kelola-konten', function () {
+            return view('dashboard.staff.cms.index');
+        })->name('kelola-konten.index');
+
+        // Unified Kelola Konten (legacy)
+        Route::get('/kelola-konten-legacy', [CMSKelolaKontenController::class, 'index'])->name('kelola-konten-legacy.index');
+
+        // Kelola Konten – Home
+        Route::post('/kelola-konten/home',        [CMSKelolaKontenController::class, 'homeStore'])->name('kelola-konten.home.store');
+        Route::get('/kelola-konten/home/create',  [CMSKelolaKontenController::class, 'homeCreate'])->name('kelola-konten.home.create');
+        Route::get('/kelola-konten/home/{home}/edit', [CMSKelolaKontenController::class, 'homeEdit'])->name('kelola-konten.home.edit');
+        Route::patch('/kelola-konten/home/{home}',  [CMSKelolaKontenController::class, 'homeUpdate'])->name('kelola-konten.home.update');
+        Route::delete('/kelola-konten/home/{home}', [CMSKelolaKontenController::class, 'homeDestroy'])->name('kelola-konten.home.destroy');
+
+        // Kelola Konten – About
+        Route::post('/kelola-konten/about',        [CMSKelolaKontenController::class, 'aboutStore'])->name('kelola-konten.about.store');
+        Route::get('/kelola-konten/about/create',  [CMSKelolaKontenController::class, 'aboutCreate'])->name('kelola-konten.about.create');
+        Route::get('/kelola-konten/about/{about}/edit', [CMSKelolaKontenController::class, 'aboutEdit'])->name('kelola-konten.about.edit');
+        Route::patch('/kelola-konten/about/{about}',  [CMSKelolaKontenController::class, 'aboutUpdate'])->name('kelola-konten.about.update');
+        Route::delete('/kelola-konten/about/{about}', [CMSKelolaKontenController::class, 'aboutDestroy'])->name('kelola-konten.about.destroy');
+
+        // Kelola Konten – Blog
+        Route::post('/kelola-konten/blog',         [CMSKelolaKontenController::class, 'blogStore'])->name('kelola-konten.blog.store');
+        Route::get('/kelola-konten/blog/create',   [CMSKelolaKontenController::class, 'blogCreate'])->name('kelola-konten.blog.create');
+        Route::get('/kelola-konten/blog/{post}/edit', [CMSKelolaKontenController::class, 'blogEdit'])->name('kelola-konten.blog.edit');
+        Route::patch('/kelola-konten/blog/{post}',  [CMSKelolaKontenController::class, 'blogUpdate'])->name('kelola-konten.blog.update');
+        Route::delete('/kelola-konten/blog/{post}', [CMSKelolaKontenController::class, 'blogDestroy'])->name('kelola-konten.blog.destroy');
+    });
+
+    // Aktivitas & Arsip â€“ pa_staff, pa_management
+    Route::middleware('role:pa_staff|pa_management')
+         ->prefix('aktivitas')
+         ->name('aktivitas.')
+         ->group(function () {
+             Route::get('/',            [DashboardController::class, 'aktivitas'])->name('index');
+             Route::get('/terbaru',     [DashboardController::class, 'aktivitasTerbaru'])->name('terbaru');
+             Route::get('/arsip',       [DashboardController::class, 'arsip'])->name('arsip');
+             Route::get('/arsip/{id}',  [DashboardController::class, 'showArsip'])->name('arsip.show');
+             Route::post('/{id}/restore', [DashboardController::class, 'restoreArsip'])->name('restore');
+         });
+
+    // Kotak masuk pengajuan publik â€“ PA Assistant, PA Management, Disdukcapil, PA Staff
     Route::middleware('role:pa_assistant|pa_management|disdukcapil_staff|pa_staff')
          ->prefix('public-inbox')
          ->name('public-inbox.')
@@ -113,17 +220,42 @@ Route::middleware(['auth', 'security.headers', 'access.log'])->prefix('dashboard
              Route::post('/{id}/reject',    [PublicSubmissionStaffController::class, 'reject'])->name('reject');
              Route::post('/{id}/resend-wa', [PublicSubmissionStaffController::class, 'resendWa'])->name('resend_wa');
          });
-    
-    // ── OCR Validation Review (PA Management & Super Admin) ─────────────────
+
+    // PA Staff: Aktivitas Terbaru & Arsip
+    Route::middleware('role:pa_staff')
+         ->prefix('staff')
+         ->name('staff.')
+         ->group(function () {
+             Route::get('/aktivitas',           [DashboardController::class, 'staffAktivitas'])->name('aktivitas');
+             Route::get('/arsip',               [DashboardController::class, 'staffArsip'])->name('arsip');
+             Route::get('/arsip/{id}',          [DashboardController::class, 'staffArsipShow'])->name('arsip.show');
+             Route::get('/arsip/{id}/download', [DashboardController::class, 'staffArsipDownload'])->name('arsip.download');
+         });
+
+    // OCR Validation Review (PA Management & Super Admin)
     Route::middleware('role:pa_management|super_admin')
          ->prefix('review')
          ->name('review.')
          ->group(function () {
              Route::get('/cases',            [\App\Http\Controllers\Web\ReviewController::class, 'index'])->name('cases');
+             Route::get('/all-data',         [\App\Http\Controllers\Web\ReviewController::class, 'allData'])->name('all_data');
              Route::get('/cases/{id}',       [\App\Http\Controllers\Web\ReviewController::class, 'show'])->name('show');
-                Route::post('/cases/{id}/correct', [\App\Http\Controllers\Web\ReviewController::class, 'correctOcr'])->name('correct');
-                Route::post('/cases/{id}/refresh-ocr', [\App\Http\Controllers\Web\ReviewController::class, 'refreshOcr'])->name('refresh_ocr');
+             Route::post('/cases/{id}/correct', [\App\Http\Controllers\Web\ReviewController::class, 'correctOcr'])->name('correct');
+             Route::post('/cases/{id}/refresh-ocr', [\App\Http\Controllers\Web\ReviewController::class, 'refreshOcr'])->name('refresh_ocr');
              Route::post('/cases/{id}/validate', [\App\Http\Controllers\Web\ReviewController::class, 'validateOcr'])->name('validate');
+             Route::post('/cases/{id}/send-to-disdukcapil', [\App\Http\Controllers\Web\ReviewController::class, 'sendToDisdukcapil'])->name('send_to_disdukcapil');
              Route::get('/statistics',       [\App\Http\Controllers\Web\ReviewController::class, 'statistics'])->name('statistics');
          });
+
+    // Disdukcapil Validation Process (Disdukcapil Staff & Super Admin)
+    Route::middleware('role:disdukcapil_staff|super_admin')
+         ->prefix('disdukcapil')
+         ->name('disdukcapil.')
+         ->group(function () {
+             Route::get('/cases',                    [\App\Http\Controllers\Web\DisdukcapilController::class, 'index'])->name('index');
+             Route::get('/cases/{id}',               [\App\Http\Controllers\Web\DisdukcapilController::class, 'show'])->name('show');
+             Route::get('/cases/{id}/process',      [\App\Http\Controllers\Web\DisdukcapilController::class, 'showProcess'])->name('process.show');
+             Route::post('/cases/{id}/process',     [\App\Http\Controllers\Web\DisdukcapilController::class, 'submitProcess'])->name('process.submit');
+         });
 });
+

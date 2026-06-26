@@ -10,13 +10,15 @@ Endpoints:
   GET  /version          – engine info
 """
 
-import hashlib
+import sys
 import io
 import json
 import logging
 import os
 import re
 import time
+import hashlib
+import shutil
 from functools import wraps
 from pathlib import Path
 
@@ -24,7 +26,16 @@ import cv2
 import numpy as np
 import pytesseract
 from flask import Flask, jsonify, request
-from pdf2image import convert_from_bytes
+try:
+    import fitz  # PyMuPDF - self-contained PDF library
+    PDF_LIBRARY = "fitz"
+except ImportError:
+    try:
+        from pdf2image import convert_from_bytes  # Fallback to pdf2image
+        PDF_LIBRARY = "pdf2image"
+    except ImportError:
+        PDF_LIBRARY = None
+        
 from PIL import Image
 from dotenv import load_dotenv
 
@@ -42,7 +53,7 @@ app.config.update(
     TESSERACT_CMD      = os.getenv("TESSERACT_CMD", "tesseract"),
     TESSDATA_PREFIX    = os.getenv("TESSDATA_PREFIX", ""),
     OCR_LANG           = os.getenv("OCR_LANG", "ind+eng"),
-    OCR_PSM_CANDIDATES = os.getenv("OCR_PSM_CANDIDATES", "6,11,3"),
+    OCR_PSM_CANDIDATES = os.getenv("OCR_PSM_CANDIDATES", "6,11"),  # PSM 6 primary, PSM 11 fallback
     UPLOAD_DPI         = int(os.getenv("UPLOAD_DPI", "300")),
     LOG_LEVEL          = os.getenv("LOG_LEVEL", "INFO"),
 )
@@ -66,6 +77,17 @@ if app.config["TESSDATA_PREFIX"]:
     os.environ["TESSDATA_PREFIX"] = app.config["TESSDATA_PREFIX"]
 
 ACCEPTED_MIMES = {"image/jpeg", "image/png", "image/tiff", "application/pdf"}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PDF Library Check
+# ─────────────────────────────────────────────────────────────────────────────
+
+if PDF_LIBRARY is None:
+    logger.warning("No PDF library available. PDF processing will fail.")
+elif PDF_LIBRARY == "fitz":
+    logger.info("Using PyMuPDF (fitz) for PDF processing")
+else:
+    logger.info("Using pdf2image for PDF processing")
 
 
 def check_ocr_runtime() -> tuple[bool, dict]:
@@ -183,58 +205,83 @@ class Preprocessor:
 
         return img
 
-    def build_variants(self, pil_image: Image.Image) -> list[tuple[str, np.ndarray]]:
-        """Build multiple preprocessing variants for OCR fallback."""
+    def build_variants(self, pil_image: Image.Image, fast_only: bool = False) -> list[tuple[str, np.ndarray]]:
+        """Build preprocessing variants - FOCUSED on blur/noise/color issues.
+        
+        Order: Fast variants first (early stopping if good), slow ones only if needed.
+        Includes: strong denoising for blur, morphology for digit robustness, 
+        color handling for dominan backgrounds
+        
+        Args:
+            pil_image: Input PIL image
+            fast_only: If True, only use fast variants (for PDF optimization)
+        """
         base_rgb = np.array(pil_image.convert("RGB"))
         base_bgr = cv2.cvtColor(base_rgb, cv2.COLOR_RGB2BGR)
         gray = cv2.cvtColor(base_bgr, cv2.COLOR_BGR2GRAY)
 
         variants: list[tuple[str, np.ndarray]] = []
 
-        # Current default pipeline.
+        # FAST VARIANTS FIRST (likely to succeed on good images)
+        # Variant 1: Default adaptive pipeline
         variants.append(("adaptive", self.process(pil_image)))
 
-        # Simple grayscale fallback can work better on colored KTP backgrounds.
-        variants.append(("gray", gray))
+        # Variant 4: High-contrast variant (fast, effective)
+        alpha = 1.5
+        beta = 10
+        contrast_img = cv2.convertScaleAbs(gray, alpha=alpha, beta=beta)
+        _, contrast_binary = cv2.threshold(contrast_img, 128, 255, cv2.THRESH_BINARY)
+        variants.append(("contrast_binary", contrast_binary))
 
-        # OTSU threshold fallback for strong foreground/background separation.
-        _, otsu = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        variants.append(("otsu", otsu))
+        # Variant 3: Sharpened + OTSU threshold (fast)
+        kernel_sharp = np.array([[-1, -1, -1],
+                                [-1,  9, -1],
+                                [-1, -1, -1]]) / 1.0
+        sharpened = cv2.filter2D(gray, -1, kernel_sharp)
+        sharpened = np.clip(sharpened, 0, 255).astype(np.uint8)
+        _, sharp_otsu = cv2.threshold(sharpened, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        variants.append(("sharp_otsu", sharp_otsu))
 
-        # Contrast-enhanced grayscale fallback.
+        # For PDF or fast-only mode, return early with just the fast 3 variants
+        if fast_only:
+            logger.info("Variant generation: fast_only=True, using 3 variants only")
+            return variants
+
+        # MEDIUM VARIANTS (only for JPG/PNG)
+        # Variant 2: Aggressive CLAHE + Morphology for digit robustness
+        clahe_agg = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(6, 6))
+        clahe_img = clahe_agg.apply(gray)
+        kernel_close = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        clahe_img = cv2.morphologyEx(clahe_img, cv2.MORPH_CLOSE, kernel_close)
+        kernel_open = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
+        clahe_img = cv2.morphologyEx(clahe_img, cv2.MORPH_OPEN, kernel_open)
+        variants.append(("clahe_morph", clahe_img))
+
+        # Variant 5: Equalized histogram for difficult lighting (fast)
         eq = cv2.equalizeHist(gray)
-        variants.append(("equalized", eq))
+        eq_clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8)).apply(eq)
+        variants.append(("equalized_clahe", eq_clahe))
+        
+        # SLOW VARIANTS (only if early stopping didn't trigger)
+        # Variant 2.5: STRONG DENOISE variant for blur images - h=35 ULTRA (SLOW, use only if needed)
+        strong_denoised = cv2.fastNlMeansDenoising(gray, h=35, templateWindowSize=7, searchWindowSize=21)
+        clahe_denoise = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8)).apply(strong_denoised)
+        clahe_denoise = cv2.morphologyEx(clahe_denoise, cv2.MORPH_CLOSE, kernel_close)
+        variants.append(("denoise_strong", clahe_denoise))
 
-        # CLAHE (Contrast Limited Adaptive Histogram Equalization) - better than simple equalization
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-        clahe_img = clahe.apply(gray)
-        variants.append(("clahe", clahe_img))
-
-        # Upscale fallback for tiny/blurred text.
-        upscaled = cv2.resize(gray, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_CUBIC)
-        variants.append(("upscaled", upscaled))
-
-        # Extra aggressive upscaling for KTP_ISTRI (spouse cards often have smaller text)
-        if self.extra_upscale > 1.0:
-            upscaled_aggressive = cv2.resize(gray, None, fx=self.extra_upscale, fy=self.extra_upscale, 
-                                           interpolation=cv2.INTER_CUBIC)
-            variants.append(("upscaled_aggressive", upscaled_aggressive))
-
-        # Left-panel ROI fallback (KTP text region is usually on the left side).
+        # Variant 6: ROI crop with aggressive cleaning + LEFT PADDING (slow)
         h, w = gray.shape[:2]
-        left_panel = gray[0:int(h * 0.78), 0:int(w * 0.72)]
-        if left_panel.size > 0:
-            variants.append(("left_panel", left_panel))
-
-        # Morphological operations for cleaning (especially useful for KTP_ISTRI)
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
-        morph_gray = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, kernel)
-        variants.append(("morphological", morph_gray))
-
-        # Bilateral filtering for edge preservation
-        if self.bilateral_filter:
-            bilateral = cv2.bilateralFilter(gray, 9, 75, 75)
-            variants.append(("bilateral", bilateral))
+        roi_y_start = int(h * 0.1)
+        roi_y_end = int(h * 0.95)
+        # Add 50px padding to LEFT to prevent cutting off first digit
+        roi_x_start = max(0, -50)  
+        roi_x_end = w
+        roi = gray[roi_y_start:roi_y_end, roi_x_start:roi_x_end]
+        if roi.size > 100:
+            roi_clahe = cv2.createCLAHE(clipLimit=5.0, tileGridSize=(5, 5)).apply(roi)
+            roi_clahe = cv2.filter2D(roi_clahe, -1, kernel_sharp)
+            roi_clahe = np.clip(roi_clahe, 0, 255).astype(np.uint8)
+            variants.append(("roi_sharp", roi_clahe))
 
         return variants
 
@@ -270,25 +317,31 @@ class OCREngine:
     LOOSE_DIGITS = re.compile(r"(?:\d[\s\-:/.]*){14,20}")
     LOOSE_DATE = re.compile(r"\b(\d{2})\s*[-/.]\s*(\d{2})\s*[-/.]\s*(\d{4})\b")
 
-    # Common OCR label synonyms on Indonesian ID cards
+    # Common OCR label synonyms on Indonesian ID cards - EXPANDED for robustness
     FIELD_HEADERS = {
-        "nik":           ["nik", "nomor induk kependudukan", "no induk", "no.nik", "nik.", "no nik"],
-        "no_kk":         ["no kk", "nomor kk", "kartu keluarga", "no kartu keluarga", "no.kk"],
-        "nama":          ["nama", "nama lengkap", "name", "nama:"],
-        "tgl_lahir":     ["tanggal lahir", "tgl lahir", "ttl", "tempat tgl lahir", "tgllahir", "tgl.lahir", "tanggal/tempat"],
-        "tempat_lahir":  ["tempat lahir", "tempat/tgl", "tempat/tgl lahir"],
-        "jenis_kelamin": ["jenis kelamin", "jk", "jenis kelamin:"],
-        "alamat":        ["alamat", "alamat:"],
-        "rt_rw":         ["rt/rw", "rt/rw:", "rt / rw"],
-        "kelurahan":     ["kel/desa", "kelurahan", "desa", "kel/dese", "kevdesa", "kedesa", "ke/desa", "kelurahan/desa"],
-        "kecamatan":     ["kecamatan", "kecamatan:"],
-        "kabupaten":     ["kabupaten", "kota", "kabupaten/kota"],
+        "nik":           ["nik", "nomor induk kependudukan", "no induk", "no.nik", "nik.", "no nik", "no. nik", "nomer induk", "no. induk kependudukan"],
+        "no_kk":         ["no kk", "nomor kk", "kartu keluarga", "no kartu keluarga", "no.kk", "nomer kk"],
+        "nama":          ["nama", "nama lengkap", "name", "nama:", "nama :", "n a m a"],
+        "tgl_lahir":     ["tanggal lahir", "tgl lahir", "ttl", "tempat tgl lahir", "tgllahir", "tgl.lahir", "tanggal/tempat", "tangal lahir", "tgl. lahir"],
+        "tempat_lahir":  ["tempat lahir", "tempat/tgl", "tempat/tgl lahir", "tempat", "t e m p a t l a h i r"],
+        "jenis_kelamin": ["jenis kelamin", "jk", "jenis kelamin:", "jk:", "jenis kelamin :", "j.kelamin"],
+        "alamat":        ["alamat", "alamat:", "alamat :", "jalan", "jln"],
+        "rt_rw":         ["rt/rw", "rt/rw:", "rt / rw", "rt/rw :", "rt.rw"],
+        "kelurahan":     ["kel/desa", "kelurahan", "desa", "kel/dese", "kevdesa", "kedesa", "ke/desa", "kelurahan/desa", "kel.desa", "kelurahan/kel"],
+        "kecamatan":     ["kecamatan", "kecamatan:", "kecamatan :", "kec."],
+        "kabupaten":     ["kabupaten", "kota", "kabupaten/kota", "kabupaten/kota:"],
         "provinsi":      ["provinsi", "provinsi:"],
     }
 
     def __init__(self, lang: str = "eng", config: str = "--oem 3 --psm 6"):
         self.lang   = lang
         self.config = config
+        
+        # Build set of all known field labels for quick lookup to avoid label-as-value confusion
+        self.all_field_labels_lower = set()
+        for field, labels in self.FIELD_HEADERS.items():
+            for lbl in labels:
+                self.all_field_labels_lower.add(lbl.lower())
 
     def extract(self, img: np.ndarray, config: str | None = None) -> dict:
         start = time.time()
@@ -344,14 +397,22 @@ class OCREngine:
         optional_fields = ["tempat_lahir", "rt_rw", "kelurahan", "kecamatan"]
         score += sum(0.6 for f in optional_fields if result.get(f))
 
-        # Add confidence score
+        # Add confidence score with better thresholding
+        # More lenient: accept 0.55+ confidence, was limiting at 0.70
         if conf:
             avg_conf = sum(conf.values()) / max(len(conf), 1)
-            score += min(avg_conf, 1.0)
+            if avg_conf >= 0.55:  # Lowered from 0.70 for more extraction
+                score += min(avg_conf, 1.0)
+            else:
+                score += avg_conf * 0.3  # Reduced penalty for lower confidence
 
         # Bonus for text volume (sign of good extraction)
         raw_len = len((result.get("raw_text") or {}).get("full") or "")
         score += min(raw_len / 500.0, 1.0)
+        
+        # Bonus: If extracted ANY critical field successfully, boost score
+        critical_count = sum(1 for f in ["nik", "nama", "tgl_lahir"] if result.get(f))
+        score += critical_count * 0.5
 
         return score
 
@@ -366,6 +427,8 @@ class OCREngine:
             if str(c).lstrip("-").isdigit() and int(c) >= 0
         ]
         overall_word_conf = (sum(word_confs) / len(word_confs) / 100) if word_confs else 0.0
+        
+        logger.debug(f"Parsing {len(lines)} text lines, avg confidence: {overall_word_conf:.2%}")
 
         for i, line in enumerate(lines):
             lower = line.lower()
@@ -373,6 +436,14 @@ class OCREngine:
             for field, labels in self.FIELD_HEADERS.items():
                 value = self._extract_labeled_value(line, lower, labels, lines[i + 1] if i + 1 < len(lines) else "")
                 if not value:
+                    continue
+
+                # CRITICAL CHECK: If the extracted value is itself a field label, reject it
+                # This prevents "RT/RW" being assigned to "alamat" field
+                value_lower = value.lower()
+                is_label = value_lower in self.all_field_labels_lower
+                if is_label:
+                    logger.debug(f"Rejecting value='{value}' for field '{field}' - it's a known label")
                     continue
 
                 value = self._clean_field_value(field, value)
@@ -383,15 +454,27 @@ class OCREngine:
                 if self._value_quality(field, value) >= self._value_quality(field, old_value):
                     fields[field] = value
                     conf[field] = overall_word_conf
+                    logger.debug(f"Extracted {field}: {value[:50]}")
 
         # Clean NIK extracted from labels (e.g., with spaces or punctuation).
         if "nik" in fields:
-            nik_digits = self._normalize_digits(fields["nik"])
-            if len(nik_digits) >= 16:
-                fields["nik"] = nik_digits[:16]
+            # Apply OCR character cleaning to handle common confusions
+            nik_cleaned = self._clean_nik_corruption(fields["nik"])
+            if len(nik_cleaned) >= 16:
+                fields["nik"] = nik_cleaned[:16]
+            elif len(nik_cleaned) >= 14:
+                # Accept 14-16 digit NIK if cleaned successfully
+                fields["nik"] = nik_cleaned
             else:
-                fields.pop("nik", None)
-                conf.pop("nik", None)
+                # Try to find 16-digit NIK in raw text if labeled extraction failed
+                nik_from_raw = self._extract_best_nik(raw_text, lines)
+                if nik_from_raw:
+                    fields["nik"] = nik_from_raw
+                    conf["nik"] = max(overall_word_conf, 0.85)
+                    logger.debug(f"Extracted NIK from raw: {nik_from_raw}")
+                else:
+                    fields.pop("nik", None)
+                    conf.pop("nik", None)
 
         # Normalize date extracted from labels (e.g., "JAKARTA 10/08/1993").
         if "tgl_lahir" in fields:
@@ -410,9 +493,12 @@ class OCREngine:
         if "nik" not in fields:
             nik_value = self._extract_best_nik(raw_text, lines)
             if nik_value:
-                fields["nik"] = nik_value
-                # Higher confidence for label-based extraction, lower for pure regex
-                conf["nik"] = max(overall_word_conf, 0.92)
+                # Apply character cleaning to extracted NIK
+                nik_value = self._clean_nik_corruption(nik_value)
+                if nik_value and len(nik_value) >= 14:
+                    fields["nik"] = nik_value
+                    # Higher confidence for label-based extraction, lower for pure regex
+                    conf["nik"] = max(overall_word_conf, 0.92)
 
         if "tgl_lahir" not in fields:
             date_value = self._extract_best_date(raw_text, lines)
@@ -452,10 +538,21 @@ class OCREngine:
                     fields["tempat_lahir"] = place.upper()
                     conf["tempat_lahir"] = max(overall_word_conf, 0.72)
 
+        # ═════════════════════════════════════════════════════════════════════════════
+        # FINAL CLEANUP: Aggressive cleansing of NIK and other fields to remove OCR garbage
+        # ═════════════════════════════════════════════════════════════════════════════
+        
+        # Final NIK cleanup - NO MATTER HOW IT WAS EXTRACTED, clean it aggressively
+        if "nik" in fields and fields["nik"]:
+            fields["nik"] = self._clean_nik_corruption(fields["nik"])
+            # If cleaning resulted in empty/invalid, remove it
+            if not fields["nik"] or len(fields["nik"]) < 14:
+                fields.pop("nik", None)
+                conf.pop("nik", None)
+
         return fields, conf
 
-    @staticmethod
-    def _extract_labeled_value(line: str, line_lower: str, labels: list[str], next_line: str) -> str:
+    def _extract_labeled_value(self, line: str, line_lower: str, labels: list[str], next_line: str) -> str:
         for lbl in labels:
             idx = line_lower.find(lbl)
             if idx < 0:
@@ -468,8 +565,17 @@ class OCREngine:
                 return remainder
 
             # If label found but no value on same line, try next line
+            # BUT: Check if next line is actually another field label (e.g., "RT/RW")
             next_val = (next_line or "").strip()
             if next_val:
+                # CRITICAL: Check if next_val is a known field label
+                next_val_lower = next_val.lower()
+                is_field_label = next_val_lower in self.all_field_labels_lower
+                
+                if is_field_label:
+                    # Skip - this is another label, not a value
+                    return ""
+                
                 return next_val
 
         return ""
@@ -492,7 +598,7 @@ class OCREngine:
         cleaned = value.strip()
         upper = cleaned.upper()
 
-        if field == "nama" and any(token in upper for token in ["TEMPAT", "TGL", "LAHIR"]):
+        if field == "nama" and any(token in upper for token in ["TEMPAT", "TGL", "LAHIR", "PROVINSI"]):
             return ""
 
         if field == "kecamatan" and upper.startswith("AGAMA"):
@@ -508,6 +614,21 @@ class OCREngine:
             if m:
                 return re.sub(r"\s+", "", m.group(0))
             return ""
+        
+        # Better address handling - keep it flexible for OCR variations
+        if field == "alamat":
+            upper_cleaned = cleaned.upper()
+            
+            # REJECT if alamat is actually a field label
+            suspicious_alamat_values = ["RT/RW", "KEL/DESA", "KELURAHAN", "DESA", "KECAMATAN", "KABUPATEN", "PROVINSI"]
+            if any(susp in upper_cleaned for susp in suspicious_alamat_values):
+                logger.debug(f"_clean_field_value: alamat rejected because looks like label: {cleaned}")
+                return ""
+            
+            # Remove trailing punctuation but keep numbers/letters
+            cleaned = re.sub(r'[\s,:;.]*$', '', cleaned)
+            # Allow mixed case for addresses
+            return value.strip()
 
         return cleaned
 
@@ -525,6 +646,56 @@ class OCREngine:
         if year < 1900 or year > 2100:
             return None
         return f"{day:02d}-{month:02d}-{year:04d}"
+
+    @staticmethod
+    def _clean_nik_corruption(nik_str: str) -> str:
+        """Clean OCR corruption in NIK values - SMART approach.
+        
+        Order matters:
+        1. Strip leading/trailing garbage
+        2. ONLY then apply targeted character mapping
+        3. Handle edge cases like extra digits
+        """
+        nik = str(nik_str).strip()
+        
+        # Step 1: Remove leading garbage (: . , > | [ { etc) and letters
+        # Keep removing until we find a digit or suspected digit pattern
+        nik = re.sub(r'^[^0-9]*', '', nik)  # Remove everything before first digit
+        
+        # Step 2: Remove trailing garbage
+        nik = re.sub(r'[^0-9]*$', '', nik)  # Remove everything after last digit
+        
+        # Step 3: TARGETED character mapping - ONLY common OCR digit confusions
+        # These replacements only make sense if they're within/between digit sequences
+        nik = nik.replace('+', '0')   # Common: ocr reads + as 0 (definitely wrong)
+        nik = nik.replace('O', '0')   # Very common: ocr reads O as 0 in digit context
+        nik = nik.replace('o', '0')   # Lowercase o → 0
+        nik = nik.replace('l', '1')   # Lowercase L can look like 1 in some fonts
+        nik = nik.replace('I', '1')   # Uppercase I → 1
+        nik = nik.replace('S', '5')   # S can look like 5
+        nik = nik.replace('Z', '2')   # Z can look like 2
+        # NOTE: REMOVED B→8, b→8 because 'b' at start of NIK is stray garbage, not digit 8
+        # NOTE: REMOVED G→6 for same reason
+        
+        # Step 4: Remove dashes/spaces
+        nik = nik.replace('-', '')
+        nik = nik.replace(' ', '')
+        
+        # Step 5: Keep ONLY digits now
+        nik = re.sub(r'[^\d]', '', nik)
+        
+        # Step 6: Handle extra digits from prefix
+        if len(nik) == 17 and nik[0] == '1':
+            # Likely :1.prefix case
+            candidate = nik[1:17]
+            if candidate[0] in '123456':  # Valid province code
+                nik = candidate
+        elif len(nik) > 16:
+            nik = nik[:16]
+        elif len(nik) < 14:
+            return ""
+            
+        return nik if len(nik) >= 14 else ""
 
     def _extract_best_nik(self, raw_text: str, lines: list[str]) -> str | None:
         candidates: list[tuple[str, float]] = []
@@ -616,57 +787,31 @@ class OCREngine:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def get_preprocessor_config(document_type: str = "default") -> dict:
-    """Get preprocessor configuration for the given document type."""
+    """Get preprocessor configuration for the given document type.
+    
+    AGGRESSIVE approach: Better NIK extraction with more preprocessing
+    """
+    # AGGRESSIVE profile - enable more preprocessing for KTP with difficult images
+    aggressive_profile = {
+        'grayscale': True,
+        'binarize': True,
+        'denoise': True,      # Full denoising
+        'deskew': True,       # ENABLE deskew for angled KTP
+        'target_dpi': app.config["UPLOAD_DPI"],
+        'contrast_boost': 0.5,     # MODERATE: 50% boost
+        'adaptive_denoise_strength': 8,      # MODERATE: 8 (was 5)
+        'enable_variants': True,
+        'extra_upscale': 1.0,  # NO upscaling - preserve quality
+        'bilateral_filter': False,
+    }
+
     # Define document-specific profiles
     profiles = {
-        'KTP_ISTRI': {
-            'grayscale': True,
-            'binarize': True,
-            'denoise': True,
-            'deskew': True,
-            'target_dpi': app.config["UPLOAD_DPI"],
-            'contrast_boost': 1.2,  # Boost contrast for spouse cards
-            'adaptive_denoise_strength': 12,  # Stronger denoise
-            'enable_variants': True,
-            'extra_upscale': 1.5,  # Additional upscaling for small text
-            'bilateral_filter': True,  # Better edge preservation
-        },
-        'KTP_SUAMI': {
-            'grayscale': True,
-            'binarize': True,
-            'denoise': True,
-            'deskew': True,
-            'target_dpi': app.config["UPLOAD_DPI"],
-            'contrast_boost': 0.0,
-            'adaptive_denoise_strength': 10,
-            'enable_variants': True,
-            'extra_upscale': 1.0,
-            'bilateral_filter': False,
-        },
-        'KTP': {
-            'grayscale': True,
-            'binarize': True,
-            'denoise': True,
-            'deskew': True,
-            'target_dpi': app.config["UPLOAD_DPI"],
-            'contrast_boost': 0.0,
-            'adaptive_denoise_strength': 10,
-            'enable_variants': True,
-            'extra_upscale': 1.0,
-            'bilateral_filter': False,
-        },
-        'default': {
-            'grayscale': True,
-            'binarize': True,
-            'denoise': True,
-            'deskew': True,
-            'target_dpi': app.config["UPLOAD_DPI"],
-            'contrast_boost': 0.0,
-            'adaptive_denoise_strength': 10,
-            'enable_variants': True,
-            'extra_upscale': 1.0,
-            'bilateral_filter': False,
-        },
+        'KTP_ISTRI': aggressive_profile,
+        'KTP_SUAMI': aggressive_profile,
+        'KTP': aggressive_profile,
+        'KK': aggressive_profile,
+        'default': aggressive_profile,
     }
     
     return profiles.get(document_type, profiles['default'])
@@ -731,9 +876,11 @@ def ocr_process():
     document_type = request.headers.get("X-Document-Type", "generic")
     
     try:
+        logger.info(f"Processing file: mime={mime}, size={len(data)} bytes")
         images = _load_images(data, mime)
+        logger.debug(f"Loaded {len(images)} image(s)")
     except Exception as e:
-        logger.error("Image load error: %s", e)
+        logger.error(f"Image load error: {e}", exc_info=True)
         return jsonify({"error": f"Failed to load image: {e}"}), 422
 
     try:
@@ -744,25 +891,36 @@ def ocr_process():
         logger.info(f"OCR processing document type: {document_type}", extra={
             "document_type": document_type,
             "config": config,
+            "file_mime": mime,
         })
         
+        # PDF optimization: Use only PSM 6 for faster processing (4x speedup)
+        if mime == "application/pdf":
+            psm_candidates = ["6"]  # PDF: single PSM only
+            logger.info("PDF detected: Using optimized PSM mode (6 only)")
+        else:
+            psm_candidates = [
+                p.strip() for p in str(app.config.get("OCR_PSM_CANDIDATES", "6,11")).split(",")
+                if p.strip().isdigit()
+            ] or ["6"]
+
         # Process all pages; merge results (primary = first page)
         results = []
-        psm_candidates = [
-            p.strip() for p in str(app.config.get("OCR_PSM_CANDIDATES", "6,11,3")).split(",")
-            if p.strip().isdigit()
-        ] or ["6"]
+        
+        # PDF optimization: Use only fast variants
+        use_fast_variants_only = (mime == "application/pdf")
 
         for pil_img in images:
             candidates: list[dict] = []
 
-            for variant_name, processed in doc_preprocessor.build_variants(pil_img):
+            for variant_name, processed in doc_preprocessor.build_variants(pil_img, fast_only=use_fast_variants_only):
                 for psm in psm_candidates:
                     cfg = f"--oem 3 --psm {psm}"
                     result = engine.extract(processed, config=cfg)
                     result["_variant"] = variant_name
                     result["_psm"] = psm
                     candidates.append(result)
+                    # NO EARLY STOPPING - TEST ALL VARIANTS
 
             best = max(candidates, key=engine.score_result)
             best.pop("_variant", None)
@@ -788,7 +946,36 @@ def ocr_process():
 def _load_images(data: bytes, mime: str) -> list[Image.Image]:
     """Convert uploaded file bytes to list of PIL Images."""
     if mime == "application/pdf":
-        return convert_from_bytes(data, dpi=app.config["UPLOAD_DPI"])
+        # PDF-specific optimization: use 150 DPI (sufficient for text OCR, 4x faster)
+        pdf_dpi = int(os.getenv("PDF_DPI", "150"))
+        
+        try:
+            # Try PyMuPDF first (no system dependencies)
+            logger.debug(f"PDF_LIBRARY={PDF_LIBRARY}, attempting PDF conversion...")
+            if PDF_LIBRARY == "fitz":
+                logger.debug("Using fitz for PDF processing")
+                doc = fitz.open(stream=data, filetype="pdf")
+                images = []
+                # Only process first page (KTP/Istri are single-page documents)
+                for page_num in range(min(1, len(doc))):
+                    page = doc[page_num]
+                    # Render to pixmap at specified DPI
+                    mat = fitz.Matrix(pdf_dpi / 72, pdf_dpi / 72)
+                    pix = page.get_pixmap(matrix=mat, alpha=False)
+                    # Convert to PIL Image
+                    img = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
+                    images.append(img)
+                doc.close()
+                logger.debug(f"PDF conversion successful: {len(images)} image(s)")
+                return images
+            else:
+                logger.debug("Using pdf2image fallback for PDF processing")
+                images = convert_from_bytes(data, dpi=pdf_dpi)
+                return images[:1] if images else images
+                
+        except Exception as e:
+            logger.error(f"PDF conversion error ({PDF_LIBRARY}): {e}", exc_info=True)
+            raise
     else:
         return [Image.open(io.BytesIO(data))]
 

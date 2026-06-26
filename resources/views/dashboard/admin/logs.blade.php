@@ -15,15 +15,15 @@
     <form method="GET" class="flex flex-wrap gap-2 items-center">
       <input type="text" name="path" value="{{ request('path') }}"
         placeholder="Filter path..."
-        class="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-      <select name="status" class="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+        class="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-stone-500 focus:border-transparent" />
+      <select name="status" class="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-stone-500">
         <option value="">Semua status</option>
         <option value="ok"    @selected(request('status')==='ok')   >2xx OK</option>
         <option value="error" @selected(request('status')==='error')>4xx/5xx Error</option>
         <option value="slow"  @selected(request('status')==='slow') >Lambat (&gt;1s)</option>
       </select>
       <button type="submit"
-        class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition">
+        class="px-4 py-2 bg-stone-600 text-white text-sm font-medium rounded-lg hover:bg-stone-700 transition">
         Filter
       </button>
       @if(request()->hasAny(['path','status']))
@@ -87,10 +87,10 @@
             <td class="px-4 py-3">
               @php
                 $methodColors = [
-                  'GET'    => 'bg-blue-100 text-blue-700',
-                  'POST'   => 'bg-green-100 text-green-700',
-                  'PATCH'  => 'bg-yellow-100 text-yellow-700',
-                  'PUT'    => 'bg-orange-100 text-orange-700',
+                  'GET'    => 'bg-stone-100 text-stone-700',
+                  'POST'   => 'bg-amber-100 text-amber-700',
+                  'PATCH'  => 'bg-orange-100 text-orange-700',
+                  'PUT'    => 'bg-yellow-100 text-yellow-700',
                   'DELETE' => 'bg-red-100 text-red-700',
                 ];
               @endphp

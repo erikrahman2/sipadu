@@ -6,7 +6,6 @@
     $statusColors = [
         'MATCH' => '#28a745',
         'PARTIAL_MATCH' => '#ffc107',
-        'MANUAL_REVIEW' => '#17a2b8',
         'MISMATCH' => '#dc3545',
     ];
     $bgColor = $statusColors[$validation->validation_status] ?? '#6c757d';
@@ -101,6 +100,10 @@
                                     @php
                                         $inputVal = $validation->{"input_$fieldKey"} ?? '-';
                                         $ocrVal = $validation->{"ocr_$fieldKey"} ?? '-';
+                                        $rawInputVal = trim((string) ($validation->{"input_$fieldKey"} ?? ''));
+                                        $rawOcrVal = trim((string) ($validation->{"ocr_$fieldKey"} ?? ''));
+                                        $displayInputVal = $rawInputVal === '' ? '-' : $rawInputVal;
+                                        $displayOcrVal = $rawOcrVal === '' ? '-' : $rawOcrVal;
                                         $comparison = $comparisonResults[$fieldKey] ?? null;
                                         $similarity = $comparison['similarity'] ?? 0;
                                         $isMatch = $comparison['match'] ?? false;
@@ -110,12 +113,19 @@
                                     @endphp
                                     <tr style="background-color: {{ $rowBg }}; color: {{ $textColor }}; padding: 3px;">
                                         <td style="font-weight: 600; font-size: 10px; padding: 3px; word-break: break-word; overflow-wrap: break-word;">{{ $fieldLabel }}</td>
-                                        <td style="font-size: 10px; padding: 3px; word-break: break-word; overflow-wrap: break-word;">{{ Illuminate\Support\Str::limit($inputVal, 20) }}</td>
+                                        <td style="font-size: 10px; padding: 3px; word-break: break-word; overflow-wrap: break-word; cursor: pointer; position: relative;"
+                                            onclick="makeEditable(this, '{{ $validation->id }}', '{{ $fieldKey }}', 'manual');"
+                                            title="Click to edit manual data">
+                                            <span id="manual-{{ $validation->id }}-{{ $fieldKey }}" class="manual-field-value" data-value="{{ $rawInputVal }}">
+                                                {{ $displayInputVal }}
+                                            </span>
+                                            <i class="fas fa-edit fa-xs" style="opacity: 0; margin-left: 2px;"></i>
+                                        </td>
                                         <td style="font-size: 10px; padding: 3px; word-break: break-word; overflow-wrap: break-word; cursor: pointer; position: relative;" 
-                                            onclick="makeEditable(this, '{{ $validation->id }}', '{{ $fieldKey }}');"
+                                            onclick="makeEditable(this, '{{ $validation->id }}', '{{ $fieldKey }}', 'ocr');"
                                             title="Click to edit">
-                                            <span id="ocr-{{ $validation->id }}-{{ $fieldKey }}" class="field-value">
-                                                {{ $ocrVal }}
+                                            <span id="ocr-{{ $validation->id }}-{{ $fieldKey }}" class="field-value" data-value="{{ $rawOcrVal }}">
+                                                {{ $displayOcrVal }}
                                             </span>
                                             <i class="fas fa-edit fa-xs" style="opacity: 0; margin-left: 2px;"></i>
                                         </td>
@@ -285,11 +295,12 @@ function toggleDetail(detailId, chevronId) {
     }
 }
 
-function makeEditable(cellElement, validationId, fieldKey) {
-    const span = cellElement.querySelector('span.field-value');
+function makeEditable(cellElement, validationId, fieldKey, target = 'ocr') {
+    const spanSelector = target === 'manual' ? 'span.manual-field-value' : 'span.field-value';
+    const span = cellElement.querySelector(spanSelector);
     if (!span) return;
     
-    const currentValue = span.textContent;
+    const currentValue = (span.getAttribute('data-value') || '').trim();
     
     // Create input field
     const input = document.createElement('input');
@@ -307,18 +318,20 @@ function makeEditable(cellElement, validationId, fieldKey) {
     // Handle blur and Enter key
     const saveChange = () => {
         const newValue = input.value.trim();
+        const displayValue = newValue === '' ? '-' : newValue;
         
         // Create new span
         const newSpan = document.createElement('span');
-        newSpan.className = 'field-value';
-        newSpan.textContent = newValue;
+        newSpan.className = target === 'manual' ? 'manual-field-value' : 'field-value';
+        newSpan.setAttribute('data-value', newValue);
+        newSpan.textContent = displayValue;
         
         // Replace input with span
         input.replaceWith(newSpan);
         
         // If value changed, save to backend
         if (newValue !== currentValue) {
-            saveOcrCorrection(validationId, fieldKey, newValue);
+            saveOcrCorrection(validationId, fieldKey, newValue, target);
         }
     };
     
@@ -329,19 +342,30 @@ function makeEditable(cellElement, validationId, fieldKey) {
         } else if (e.key === 'Escape') {
             // Cancel edit
             const cancelSpan = document.createElement('span');
-            cancelSpan.className = 'field-value';
-            cancelSpan.textContent = currentValue;
+            cancelSpan.className = target === 'manual' ? 'manual-field-value' : 'field-value';
+            cancelSpan.setAttribute('data-value', currentValue);
+            cancelSpan.textContent = currentValue === '' ? '-' : currentValue;
             input.replaceWith(cancelSpan);
         }
     });
 }
 
-function saveOcrCorrection(validationId, fieldKey, newValue) {
+function saveOcrCorrection(validationId, fieldKey, newValue, target = 'ocr') {
     // Get case ID from URL: /dashboard/review/cases/{id}
     const pathParts = window.location.pathname.split('/');
     const caseId = pathParts[pathParts.length - 1];
     
-    const fieldMap = {
+    const fieldMap = target === 'manual' ? {
+        'nik': 'input_nik',
+        'nama': 'input_nama',
+        'tempat_lahir': 'input_tempat_lahir',
+        'tgl_lahir': 'input_tgl_lahir',
+        'alamat': 'input_alamat',
+        'rt_rw': 'input_rt_rw',
+        'kelurahan': 'input_kelurahan',
+        'kecamatan': 'input_kecamatan',
+        'no_kk': 'input_no_kk',
+    } : {
         'nik': 'ocr_nik',
         'nama': 'ocr_nama',
         'tempat_lahir': 'ocr_tempat_lahir',
@@ -353,25 +377,33 @@ function saveOcrCorrection(validationId, fieldKey, newValue) {
         'no_kk': 'ocr_no_kk',
     };
     
-    const ocrFieldName = fieldMap[fieldKey];
-    if (!ocrFieldName) {
+    const fieldName = fieldMap[fieldKey];
+    if (!fieldName) {
         console.error('Unknown field key:', fieldKey);
         return;
     }
     
     const formData = new FormData();
     formData.append('validation_id', validationId);
-    formData.append(ocrFieldName, newValue);
+    formData.append('target', target);
+    formData.append(fieldName, newValue);
     formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
     
     fetch(`/dashboard/review/cases/${caseId}/correct`, {
         method: 'POST',
         body: formData,
         headers: {
-            'X-Requested-With': 'XMLHttpRequest'
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
         }
     })
-    .then(response => response.json())
+    .then(async response => {
+        const data = await response.json().catch(() => null);
+        if (!response.ok || !data || !data.success) {
+            throw new Error((data && data.message) ? data.message : 'Gagal menyimpan koreksi');
+        }
+        location.reload();
+    })
     .catch(error => {
         console.error('Error saving correction:', error);
         alert('Gagal menyimpan koreksi. Silakan coba lagi.');

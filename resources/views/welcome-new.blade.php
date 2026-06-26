@@ -1,413 +1,508 @@
 @extends('layouts.public')
 
-@section('title', 'Beranda - SiPadu')
+@section('title', $sSeo->title ?: 'SiPadu - Sistem Pembaruan Dokumen Pasca Perceraian')
+
+@push('styles')
+<style>
+  /* ── Animations ───────────────────────────────────── */
+  .fade-up {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s cubic-bezier(.22,.61,.36,1),
+                transform 0.7s cubic-bezier(.22,.61,.36,1);
+  }
+  .fade-up.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .fade-up-delay-1 { transition-delay: 0.1s; }
+  .fade-up-delay-2 { transition-delay: 0.2s; }
+  .fade-up-delay-3 { transition-delay: 0.3s; }
+
+  /* ── Stat number ──────────────────────────────────── */
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 0.5rem 0;
+    overflow: hidden;
+  }
+  .stat-inner {
+    width: 100%;
+  }
+  .stat-number {
+    font-size: clamp(1.25rem, 4vw, 4rem);
+    line-height: 1.1;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    display: block;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+  .stat-label {
+    font-size: clamp(0.6rem, 1.8vw, 0.95rem);
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 0.25rem;
+    font-weight: 400;
+    display: block;
+    overflow-wrap: anywhere;
+    word-break: break-all;
+  }
+
+  /* ── Scroll-triggered fade ────────────────────────── */
+  .observe-fade {
+    will-change: opacity, transform;
+  }
+</style>
+@endpush
 
 @section('content')
 
-{{-- ═══════════════════════════════════════════════════════════════════════════
-    HERO SECTION
-    ═══════════════════════════════════════════════════════════════════════════ --}}
-<section class="gradient-hero text-white py-20 px-4 sm:px-6 lg:px-8">
-  <div class="max-w-7xl mx-auto">
-    <div class="max-w-3xl">
-      <h1 class="text-4xl md:text-6xl font-bold leading-tight mb-6">
-        Ketika Kepastian Hukum,
-        <span class="text-cyan-300">Dokumen Menjadi Kunci</span>
-      </h1>
-      <p class="text-blue-100 text-lg md:text-xl leading-relaxed mb-8 max-w-2xl">
-        Sistem terintegrasi pembaruan dokumen kependudukan pasca perceraian antara Pengadilan Agama dan Dinas Kependudukan. Proses digital, transparan, dan terpercaya.
+{{-- SEO Meta Description --}}
+<meta name="description" content="{{ $sSeo->content ?: 'Sistem terintegrasi pembaruan dokumen kependudukan pasca perceraian.' }}">
+
+{{-- ===================================================================
+    SECTION 1 — HERO (two columns: text left, collage right)
+    =================================================================== --}}
+<section class="px-4 sm:px-6 lg:px-8 pt-16 pb-20 md:pb-28 overflow-hidden" style="background: url('{{ asset('assets-hero.jpg') }}') center/cover no-repeat; position: relative;">
+    <div class="absolute inset-0 bg-cream/65"></div>
+    <div class="max-w-7xl mx-auto relative z-10">
+    <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+
+      {{-- Left: headline + buttons --}}
+      <div class="order-2 lg:order-1">
+        <h1 class="text-3xl sm:text-4xl md:text-[2.75rem] lg:text-5xl leading-[1.15] font-medium tracking-tight text-brand mb-6">
+          {{ $sHero->title ?: 'Quando Kepastian Hukum, Dokumen Menjadi Kunci' }}
+        </h1>
+
+        <p class="text-base md:text-lg text-brown/60 max-w-lg mb-8 leading-relaxed observe-fade">
+          {{ $sHero->subtitle ?: 'Sistem terintegrasi pembaruan dokumen kependudukan pasca perceraian antara Pengadilan Agama dan Dinas Kependudukan.' }}
+        </p>
+
+        <div class="flex flex-wrap gap-3 mb-10 observe-fade fade-up">
+          <a href="{{ $sHero->cta_url ?: route('public.submit.create') }}"
+             class="px-6 py-3 bg-brand text-white font-medium text-sm rounded-full shadow-sm hover:opacity-90 transition inline-flex items-center gap-2">
+            <i class="fas fa-file-alt"></i> {{ $sHero->cta_label ?: 'Mulai Pengajuan' }}
+          </a>
+          <a href="{{ route('tracking.public') }}"
+             class="px-6 py-3 bg-white text-brand border border-brown/20 font-medium text-sm rounded-full hover:bg-brown/5 transition inline-flex items-center gap-2">
+            <i class="fas fa-search"></i> Lacak Pengajuan
+          </a>
+          <a href="{{ route('services') }}"
+             class="px-6 py-3 text-brown/70 font-medium text-sm hover:text-brown transition inline-flex items-center gap-2">
+            Layanan <i class="fas fa-arrow-right text-xs"></i>
+          </a>
+          <a href="{{ route('tentang') }}"
+             class="px-6 py-3 text-brown/70 font-medium text-sm hover:text-brown transition inline-flex items-center gap-2">
+            Tentang <i class="fas fa-arrow-right text-xs"></i>
+          </a>
+        </div>
+
+        {{-- Portrait circles --}}
+        <div class="flex items-center gap-4 observe-fade fade-up">
+          <div class="flex -space-x-3">
+            <div class="w-11 h-11 rounded-full bg-green-sm border-2 border-cream flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v1.2c0 .7.5 1.2 1.2 1.2h16.8c.7 0 1.2-.5 1.2-1.2v-1.2c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+            </div>
+            <div class="w-11 h-11 rounded-full bg-brand border-2 border-cream flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v1.2c0 .7.5 1.2 1.2 1.2h16.8c.7 0 1.2-.5 1.2-1.2v-1.2c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+            </div>
+            <div class="w-11 h-11 rounded-full bg-coral border-2 border-cream flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v1.2c0 .7.5 1.2 1.2 1.2h16.8c.7 0 1.2-.5 1.2-1.2v-1.2c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+            </div>
+            <div class="w-11 h-11 rounded-full bg-accent border-2 border-cream flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v1.2c0 .7.5 1.2 1.2 1.2h16.8c.7 0 1.2-.5 1.2-1.2v-1.2c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 bg-white rounded-full px-4 py-1.5 shadow-sm">
+            <div class="w-2 h-2 rounded-full bg-green-sm"></div>
+            <span class="text-xs text-brown/50 font-medium">Dipercaya oleh petugas PA di seluruh Indonesia</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+{{-- ===================================================================
+    SECTION 2 — TRUST LOGOS STRIP
+    =================================================================== --}}
+<section class="border-y border-brown/10 bg-cream py-10 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-6xl mx-auto">
+    <div class="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 opacity-50">
+      <span class="text-sm font-semibold text-brown/50">Kemenag RI</span>
+      <span class="text-sm font-semibold text-brown/50">Kemendagri</span>
+      <span class="text-sm font-semibold text-brown/50">PA</span>
+      <span class="text-sm font-semibold text-brown/50">Disdukcapil</span>
+      <span class="text-sm font-semibold text-brown/50">Mahkamah Agung</span>
+    </div>
+  </div>
+</section>
+
+
+{{-- ===================================================================
+    SECTION 3 — SPLIT SCREEN (Image left, Text right)
+    =================================================================== --}}
+<section class="py-20 md:py-28 px-4 sm:px-6 lg:px-8 bg-cream">
+  <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 md:gap-16 items-center">
+
+    {{-- Left: Image --}}
+    <div class="observe-fade fade-up">
+      <div class="rounded-2xl overflow-hidden bg-green-sm/20 shadow-sm" style="aspect-ratio:4/5;">
+        @if($sAbout->image_path)
+          <img src="{{ asset('storage/' . $sAbout->image_path) }}"
+               alt="{{ $sAbout->title ?: 'Tim SiPadu' }}"
+               class="w-full h-full object-cover">
+        @else
+          <img src="https://images.unsplash.com/photo-1521791136064-7986c2920210?w=800&q=80"
+               alt="Tim SiPadu"
+               class="w-full h-full object-cover">
+        @endif
+      </div>
+    </div>
+
+    {{-- Right: Text --}}
+    <div class="observe-fade fade-up">
+      <h2 class="text-2xl md:text-4xl font-medium text-brand leading-tight mb-6">
+        {{ $sAbout->title ?: 'Apa itu SiPadu?' }}
+      </h2>
+      <p class="text-brown/70 leading-relaxed mb-6">
+        {{ $sAbout->subtitle ?: 'SiPadu (Sistem Pembaruan Dokumen) adalah platform terintegrasi yang memudahkan proses pembaruan dokumen kependudukan bagi Anda yang baru saja mengalami perceraian.' }}
       </p>
-      <div class="flex flex-wrap gap-4">
-        <a href="{{ route('public.submit.create') }}"
-          class="px-8 py-4 bg-white text-brand font-bold rounded-lg hover:bg-gray-100 transition-colors inline-flex items-center gap-2">
-          <i class="fas fa-file-alt"></i> Mulai Pengajuan
-        </a>
-        <a href="{{ route('tracking.public') }}"
-          class="px-8 py-4 border-2 border-white text-white font-bold rounded-lg hover:bg-white/10 transition-colors inline-flex items-center gap-2">
-          <i class="fas fa-search"></i> Lacak Pengajuan
-        </a>
-      </div>
+      <p class="text-brown/70 leading-relaxed mb-8">
+        {{ $sAbout->content ?: 'Dengan SiPadu, proses pembaruan dokumen status perkawinan menjadi lebih cepat, transparan, dan dapat dilacak secara real-time.' }}
+      </p>
+      <a href="{{ route('tentang') }}"
+         class="inline-flex items-center gap-2 text-brand font-medium text-sm hover:gap-3 transition-all">
+        Pelajari Lebih Lanjut <i class="fas fa-arrow-right"></i>
+      </a>
     </div>
-    
-    {{-- Hero Image Placeholder --}}
-    <div class="mt-16 grid md:grid-cols-2 gap-8">
-      <div class="bg-white/10 rounded-lg h-64 md:h-96 flex items-center justify-center backdrop-blur-sm">
-        <div class="text-center">
-          <i class="fas fa-file-check text-6xl text-cyan-300 mb-4"></i>
-          <p class="text-blue-100">Dokumen Digital Terintegrasi</p>
-        </div>
-      </div>
-      <div class="bg-white/10 rounded-lg h-64 md:h-96 flex items-center justify-center backdrop-blur-sm">
-        <div class="text-center">
-          <i class="fas fa-chart-line text-6xl text-cyan-300 mb-4"></i>
-          <p class="text-blue-100">Proses Transparan & Real-Time</p>
-        </div>
-      </div>
-    </div>
+
   </div>
 </section>
 
-{{-- ═══════════════════════════════════════════════════════════════════════════
-    PROSES & METODOLOGI
-    ═══════════════════════════════════════════════════════════════════════════ --}}
-<section class="py-20 px-4 sm:px-6 lg:px-8">
-  <div class="max-w-7xl mx-auto">
-    <div class="grid lg:grid-cols-2 gap-16 items-center">
-      
-      {{-- Left Content --}}
-      <div>
-        <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-8 leading-tight">
-          Kami Membantu Mempercepat Pembaruan Dokumen Anda dengan Sistem yang Terstruktur, Jelas, dan Terpercaya
-        </h2>
-        
-        <div class="space-y-8">
-          {{-- Process Step 1 --}}
-          <div class="flex gap-6">
-            <div class="flex-shrink-0">
-              <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-brand text-white font-bold">
-                1
-              </div>
-              <div class="h-16 w-1 bg-gray-200 mx-auto mt-2"></div>
-            </div>
-            <div class="flex-1 pt-1">
-              <h4 class="text-sm font-semibold text-brand uppercase tracking-wider">MINGGU 1</h4>
-              <h3 class="text-lg font-bold text-gray-900 mb-2">Pengajuan & Validasi</h3>
-              <p class="text-gray-600">Anda dapat langsung mengajukan dokumen melalui platform tanpa perlu datang ke kantor. Sistem akan melakukan validasi awal NIK dan data pribadi Anda.</p>
-            </div>
-          </div>
 
-          {{-- Process Step 2 --}}
-          <div class="flex gap-6">
-            <div class="flex-shrink-0">
-              <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-brand text-white font-bold">
-                2
-              </div>
-              <div class="h-16 w-1 bg-gray-200 mx-auto mt-2"></div>
-            </div>
-            <div class="flex-1 pt-1">
-              <h4 class="text-sm font-semibold text-brand uppercase tracking-wider">MINGGU 1-2</h4>
-              <h3 class="text-lg font-bold text-gray-900 mb-2">Ekstraksi & OCR</h3>
-              <p class="text-gray-600">Sistem otomatis mengekstraksi data dari dokumen Anda menggunakan teknologi OCR terkini. Hasil ekstraksi akan diverifikasi untuk akurasi maksimal.</p>
-            </div>
-          </div>
-
-          {{-- Process Step 3 --}}
-          <div class="flex gap-6">
-            <div class="flex-shrink-0">
-              <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-brand text-white font-bold">
-                3
-              </div>
-              <div class="h-16 w-1 bg-gray-200 mx-auto mt-2"></div>
-            </div>
-            <div class="flex-1 pt-1">
-              <h4 class="text-sm font-semibold text-brand uppercase tracking-wider">MINGGU 2-3</h4>
-              <h3 class="text-lg font-bold text-gray-900 mb-2">Verifikasi PA & Disdukcapil</h3>
-              <p class="text-gray-600">Dokumen Anda diverifikasi oleh Pengadilan Agama dan Disdukcapil secara berlapis untuk memastikan keabsahan dan kelengkapan data.</p>
-            </div>
-          </div>
-
-          {{-- Process Step 4 --}}
-          <div class="flex gap-6">
-            <div class="flex-shrink-0">
-              <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-green-600 text-white font-bold">
-                ✓
-              </div>
-            </div>
-            <div class="flex-1 pt-1">
-              <h4 class="text-sm font-semibold text-green-600 uppercase tracking-wider">MINGGU 3+</h4>
-              <h3 class="text-lg font-bold text-gray-900 mb-2">Penerbitan & Update</h3>
-              <p class="text-gray-600">Dokumen Anda berhasil diperbarui di sistem kependudukan. Anda akan menerima notifikasi lengkap via WhatsApp dan dapat mengunduh dokumen digital.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {{-- Right Image/Illustration --}}
-      <div class="relative">
-        <div class="bg-gradient-to-br from-blue-100 to-cyan-100 rounded-2xl p-12 flex items-center justify-center h-96 shadow-lg">
-          <div class="text-center">
-            <i class="fas fa-people-arrows text-6xl text-brand mb-6"></i>
-            <div class="space-y-2">
-              <p class="text-lg font-semibold text-gray-900">Kolaborasi Antara</p>
-              <p class="text-gray-600">Pengadilan Agama & Disdukcapil</p>
-            </div>
-            <div class="mt-8 space-y-2">
-              <div class="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow">
-                <i class="fas fa-balance-scale text-brand"></i>
-                <span class="text-sm font-medium text-gray-700">Pengadilan Agama</span>
-              </div>
-              <div class="block">↓</div>
-              <div class="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow">
-                <i class="fas fa-id-card text-brand"></i>
-                <span class="text-sm font-medium text-gray-700">Disdukcapil</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-{{-- ═══════════════════════════════════════════════════════════════════════════
-    FITUR UNGGULAN
-    ═══════════════════════════════════════════════════════════════════════════ --}}
-<section class="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
-  <div class="max-w-7xl mx-auto">
+{{-- ===================================================================
+    SECTION 4 — PROCESS TIMELINE (dark section)
+    =================================================================== --}}
+<section class="py-20 md:py-28 px-4 sm:px-6 lg:px-8 bg-brand text-cream relative overflow-hidden">
+  <div class="absolute top-0 right-0 w-96 h-96 bg-green-sm/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+  <div class="max-w-6xl mx-auto relative z-10">
     <div class="text-center mb-16">
-      <h2 class="section-title">Fitur Unggulan</h2>
-      <p class="section-subtitle mx-auto">
-        Kami membantu mempercepat proses pembaruan dokumen dengan teknologi terkini dan sistem yang mudah digunakan.
-      </p>
+      <p class="text-[10px] font-semibold uppercase tracking-widest text-cream/40 mb-4">{{ $sProses->title ?: 'Proses' }}</p>
+      <h2 class="text-2xl md:text-4xl font-medium">
+        {{ $sProses->subtitle ?: 'Bagaimana cara kerjanya?' }}
+      </h2>
     </div>
 
-    <div class="grid md:grid-cols-3 gap-8">
-      {{-- Feature 1 --}}
-      <div class="card-hover bg-white p-8 rounded-lg shadow-sm hover:shadow-xl transition-all">
-        <div class="w-14 h-14 rounded-lg bg-brand/10 flex items-center justify-center mb-4">
-          <i class="fas fa-camera text-2xl text-brand"></i>
-        </div>
-        <h3 class="text-xl font-bold text-gray-900 mb-3">OCR Otomatis</h3>
-        <p class="text-gray-600 leading-relaxed">
-          Sistem ekstraksi teks otomatis dari dokumen menggunakan teknologi OCR terdepan untuk akurasi tinggi.
-        </p>
-      </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
 
-      {{-- Feature 2 --}}
-      <div class="card-hover bg-white p-8 rounded-lg shadow-sm hover:shadow-xl transition-all">
-        <div class="w-14 h-14 rounded-lg bg-brand/10 flex items-center justify-center mb-4">
-          <i class="fas fa-shield-alt text-2xl text-brand"></i>
-        </div>
-        <h3 class="text-xl font-bold text-gray-900 mb-3">Verifikasi Ganda</h3>
-        <p class="text-gray-600 leading-relaxed">
-          Setiap dokumen melalui verifikasi berlapis oleh Pengadilan Agama dan Disdukcapil untuk kepastian hukum.
-        </p>
-      </div>
-
-      {{-- Feature 3 --}}
-      <div class="card-hover bg-white p-8 rounded-lg shadow-sm hover:shadow-xl transition-all">
-        <div class="w-14 h-14 rounded-lg bg-brand/10 flex items-center justify-center mb-4">
-          <i class="fas fa-map-marker-alt text-2xl text-brand"></i>
-        </div>
-        <h3 class="text-xl font-bold text-gray-900 mb-3">Pelacakan Real-Time</h3>
-        <p class="text-gray-600 leading-relaxed">
-          Lacak status pengajuan kapan saja melalui token unik yang dikirim langsung ke nomor WhatsApp Anda.
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
-
-{{-- ═══════════════════════════════════════════════════════════════════════════
-    ALUR KERJA
-    ═══════════════════════════════════════════════════════════════════════════ --}}
-<section class="py-20 px-4 sm:px-6 lg:px-8">
-  <div class="max-w-7xl mx-auto">
-    <div class="text-center mb-16">
-      <h2 class="section-title">Alur Kerja Sistem</h2>
-      <p class="section-subtitle mx-auto">
-        Proses yang dirancang untuk memudahkan Anda dari awal hingga akhir.
-      </p>
-    </div>
-
-    <div class="grid md:grid-cols-4 gap-6">
       {{-- Step 1 --}}
-      <div class="relative">
-        <div class="text-center">
-          <div class="w-16 h-16 rounded-full bg-brand text-white flex items-center justify-center font-bold text-xl mx-auto mb-4 relative z-10">
-            1
-          </div>
-          <h4 class="font-bold text-gray-900 mb-2">Buat Akun</h4>
-          <p class="text-sm text-gray-600">Daftar dengan NIK dan data diri Anda</p>
+      <div class="text-center observe-fade fade-up">
+        <div class="w-16 h-16 rounded-full bg-cream/10 flex items-center justify-center mx-auto mb-5 border border-cream/15">
+          <svg class="w-7 h-7 text-cream/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         </div>
-        <div class="absolute top-8 left-1/2 w-full h-1 bg-gray-200 -z-0 md:-translate-x-1/2" style="width: calc(100% + 1.5rem); left: 50%;"></div>
+        <h3 class="text-sm font-semibold uppercase tracking-wider mb-2">1. Ajukan</h3>
+        <p class="text-sm text-cream/50 leading-relaxed">
+          Buat pengajuan pembaruan dokumen melalui formulir online lengkap dengan persyaratan.
+        </p>
       </div>
 
       {{-- Step 2 --}}
-      <div class="relative">
-        <div class="text-center">
-          <div class="w-16 h-16 rounded-full bg-brand text-white flex items-center justify-center font-bold text-xl mx-auto mb-4 relative z-10">
-            2
-          </div>
-          <h4 class="font-bold text-gray-900 mb-2">Upload Dokumen</h4>
-          <p class="text-sm text-gray-600">Unggah dokumen perceraian dan identitas</p>
+      <div class="text-center observe-fade fade-up fade-up-delay-1">
+        <div class="w-16 h-16 rounded-full bg-cream/10 flex items-center justify-center mx-auto mb-5 border border-cream/15">
+          <svg class="w-7 h-7 text-cream/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
         </div>
-        <div class="absolute top-8 left-1/2 w-full h-1 bg-gray-200 -z-0 md:-translate-x-1/2" style="width: calc(100% + 1.5rem); left: 50%;"></div>
+        <h3 class="text-sm font-semibold uppercase tracking-wider mb-2">2. Verifikasi</h3>
+        <p class="text-sm text-cream/50 leading-relaxed">
+          Petugas Pengadilan Agama memverifikasi kelengkapan dokumen dan putusan.
+        </p>
       </div>
 
       {{-- Step 3 --}}
-      <div class="relative">
-        <div class="text-center">
-          <div class="w-16 h-16 rounded-full bg-brand text-white flex items-center justify-center font-bold text-xl mx-auto mb-4 relative z-10">
-            3
-          </div>
-          <h4 class="font-bold text-gray-900 mb-2">Verifikasi</h4>
-          <p class="text-sm text-gray-600">Tim kami memverifikasi dokumen Anda</p>
+      <div class="text-center observe-fade fade-up fade-up-delay-2">
+        <div class="w-16 h-16 rounded-full bg-cream/10 flex items-center justify-center mx-auto mb-5 border border-cream/15">
+          <svg class="w-7 h-7 text-cream/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 6l3 3m0 0l-3 3m3-3H9"/></svg>
         </div>
-        <div class="absolute top-8 left-1/2 w-full h-1 bg-gray-200 -z-0 md:-translate-x-1/2" style="width: calc(100% + 1.5rem); left: 50%;"></div>
+        <h3 class="text-sm font-semibold uppercase tracking-wider mb-2">3. Sinkronisasi</h3>
+        <p class="text-sm text-cream/50 leading-relaxed">
+          Data secara otomatis disinkronkan ke Disdukcapil untuk pembaruan KTP dan KK.
+        </p>
       </div>
 
       {{-- Step 4 --}}
-      <div>
-        <div class="text-center">
-          <div class="w-16 h-16 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-xl mx-auto mb-4">
-            ✓
-          </div>
-          <h4 class="font-bold text-gray-900 mb-2">Selesai</h4>
-          <p class="text-sm text-gray-600">Dokumen berhasil diperbarui</p>
+      <div class="text-center observe-fade fade-up fade-up-delay-3">
+        <div class="w-16 h-16 rounded-full bg-cream/10 flex items-center justify-center mx-auto mb-5 border border-cream/15">
+          <svg class="w-7 h-7 text-cream/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         </div>
+        <h3 class="text-sm font-semibold uppercase tracking-wider mb-2">4. Selesai</h3>
+        <p class="text-sm text-cream/50 leading-relaxed">
+          Dokumen Anda telah diperbarui. Notifikasi dikirim dan dapat diunduh.
+        </p>
       </div>
+
     </div>
   </div>
 </section>
 
-{{-- ═══════════════════════════════════════════════════════════════════════════
-    PENGGUNA SISTEM
-    ═══════════════════════════════════════════════════════════════════════════ --}}
-<section class="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
-  <div class="max-w-7xl mx-auto">
-    <div class="text-center mb-16">
-      <h2 class="section-title">Untuk Siapa?</h2>
-      <p class="section-subtitle mx-auto">
-        Sistem ini dirancang untuk melayani berbagai pengguna sesuai dengan peran dan kebutuhannya.
+
+{{-- ===================================================================
+    SECTION 5 — FEATURES GRID
+    =================================================================== --}}
+<section class="py-20 md:py-28 px-4 sm:px-6 lg:px-8 bg-cream">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-14">
+      <p class="text-[10px] font-semibold uppercase tracking-widest text-brown/25 mb-4">Keunggulan</p>
+      <h2 class="text-2xl md:text-4xl font-medium mb-4">
+        {{ $sFitur->title ?: 'Fitur Unggulan Kami' }}
+      </h2>
+      <p class="text-brown/50 text-sm md:text-base max-w-xl mx-auto">
+        {{ $sFitur->subtitle ?: 'Fitur-fitur yang dirancang untuk memudahkan proses pembaruan dokumen Anda dari awal hingga selesai.' }}
       </p>
     </div>
 
-    <div class="grid md:grid-cols-3 gap-8">
-      {{-- User Type 1 --}}
-      <div class="card-hover bg-white p-8 rounded-lg shadow-sm">
-        <div class="w-20 h-20 rounded-lg bg-blue-100 flex items-center justify-center mx-auto mb-4">
-          <i class="fas fa-users text-4xl text-brand"></i>
+    <div class="grid md:grid-cols-3 gap-6">
+
+      {{-- Card 1 --}}
+      <div class="bg-white rounded-2xl p-7 card-lift observe-fade fade-up">
+        <div class="w-12 h-12 bg-brand/10 rounded-xl flex items-center justify-center mb-5">
+          <svg class="w-6 h-6 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
         </div>
-        <h3 class="text-xl font-bold text-center text-gray-900 mb-3">Masyarakat Umum</h3>
-        <p class="text-gray-600 text-center leading-relaxed mb-4">
-          Pengajuan pembaruan dokumen pasca perceraian tanpa perlu akun atau membawa dokumen fisik ke kantor.
+        <h3 class="text-base font-semibold mb-2">OCR Dokumen</h3>
+        <p class="text-sm text-brown/60 leading-relaxed mb-5">
+          Scan dan ekstrak data secara otomatis dari dokumen putusan pengadilan menggunakan Optical Character Recognition.
         </p>
-        <div class="text-center">
-          <a href="{{ route('public.submit.create') }}" class="inline-block text-brand font-semibold hover:text-brand-dark transition-colors">
-            Ajukan Sekarang <i class="fas fa-arrow-right ml-2"></i>
-          </a>
-        </div>
+        <a href="{{ route('tentang') }}" class="text-xs font-semibold text-brand inline-flex items-center gap-1 hover:gap-2 transition-all">
+          Selengkapnya <i class="fas fa-arrow-right text-[10px]"></i>
+        </a>
       </div>
 
-      {{-- User Type 2 --}}
-      <div class="card-hover bg-white p-8 rounded-lg shadow-sm">
-        <div class="w-20 h-20 rounded-lg bg-green-100 flex items-center justify-center mx-auto mb-4">
-          <i class="fas fa-balance-scale text-4xl text-green-600"></i>
+      {{-- Card 2 --}}
+      <div class="bg-white rounded-2xl p-7 card-lift observe-fade fade-up fade-up-delay-1">
+        <div class="w-12 h-12 bg-green-sm/20 rounded-xl flex items-center justify-center mb-5">
+          <svg class="w-6 h-6 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
         </div>
-        <h3 class="text-xl font-bold text-center text-gray-900 mb-3">Pengadilan Agama</h3>
-        <p class="text-gray-600 text-center leading-relaxed mb-4">
-          Kelola kasus perceraian, verifikasi dokumen, dan sinkronisasi data dengan Disdukcapil secara real-time.
+        <h3 class="text-base font-semibold mb-2">Pelacakan Real-time</h3>
+        <p class="text-sm text-brown/60 leading-relaxed mb-5">
+          Lacak status pengajuan Anda secara real-time. Dapatkan notifikasi setiap kali ada pembaruan status.
         </p>
-        <div class="text-center">
-          <a href="{{ route('auth.login') }}" class="inline-block text-green-600 font-semibold hover:text-green-700 transition-colors">
-            Masuk Sistem <i class="fas fa-arrow-right ml-2"></i>
-          </a>
-        </div>
+        <a href="{{ route('tentang') }}" class="text-xs font-semibold text-brand inline-flex items-center gap-1 hover:gap-2 transition-all">
+          Selengkapnya <i class="fas fa-arrow-right text-[10px]"></i>
+        </a>
       </div>
 
-      {{-- User Type 3 --}}
-      <div class="card-hover bg-white p-8 rounded-lg shadow-sm">
-        <div class="w-20 h-20 rounded-lg bg-purple-100 flex items-center justify-center mx-auto mb-4">
-          <i class="fas fa-id-card text-4xl text-purple-600"></i>
+      {{-- Card 3 --}}
+      <div class="bg-white rounded-2xl p-7 card-lift observe-fade fade-up fade-up-delay-2">
+        <div class="w-12 h-12 bg-coral/10 rounded-xl flex items-center justify-center mb-5">
+          <svg class="w-6 h-6 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
         </div>
-        <h3 class="text-xl font-bold text-center text-gray-900 mb-3">Disdukcapil</h3>
-        <p class="text-gray-600 text-center leading-relaxed mb-4">
-          Validasi dokumen, verifikasi data kependudukan, dan lakukan pembaruan pada sistem kependudukan terpadu.
+        <h3 class="text-base font-semibold mb-2">Integrasi Instansi</h3>
+        <p class="text-sm text-brown/60 leading-relaxed mb-5">
+          Data mengalir otomatis antara Pengadilan Agama dan Disdukcapil. Tidak perlu mengirim berkas secara manual.
         </p>
-        <div class="text-center">
-          <a href="{{ route('auth.login') }}" class="inline-block text-purple-600 font-semibold hover:text-purple-700 transition-colors">
-            Masuk Sistem <i class="fas fa-arrow-right ml-2"></i>
-          </a>
-        </div>
+        <a href="{{ route('tentang') }}" class="text-xs font-semibold text-brand inline-flex items-center gap-1 hover:gap-2 transition-all">
+          Selengkapnya <i class="fas fa-arrow-right text-[10px]"></i>
+        </a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+{{-- ===================================================================
+    SECTION 6 — STATS BANNER
+    =================================================================== --}}
+<section class="relative py-12 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+  <div class="absolute inset-0">
+    <img src="{{ asset('assets-hero.jpg') }}"
+         alt="Background"
+         class="w-full h-full object-cover">
+    <div class="absolute inset-0 bg-brand/80 mix-blend-multiply"></div>
+    <div class="absolute inset-0 bg-black/10"></div>
+  </div>
+  <div class="max-w-6xl mx-auto relative z-10">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-6 lg:gap-y-0">
+      <div class="stat-item observe-fade fade-up">
+        <div class="stat-inner"><div class="stat-number text-cream">{{ $sStatistik->field_1 ?? '200+' }}</div><p class="stat-label">Kasus Diproses</p></div>
+      </div>
+      <div class="stat-item observe-fade fade-up fade-up-delay-1">
+        <div class="stat-inner"><div class="stat-number text-cream">{{ $sStatistik->field_2 ?? '98%' }}</div><p class="stat-label">Tingkat Akurasi</p></div>
+      </div>
+      <div class="stat-item observe-fade fade-up fade-up-delay-2">
+        <div class="stat-inner"><div class="stat-number text-cream">{{ $sStatistik->field_3 ?? '24/7' }}</div><p class="stat-label">Layanan Aktif</p></div>
+      </div>
+      <div class="stat-item observe-fade fade-up fade-up-delay-3">
+        <div class="stat-inner"><div class="stat-number text-cream">{{ $sStatistik->field_4 ?? '2.5d' }}</div><p class="stat-label">Waktu Pemrosesan Rata-rata</p></div>
       </div>
     </div>
   </div>
 </section>
 
-{{-- ═══════════════════════════════════════════════════════════════════════════
-    STATISTIK
-    ═══════════════════════════════════════════════════════════════════════════ --}}
-<section class="py-20 px-4 sm:px-6 lg:px-8">
-  <div class="max-w-7xl mx-auto">
-    <div class="grid md:grid-cols-4 gap-8 mb-16">
-      <div class="text-center">
-        <p class="text-4xl md:text-5xl font-bold text-brand mb-2">1,200+</p>
-        <p class="text-gray-600">Kasus Diproses</p>
-      </div>
-      <div class="text-center">
-        <p class="text-4xl md:text-5xl font-bold text-brand mb-2">98%</p>
-        <p class="text-gray-600">Tingkat Akurasi</p>
-      </div>
-      <div class="text-center">
-        <p class="text-4xl md:text-5xl font-bold text-brand mb-2">24/7</p>
-        <p class="text-gray-600">Layanan Pelacakan</p>
-      </div>
-      <div class="text-center">
-        <p class="text-4xl md:text-5xl font-bold text-brand mb-2">2.5d</p>
-        <p class="text-gray-600">Waktu Pemrosesan Rata-rata</p>
-      </div>
-    </div>
-  </div>
-</section>
 
-{{-- ═══════════════════════════════════════════════════════════════════════════
-    TEKNOLOGI
-    ═══════════════════════════════════════════════════════════════════════════ --}}
-<section class="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
-  <div class="max-w-7xl mx-auto">
-    <div class="text-center mb-16">
-      <h2 class="section-title">Teknologi Terdepan</h2>
-      <p class="section-subtitle mx-auto">
-        Dibangun dengan stack teknologi modern dan scalable untuk performa optimal.
-      </p>
-    </div>
-
-    <div class="grid md:grid-cols-3 gap-8">
-      <div class="bg-white p-8 rounded-lg shadow-sm text-center">
-        <i class="fab fa-laravel text-5xl text-red-600 mb-4"></i>
-        <h4 class="font-bold text-gray-900">Laravel 11</h4>
-        <p class="text-sm text-gray-600 mt-2">Backend framework modern & robust</p>
-      </div>
-      <div class="bg-white p-8 rounded-lg shadow-sm text-center">
-        <i class="fas fa-database text-5xl text-blue-600 mb-4"></i>
-        <h4 class="font-bold text-gray-900">MySQL & Neo4j</h4>
-        <p class="text-sm text-gray-600 mt-2">Database relasional & graph</p>
-      </div>
-      <div class="bg-white p-8 rounded-lg shadow-sm text-center">
-        <i class="fas fa-brain text-5xl text-purple-600 mb-4"></i>
-        <h4 class="font-bold text-gray-900">Python OCR</h4>
-        <p class="text-sm text-gray-600 mt-2">Ekstraksi teks otomatis cerdas</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-{{-- ═══════════════════════════════════════════════════════════════════════════
-    CTA FOOTER
-    ═══════════════════════════════════════════════════════════════════════════ --}}
-<section class="gradient-hero text-white py-20 px-4 sm:px-6 lg:px-8">
-  <div class="max-w-3xl mx-auto text-center">
-    <h2 class="text-3xl md:text-4xl font-bold mb-6">Siap Mulai?</h2>
-    <p class="text-blue-100 text-lg mb-10 leading-relaxed">
-      Ajukan pembaruan dokumen Anda sekarang atau lacak pengajuan yang sudah ada dengan cepat dan mudah.
-    </p>
-    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-      <a href="{{ route('public.submit.create') }}"
-        class="px-8 py-4 bg-white text-brand font-bold rounded-lg hover:bg-gray-100 transition-colors inline-flex items-center gap-2">
-        <i class="fas fa-file-alt"></i> Pengajuan Baru
+{{-- ===================================================================
+    SECTION 7 — TESTIMONIALS (dark)
+    =================================================================== --}}
+<section class="py-20 md:py-28 px-4 sm:px-6 lg:px-8 bg-brand-dk text-cream">
+  <div class="max-w-6xl mx-auto">
+    <div class="flex items-center justify-between mb-10">
+      <p class="text-[10px] font-semibold uppercase tracking-widest text-cream/30">Testimoni</p>
+      <a href="{{ route('tentang') }}" class="text-xs text-cream/50 hover:text-cream transition inline-flex items-center gap-1">
+        Tentang Kami <i class="fas fa-arrow-right text-[10px]"></i>
       </a>
-      <a href="{{ route('tracking.public') }}"
-        class="px-8 py-4 border-2 border-white text-white font-bold rounded-lg hover:bg-white/10 transition-colors inline-flex items-center gap-2">
-        <i class="fas fa-search"></i> Lacak Pengajuan
+    </div>
+
+    <h2 class="text-2xl md:text-4xl font-medium mb-12">
+      Apa kata mereka
+    </h2>
+
+    <div class="grid md:grid-cols-2 gap-6">
+
+      {{-- Testimonial 1 --}}
+      <div class="bg-white/5 border border-cream/10 rounded-2xl p-7 observe-fade fade-up">
+        <blockquote class="text-sm text-cream/70 leading-relaxed mb-5">
+          "SiPadu sangat membantu kami dalam mempercepat proses transmisi putusan pengadilan ke Disdukcapil. Sebelumnya proses ini memakan waktu berminggu-minggu, sekarang hanya dalam hitungan hari."
+        </blockquote>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-green-sm/30 flex items-center justify-center text-sm font-semibold text-cream">HS</div>
+          <div>
+            <p class="text-sm font-medium">H. Ahmad Surya</p>
+            <p class="text-xs text-cream/40">Ketua PA Kota Jakarta Selatan</p>
+          </div>
+        </div>
+      </div>
+
+      {{-- Testimonial 2 --}}
+      <div class="bg-white/5 border border-cream/10 rounded-2xl p-7 observe-fade fade-up fade-up-delay-1">
+        <blockquote class="text-sm text-cream/70 leading-relaxed mb-5">
+          "Sebagai warga yang baru mengalami perceraian, saya bisa melacak status pengajuan dokumen dari rumah tanpa harus bolak-balik kantor. Sangat memudahkan!"
+        </blockquote>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-coral/30 flex items-center justify-center text-sm font-semibold text-cream">DR</div>
+          <div>
+            <p class="text-sm font-medium">Dewi Rahayu</p>
+            <p class="text-xs text-cream/40">Warga, Jakarta Selatan</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+{{-- ===================================================================
+    SECTION 8 — BLOG / BERITA
+    =================================================================== --}}
+@php $latestPosts = $blogPosts->take(3); @endphp
+@if($latestPosts->isNotEmpty())
+<section class="py-20 md:py-28 px-4 sm:px-6 lg:px-8 bg-cream">
+  <div class="max-w-6xl mx-auto">
+    <div class="flex items-center justify-between mb-10">
+      <p class="text-[10px] font-semibold uppercase tracking-widest text-brown/25">{{ $sBlog->title ?: 'Berita' }}</p>
+      <a href="{{ route('berita') }}" class="text-xs text-brand font-semibold inline-flex items-center gap-1 hover:gap-2 transition-all">
+        Lihat Semua <i class="fas fa-arrow-right text-[10px]"></i>
+      </a>
+    </div>
+
+    <h2 class="text-2xl md:text-4xl font-medium mb-12">
+      {{ $sBlog->subtitle ?: 'Berita & Pengumuman Terbaru' }}
+    </h2>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      @foreach($latestPosts as $post)
+      <article class="bg-white rounded-2xl overflow-hidden card-lift group">
+        @if($post->cover_image)
+          <div class="h-44 overflow-hidden">
+            <img src="{{ asset('storage/' . $post->cover_image) }}"
+                 alt="{{ $post->title }}"
+                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+          </div>
+        @else
+          <div class="h-44 bg-brand-dk/5 flex items-center justify-center">
+            <svg class="w-10 h-10 text-brand/15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
+          </div>
+        @endif
+        <div class="p-6">
+          <div class="text-[10px] font-semibold uppercase tracking-wider text-brown/25 mb-3">
+            {{ $post->published_at ? $post->published_at->format('d M Y') : 'Draft' }}
+          </div>
+          <h3 class="text-sm font-semibold text-brown mb-2 group-hover:text-brand transition-colors leading-snug">
+            <a href="{{ route('berita.detail', $post->slug) }}">{{ $post->title }}</a>
+          </h3>
+          @if($post->excerpt)
+          <p class="text-xs text-brown/50 leading-relaxed mb-4">{{ Str::limit($post->excerpt, 120) }}</p>
+          @endif
+          <a href="{{ route('berita.detail', $post->slug) }}"
+             class="text-xs font-semibold text-brand inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+            Baca Selengkapnya <i class="fas fa-arrow-right text-[10px]"></i>
+          </a>
+        </div>
+      </article>
+      @endforeach
+    </div>
+  </div>
+</section>
+@endif
+
+
+{{-- ===================================================================
+    SECTION 9 — FINAL CTA
+    =================================================================== --}}
+<section class="py-20 md:py-28 px-4 sm:px-6 lg:px-8 bg-brand relative overflow-hidden">
+  <div class="absolute inset-0 opacity-20">
+    <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-green-sm/30 rounded-full blur-3xl"></div>
+    <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/15 rounded-full blur-3xl"></div>
+  </div>
+
+  <div class="max-w-2xl mx-auto text-center relative z-10">
+    <h2 class="text-2xl md:text-4xl font-medium text-cream mb-4">
+      {{ $sCta->title ?: 'Siap untuk memulai?' }}
+    </h2>
+    <p class="text-sm text-cream/40 leading-relaxed mb-10">
+      {{ $sCta->subtitle ?: 'Bergabunglah dengan ribuan pengguna yang telah merasakan kemudahan proses pembaruan dokumen melalui SiPadu.' }}
+    </p>
+    <div class="flex flex-wrap justify-center gap-3">
+      <a href="{{ $sCta->cta_url ?: route('public.submit.create') }}"
+         class="px-8 py-3 bg-cream text-brand font-medium text-sm rounded-full hover:opacity-90 transition shadow-lg">
+        {{ $sCta->cta_label ?: 'Buat Pengajuan Sekarang' }}
       </a>
       <a href="{{ route('auth.login') }}"
-        class="px-8 py-4 border-2 border-white text-white font-bold rounded-lg hover:bg-white/10 transition-colors inline-flex items-center gap-2">
-        <i class="fas fa-sign-in-alt"></i> Masuk Sistem
+         class="px-8 py-3 border border-cream/25 text-cream font-medium text-sm rounded-full hover:bg-cream/5 transition">
+        Masuk ke Akun
       </a>
     </div>
   </div>
 </section>
 
 @endsection
+
+@push('scripts')
+<script>
+  // ── Intersection Observer: fade-up on scroll ──────────────────────
+  document.addEventListener('DOMContentLoaded', function () {
+    const els = document.querySelectorAll('.observe-fade.fade-up');
+    if (!els.length) return;
+
+    const observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.15,
+      rootMargin: '0px 0px -40px 0px'
+    });
+
+    els.forEach(function (el) {
+      observer.observe(el);
+    });
+  });
+</script>
+@endpush

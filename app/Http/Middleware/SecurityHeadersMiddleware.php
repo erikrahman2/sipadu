@@ -19,7 +19,7 @@ class SecurityHeadersMiddleware
         'Referrer-Policy'           => 'strict-origin-when-cross-origin',
         'Permissions-Policy'        => 'camera=(), microphone=(), geolocation=()',
         'Strict-Transport-Security' => 'max-age=31536000; includeSubDomains',
-        'Content-Security-Policy'   => "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' data: https://cdnjs.cloudflare.com https://fonts.gstatic.com; img-src 'self' data: https:",
+        'Content-Security-Policy'   => "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' data: https://cdnjs.cloudflare.com https://fonts.gstatic.com; img-src 'self' data: https:",
     ];
 
     public function handle(Request $request, Closure $next): Response

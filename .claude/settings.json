@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep -l \"Kelola Konten\\\\|kelola.konten\\\\|menu\\\\.cms\")",
+      "Bash(php artisan *)",
+      "Bash(grep -n 'section_key\\\\|@php\\\\|$sections' d:/ProyekTA/resources/views/tentang.blade.php)",
+      "Bash(grep -n 'section_key\\\\|@php\\\\|$sections\\\\|@foreach\\\\|@forelse' d:/ProyekTA/resources/views/berita.blade.php)",
+      "Bash(cat app/Http/Controllers/Web/HomeController.php)",
+      "Bash(ls app/Http/Controllers/Web/)",
+      "Bash(find resources/views/dashboard/admin/cms/kelola-konten/ -type f)",
+      "Bash(ls -la resources/views/dashboard/admin/cms/kelola-konten/)",
+      "Bash(grep -n \"about\\\\|berita\\\\|blog\\\\|ContentController\\\\|tentang\\\\|/\\\\$\" routes/web.php)",
+      "Bash(cat app/Services/ContentService.php)",
+      "Bash(ls app/Services/)",
+      "Bash(find resources/views/dashboard/admin/cms/ -type f)",
+      "Bash(find resources/views/ -path \"*/kelola*\" -type f)",
+      "Bash(xargs grep -l \"cms_global\\\\|global_setting\\\\|website_setting\\\\|setting\")",
+      "Bash(ls resources/views/welcome*.blade.php)",
+      "Bash(cat resources/views/welcome-new.blade.php)",
+      "Bash(xargs grep -l \"Kelola\\\\|kelola.*konten\\\\|Beranda\\\\|Berita\\\\|Tentang\")",
+      "Bash(ls -la app/Http/Controllers/Web/ContentController.php)",
+      "Bash(cat app/Http/Controllers/Web/ContentController.php)",
+      "mcp__adaCODE-MCP__understand_image",
+      "Bash(curl -s http://127.0.0.1:8000/)",
+      "Bash(python3 -c \"import sys,html; content=sys.stdin.read\\(\\); idx=content.find\\('ViewException'\\); print\\(content[max\\(0,idx-100\\):idx+500] if idx!=-1 else 'No ViewException found'\\)\")",
+      "Skill(run)",
+      "Skill(run:*)",
+      "Bash(grep -n \"'/\\\\|home\\\\|tentang\" \"d:/ProyekTA/routes/web.php\")",
+      "Bash(php -v)",
+      "Bash(curl -s \"http://127.0.0.1:8000/kelola-blog\" -o /dev/null -w \"%{http_code}\")",
+      "Bash(curl -s \"http://127.0.0.1:8000/admin/blog\" -o /dev/null -w \"%{http_code}\")",
+      "Bash(curl -s \"http://127.0.0.1:8000/berita\" -o /dev/null -w \"%{http_code}\")",
+      "Bash(curl -s \"http://127.0.0.1:8000/berita\")",
+      "Bash(cp /tmp/welcome-new-clean.blade.php \"d:/ProyekTA/resources/views/welcome-new.blade.php\")",
+      "Bash(git show *)"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
+    ]
+  }
+}
