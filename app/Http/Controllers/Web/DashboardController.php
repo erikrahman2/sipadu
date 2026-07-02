@@ -9,6 +9,7 @@ use App\Models\AuditLog;
 use App\Models\IntegrationQueue;
 use App\Models\OcrResult;
 use App\Models\PublicSubmission;
+use App\Services\DocumentTypeMapper;
 use App\Services\ReBACService;
 use App\Services\GraphService;
 use Illuminate\Http\Request;
@@ -90,33 +91,32 @@ class DashboardController extends Controller
             return redirect()->route('dashboard.review.cases');
         }
 
-        $type = $request->query('type', 'all'); // all, cases, public
+        $type = $request->query('type', 'all'); // all, manual, public
         $status = $request->query('status');
-        
+
         // Semua data dashboard mengikuti schema kasus yang sama.
         if ($user->hasRole('disdukcapil_staff')) {
             // Disdukcapil staff: ONLY see cases in DISDUKCAPIL_VALIDATION status
-            // (They receive cases from PA Management after OCR approval)
             $casesQuery = CaseModel::query()
                 ->where('status', 'DISDUKCAPIL_VALIDATION')
                 ->with('institution:id,name', 'submitter:id,name')
-                ->selectRaw('id, case_number, tracking_token, petitioner_name, status, institution_id, submitter_id, spouse_name, divorce_date, source_type, created_at, updated_at');
+                ->selectRaw('id, case_number, tracking_token, petitioner_name, status, institution_id, submitter_id, spouse_name, divorce_date, source_type, public_submission_id, created_at, updated_at');
         } else {
             // Other roles: use forUser scope
             $casesQuery = CaseModel::query()
                 ->with('institution:id,name', 'submitter:id,name')
                 ->forUser($user)
-                ->selectRaw('id, case_number, tracking_token, petitioner_name, status, institution_id, submitter_id, spouse_name, divorce_date, source_type, created_at, updated_at');
+                ->selectRaw('id, case_number, tracking_token, petitioner_name, status, institution_id, submitter_id, spouse_name, divorce_date, source_type, public_submission_id, created_at, updated_at');
         }
-        
+
         if ($status) {
             $casesQuery->byStatus($status);
         }
-        
+
         // Filter by type
-        if ($type === 'cases') {
+        if ($type === 'manual') {
             $allItems = (clone $casesQuery)
-                ->where('source_type', 'internal')
+                ->where('source_type', '!=', 'public')
                 ->orderByDesc('created_at')
                 ->paginate(15);
         } elseif ($type === 'public') {
@@ -127,15 +127,14 @@ class DashboardController extends Controller
         } else {
             $allItems = $casesQuery->orderByDesc('created_at')->paginate(15);
         }
-        
+
         // Count statistics
         if ($user->hasRole('disdukcapil_staff')) {
-            // Disdukcapil staff sees ONLY DISDUKCAPIL_VALIDATION cases
             $baseQuery = CaseModel::where('status', 'DISDUKCAPIL_VALIDATION');
         } else {
             $baseQuery = CaseModel::forUser($user);
         }
-        
+
         $counts = [
             'all' => (clone $baseQuery)->count(),
             'cases' => (clone $baseQuery)->where('source_type', 'internal')->count(),
@@ -153,12 +152,25 @@ class DashboardController extends Controller
     public function createCase(): View
     {
         $institutions = \App\Models\Institution::active()->get(['id', 'name', 'type']);
-        return view('dashboard.cases.create', compact('institutions'));
+        $ceraiOptions = $this->ceraiOptions();
+        return view('dashboard.cases.create', compact('institutions', 'ceraiOptions'));
     }
 
     public function storeCase(Request $request)
     {
-        $request->validate([
+        $maxSizeByte = 5120;
+        $ceraiOptions = $this->ceraiOptions();
+        $ceraiType = $request->input('cerai_type');
+        $isGroupedFlow = is_string($ceraiType) && array_key_exists($ceraiType, $ceraiOptions);
+
+        // Clean phone number
+        $phoneWa = $request->input('phone_wa', '');
+        $phoneWa = preg_replace('/^(\+62|0)/', '', $phoneWa);
+        $phoneWa = preg_replace('/\s+/', '', $phoneWa);
+        $phoneWa = preg_replace('/[-.]/', '', $phoneWa);
+        $request->merge(['phone_wa' => $phoneWa]);
+
+        $rules = [
             'suami_nik'      => 'required|digits:16',
             'suami_name'     => 'required|string|max:255',
             'suami_alamat'   => 'required|string|max:255',
@@ -173,15 +185,16 @@ class DashboardController extends Controller
             'istri_kecamatan'=> 'required|string|max:255',
             'phone_wa'       => ['required', 'string', 'max:20', 'regex:/^[0-9]{9,15}$/'],
             'institution_id' => 'required|exists:institutions,id',
+            'cerai_type'     => 'nullable|in:' . implode(',', array_keys($ceraiOptions)),
             'divorce_date'   => 'nullable|date|before_or_equal:today',
             'verdict_number' => 'nullable|string|max:100',
             'notes'          => 'nullable|string|max:1000',
             'agreement'      => 'required|accepted',
             'documents'      => 'nullable|array',
-            'documents.KTP_SUAMI' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'documents.KTP_ISTRI' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'documents.*'    => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
-        ], [
+        ];
+
+        $messages = [
             'suami_nik.required'     => 'NIK suami wajib diisi.',
             'suami_nik.digits'       => 'NIK suami harus 16 digit angka.',
             'suami_name.required'    => 'Nama suami wajib diisi.',
@@ -204,31 +217,41 @@ class DashboardController extends Controller
             'divorce_date.before_or_equal' => 'Tanggal perceraian tidak boleh di masa depan.',
             'agreement.required'     => 'Anda harus menyetujui pernyataan kebenaran data.',
             'agreement.accepted'     => 'Anda harus menyetujui pernyataan kebenaran data.',
-            'documents.KTP_SUAMI.required' => 'Dokumen KTP suami wajib diunggah.',
-            'documents.KTP_ISTRI.required' => 'Dokumen KTP istri wajib diunggah.',
-            'documents.KTP_SUAMI.mimes' => 'Format file KTP suami harus JPG, PNG, atau PDF.',
-            'documents.KTP_ISTRI.mimes' => 'Format file KTP istri harus JPG, PNG, atau PDF.',
-            'documents.KTP_SUAMI.max' => 'Ukuran file KTP suami maksimal 10 MB.',
-            'documents.KTP_ISTRI.max' => 'Ukuran file KTP istri maksimal 10 MB.',
             'documents.*.mimes'      => 'Format file harus JPG, PNG, atau PDF.',
-            'documents.*.max'        => 'Ukuran file maksimal 10 MB.',
-        ]);
+            'documents.*.max'        => 'Ukuran file maksimal 5 MB.',
+        ];
 
-        // === Validasi Business Logic (menggunakan PublicSubmission methods) ===
+        if ($isGroupedFlow) {
+            $rules['cerai_type'] = 'required|in:' . implode(',', array_keys($ceraiOptions));
+            $requiredDocs = $this->documentsForCeraiType($ceraiType);
+            $rules['documents'] = 'required|array|min:' . count($requiredDocs);
+
+            foreach ($requiredDocs as $documentType) {
+                $rules['documents.' . $documentType] = 'required|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte;
+                $messages['documents.' . $documentType . '.required'] = 'Dokumen ' . ($ceraiOptions[$ceraiType]['docs'][$documentType] ?? $documentType) . ' wajib diunggah.';
+            }
+        } else {
+            $rules['documents.KTP_SUAMI'] = 'required|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte;
+            $rules['documents.KTP_ISTRI'] = 'required|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte;
+            $messages['documents.KTP_SUAMI.required'] = 'Dokumen KTP suami wajib diunggah.';
+            $messages['documents.KTP_ISTRI.required'] = 'Dokumen KTP istri wajib diunggah.';
+        }
+
+        $validated = $request->validate($rules, $messages);
+
+        // === Validasi Business Logic ===
         $petitionerNik = $request->suami_nik;
         $spouseNik = $request->istri_nik;
 
-        // Validasi 1: NIK pemohon ≠ NIK pasangan
         if (\App\Models\PublicSubmission::isSameNik($petitionerNik, $spouseNik)) {
             return back()->withErrors([
                 'istri_nik' => 'NIK suami tidak boleh sama dengan NIK istri.',
             ])->withInput();
         }
 
-        // Validasi 2: Periksa apakah NIK dibekukan (sudah dalam proses)
         if (\App\Models\PublicSubmission::isNikFrozen($petitionerNik)) {
             $reason = \App\Models\PublicSubmission::getFrozenReason($petitionerNik);
-            
+
             $statusLabel = match($reason['status']) {
                 'REVIEWING' => 'sedang ditinjau petugas',
                 'WAITING_OCR' => 'sedang menunggu proses OCR',
@@ -239,13 +262,13 @@ class DashboardController extends Controller
             };
 
             $message = "⚠️ PERINGATAN: NIK ini {$statusLabel}. ";
-            
+
             if ($reason['type'] === 'public_submission') {
                 $message .= "Token pengajuan publik: {$reason['token']}.";
             } else {
                 $message .= "Nomor kasus: {$reason['case_number']}.";
             }
-            
+
             $message .= " Harap koordinasi dengan pihak terkait sebelum membuat kasus baru atau pastikan tidak ada duplikasi data.";
 
             return back()->withErrors([
@@ -253,7 +276,6 @@ class DashboardController extends Controller
             ])->withInput();
         }
 
-        // Validasi 3: Cek apakah pasangan NIK sudah terdaftar di Disdukcapil
         if ($spouseNik && \App\Models\PublicSubmission::hasCoupleInDisdukcapil($petitionerNik, $spouseNik)) {
             return back()->withErrors([
                 'istri_nik' => 'Pasangan dengan NIK ini sudah terdaftar dan sedang diproses di Disdukcapil. Tidak dapat membuat kasus baru dengan kombinasi NIK yang sama.',
@@ -262,27 +284,13 @@ class DashboardController extends Controller
 
         $user = auth()->user();
 
-        // Normalize legacy/non-enum document keys from form uploads.
-        $documentTypeAliases = [
-            'SURAT_NIKAH' => 'AKTA_NIKAH',
-            'FOTO_DIRI'   => 'OTHER',
-            'LAINNYA'     => 'OTHER',
-        ];
-        $allowedDocumentTypes = [
-            'KTP',
-            'KTP_SUAMI',
-            'KTP_ISTRI',
-            'KK',
-            'AKTA_CERAI',
-            'PUTUSAN_PA',
-            'AKTA_NIKAH',
-            'SURAT_PENGANTAR',
-            'OTHER',
-        ];
+        // Normalize document type aliases
+        $allowedDocumentTypes = array_keys($ceraiOptions['cerai_normal']['docs'])
+            + ['AKTA_KEMATIAN', 'SURAT_KETERANGAN_AHLI_WARIS', 'SURAT_PINDAH', 'SURAT_KETERANGAN_GHAIB', 'AKTA_KELAHIRAN_ANAK', 'OTHER'];
 
         if ($request->hasFile('documents')) {
             foreach (array_keys($request->file('documents')) as $docTypeKey) {
-                $normalizedType = $documentTypeAliases[$docTypeKey] ?? $docTypeKey;
+                $normalizedType = DocumentTypeMapper::toCaseType($docTypeKey);
                 if (!in_array($normalizedType, $allowedDocumentTypes, true)) {
                     return back()->withErrors([
                         'documents' => "Jenis dokumen {$docTypeKey} tidak didukung.",
@@ -291,7 +299,7 @@ class DashboardController extends Controller
             }
         }
 
-        $case = DB::transaction(function () use ($request, $user, $petitionerNik, $spouseNik) {
+        $case = DB::transaction(function () use ($request, $user, $petitionerNik, $spouseNik, $ceraiType) {
             $case = CaseModel::create([
                 'submitter_id'      => $user->id,
                 'petitioner_nik'    => $request->suami_nik,
@@ -301,6 +309,7 @@ class DashboardController extends Controller
                 'petitioner_rt_rw' => $request->suami_rt_rw,
                 'petitioner_kelurahan' => $request->suami_kelurahan,
                 'petitioner_kecamatan' => $request->suami_kecamatan,
+                'cerai_type'        => $ceraiType ?: null,
                 'institution_id'    => $request->institution_id,
                 'spouse_nik'        => $request->istri_nik,
                 'spouse_name'       => $request->istri_name,
@@ -311,7 +320,6 @@ class DashboardController extends Controller
                 'divorce_date'      => $request->divorce_date,
                 'verdict_number'    => $request->verdict_number,
                 'notes'             => $request->notes,
-                // Auto-submit once data and documents are posted from this form.
                 'status'            => 'SUBMITTED',
                 'submitted_at'      => now(),
             ]);
@@ -337,14 +345,8 @@ class DashboardController extends Controller
 
             // Handle document uploads
             if ($request->hasFile('documents')) {
-                $documentTypeAliases = [
-                    'SURAT_NIKAH' => 'AKTA_NIKAH',
-                    'FOTO_DIRI'   => 'OTHER',
-                    'LAINNYA'     => 'OTHER',
-                ];
-
                 foreach ($request->file('documents') as $docType => $file) {
-                    $normalizedDocType = $documentTypeAliases[$docType] ?? $docType;
+                    $normalizedDocType = DocumentTypeMapper::toCaseType($docType);
 
                     $storedName = Str::uuid() . '.' . $file->getClientOriginalExtension();
                     $path = $file->storeAs("cases/{$case->id}", $storedName, 'public');
@@ -442,8 +444,19 @@ class DashboardController extends Controller
      */
     public function saveDraftCase(Request $request)
     {
+        $ceraiOptions = $this->ceraiOptions();
+        $ceraiType = $request->input('cerai_type');
+        $isGroupedFlow = is_string($ceraiType) && array_key_exists($ceraiType, $ceraiOptions);
+
+        // Clean phone number
+        $phoneWa = $request->input('phone_wa', '');
+        $phoneWa = preg_replace('/^(\+62|0)/', '', $phoneWa);
+        $phoneWa = preg_replace('/\s+/', '', $phoneWa);
+        $phoneWa = preg_replace('/[-.]/', '', $phoneWa);
+        $request->merge(['phone_wa' => $phoneWa]);
+
         // Validasi minimal - lebih relaksasi dari submit
-        $request->validate([
+        $rules = [
             'suami_nik'      => 'required|digits:16',
             'suami_name'     => 'required|string|max:255',
             'suami_alamat'   => 'required|string|max:255',
@@ -458,18 +471,52 @@ class DashboardController extends Controller
             'istri_kecamatan'=> 'required|string|max:255',
             'phone_wa'       => ['required', 'string', 'max:20', 'regex:/^[0-9]{9,15}$/'],
             'institution_id' => 'required|exists:institutions,id',
+            'cerai_type'     => 'nullable|in:' . implode(',', array_keys($ceraiOptions)),
             'divorce_date'   => 'nullable|date|before_or_equal:today',
             'verdict_number' => 'nullable|string|max:100',
             'notes'          => 'nullable|string|max:1000',
             'documents'      => 'nullable|array',
             'documents.*'    => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
-        ]);
+        ];
+
+        $messages = [
+            'suami_nik.required'     => 'NIK suami wajib diisi.',
+            'suami_nik.digits'       => 'NIK suami harus 16 digit angka.',
+            'suami_name.required'    => 'Nama suami wajib diisi.',
+            'suami_alamat.required'  => 'Alamat suami wajib diisi.',
+            'suami_rt_rw.required'   => 'RT/RW suami wajib diisi.',
+            'suami_rt_rw.regex'      => 'Format RT/RW suami harus 000/000.',
+            'suami_kelurahan.required' => 'Kelurahan suami wajib diisi.',
+            'suami_kecamatan.required' => 'Kecamatan suami wajib diisi.',
+            'istri_nik.required'     => 'NIK istri wajib diisi.',
+            'istri_nik.digits'       => 'NIK istri harus 16 digit angka.',
+            'istri_name.required'    => 'Nama istri wajib diisi.',
+            'istri_alamat.required'  => 'Alamat istri wajib diisi.',
+            'istri_rt_rw.required'   => 'RT/RW istri wajib diisi.',
+            'istri_rt_rw.regex'      => 'Format RT/RW istri harus 000/000.',
+            'istri_kelurahan.required' => 'Kelurahan istri wajib diisi.',
+            'istri_kecamatan.required' => 'Kecamatan istri wajib diisi.',
+            'phone_wa.required'      => 'Nomor WhatsApp wajib diisi.',
+            'phone_wa.regex'         => 'Format nomor WhatsApp tidak valid (gunakan angka saja, 9-15 digit).',
+            'institution_id.required' => 'Institusi wajib dipilih.',
+            'documents.*.mimes'      => 'Format file harus JPG, PNG, atau PDF.',
+            'documents.*.max'        => 'Ukuran file maksimal 5 MB.',
+        ];
+
+        if ($isGroupedFlow) {
+            $rules['cerai_type'] = 'required|in:' . implode(',', array_keys($ceraiOptions));
+        }
+
+        $request->validate($rules, $messages);
 
         $petitionerNik = $request->suami_nik;
         $spouseNik = $request->istri_nik;
 
         // Validasi: NIK pemohon ≠ NIK pasangan
         if (\App\Models\PublicSubmission::isSameNik($petitionerNik, $spouseNik)) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'errors' => ['istri_nik' => ['NIK suami tidak boleh sama dengan NIK istri.']]], 422);
+            }
             return back()->withErrors([
                 'istri_nik' => 'NIK suami tidak boleh sama dengan NIK istri.',
             ])->withInput();
@@ -478,7 +525,7 @@ class DashboardController extends Controller
         $user = auth()->user();
 
         // Simpan sebagai DRAFT tanpa auto-submit
-        $case = DB::transaction(function () use ($request, $user, $petitionerNik, $spouseNik) {
+        $case = DB::transaction(function () use ($request, $user, $petitionerNik, $spouseNik, $ceraiType) {
             $case = CaseModel::create([
                 'submitter_id'      => $user->id,
                 'petitioner_nik'    => $request->suami_nik,
@@ -488,6 +535,7 @@ class DashboardController extends Controller
                 'petitioner_rt_rw' => $request->suami_rt_rw,
                 'petitioner_kelurahan' => $request->suami_kelurahan,
                 'petitioner_kecamatan' => $request->suami_kecamatan,
+                'cerai_type'        => $ceraiType ?: null,
                 'institution_id'    => $request->institution_id,
                 'spouse_nik'        => $request->istri_nik,
                 'spouse_name'       => $request->istri_name,
@@ -513,16 +561,10 @@ class DashboardController extends Controller
 
             // Handle document uploads jika ada
             if ($request->hasFile('documents')) {
-                $documentTypeAliases = [
-                    'SURAT_NIKAH' => 'AKTA_NIKAH',
-                    'FOTO_DIRI'   => 'OTHER',
-                    'LAINNYA'     => 'OTHER',
-                ];
-
                 foreach ($request->file('documents') as $docType => $file) {
                     if (!$file) continue; // Skip jika file tidak ada
 
-                    $normalizedDocType = $documentTypeAliases[$docType] ?? $docType;
+                    $normalizedDocType = DocumentTypeMapper::toCaseType($docType);
 
                     $storedName = Str::uuid() . '.' . $file->getClientOriginalExtension();
                     $path = $file->storeAs("cases/{$case->id}", $storedName, 'public');
@@ -586,8 +628,28 @@ class DashboardController extends Controller
         }
 
         $institutions = \App\Models\Institution::active()->get(['id', 'name', 'type']);
-        
-        return view('dashboard.cases.edit-draft', compact('case', 'institutions'));
+        $ceraiOptions = $this->ceraiOptions();
+
+        // Create array of uploaded document types for this case (normalized to form types)
+        $uploadedDocTypes = $case->documents->map(function($doc) {
+            // Normalize database type to form type
+            $type = $doc->document_type;
+            // If it's AKTA_NIKAH, SURAT_NIKAH, or AKTA_KAWIN, use AKTA_NIKAH
+            if (in_array($type, ['AKTA_NIKAH', 'SURAT_NIKAH', 'AKTA_KAWIN'])) {
+                return 'AKTA_NIKAH';
+            }
+            // SURAT_PENGANTAR -> OTHER
+            if ($type === 'SURAT_PENGANTAR') {
+                return 'SURAT_PENGANTAR';
+            }
+            // KTP, FOTO_DIRI, LAINNYA -> OTHER
+            if (in_array($type, ['KTP', 'FOTO_DIRI', 'LAINNYA'])) {
+                return 'OTHER';
+            }
+            return $type;
+        })->toArray();
+
+        return view('dashboard.cases.edit-draft', compact('case', 'institutions', 'ceraiOptions', 'uploadedDocTypes'));
     }
 
     /**
@@ -596,7 +658,7 @@ class DashboardController extends Controller
     public function updateDraftCase(Request $request, int $id)
     {
         $case = CaseModel::with('documents')->findOrFail($id);
-        
+
         // Hanya submitter atau admin yang bisa update
         if ($case->submitter_id !== auth()->id() && !auth()->user()->hasRole('super_admin')) {
             return back()->withErrors('Anda tidak memiliki akses');
@@ -607,8 +669,19 @@ class DashboardController extends Controller
             return back()->withErrors('Hanya draft yang belum dikirim dapat diubah');
         }
 
+        $ceraiOptions = $this->ceraiOptions();
+        $ceraiType = $request->input('cerai_type');
+        $isGroupedFlow = is_string($ceraiType) && array_key_exists($ceraiType, $ceraiOptions);
+
+        // Clean phone number
+        $phoneWa = $request->input('phone_wa', '');
+        $phoneWa = preg_replace('/^(\+62|0)/', '', $phoneWa);
+        $phoneWa = preg_replace('/\s+/', '', $phoneWa);
+        $phoneWa = preg_replace('/[-.]/', '', $phoneWa);
+        $request->merge(['phone_wa' => $phoneWa]);
+
         // Validasi yang sama dengan saveDraft
-        $request->validate([
+        $rules = [
             'suami_nik'      => 'required|digits:16',
             'suami_name'     => 'required|string|max:255',
             'suami_alamat'   => 'required|string|max:255',
@@ -623,6 +696,7 @@ class DashboardController extends Controller
             'istri_kecamatan'=> 'required|string|max:255',
             'phone_wa'       => ['required', 'string', 'max:20', 'regex:/^[0-9]{9,15}$/'],
             'institution_id' => 'required|exists:institutions,id',
+            'cerai_type'     => 'nullable|in:' . implode(',', array_keys($ceraiOptions)),
             'divorce_date'   => 'nullable|date|before_or_equal:today',
             'verdict_number' => 'nullable|string|max:100',
             'notes'          => 'nullable|string|max:1000',
@@ -630,13 +704,46 @@ class DashboardController extends Controller
             'documents.*'    => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'remove_documents' => 'nullable|array',
             'remove_documents.*' => 'nullable|exists:documents,id',
-        ]);
+        ];
+
+        $messages = [
+            'suami_nik.required'     => 'NIK suami wajib diisi.',
+            'suami_nik.digits'       => 'NIK suami harus 16 digit angka.',
+            'suami_name.required'    => 'Nama suami wajib diisi.',
+            'suami_alamat.required'  => 'Alamat suami wajib diisi.',
+            'suami_rt_rw.required'   => 'RT/RW suami wajib diisi.',
+            'suami_rt_rw.regex'      => 'Format RT/RW suami harus 000/000.',
+            'suami_kelurahan.required' => 'Kelurahan suami wajib diisi.',
+            'suami_kecamatan.required' => 'Kecamatan suami wajib diisi.',
+            'istri_nik.required'     => 'NIK istri wajib diisi.',
+            'istri_nik.digits'       => 'NIK istri harus 16 digit angka.',
+            'istri_name.required'    => 'Nama istri wajib diisi.',
+            'istri_alamat.required'  => 'Alamat istri wajib diisi.',
+            'istri_rt_rw.required'   => 'RT/RW istri wajib diisi.',
+            'istri_rt_rw.regex'      => 'Format RT/RW istri harus 000/000.',
+            'istri_kelurahan.required' => 'Kelurahan istri wajib diisi.',
+            'istri_kecamatan.required' => 'Kecamatan istri wajib diisi.',
+            'phone_wa.required'      => 'Nomor WhatsApp wajib diisi.',
+            'phone_wa.regex'         => 'Format nomor WhatsApp tidak valid (gunakan angka saja, 9-15 digit).',
+            'institution_id.required' => 'Institusi wajib dipilih.',
+            'documents.*.mimes'      => 'Format file harus JPG, PNG, atau PDF.',
+            'documents.*.max'        => 'Ukuran file maksimal 5 MB.',
+        ];
+
+        if ($isGroupedFlow) {
+            $rules['cerai_type'] = 'required|in:' . implode(',', array_keys($ceraiOptions));
+        }
+
+        $request->validate($rules, $messages);
 
         $petitionerNik = $request->suami_nik;
         $spouseNik = $request->istri_nik;
 
         // Validasi: NIK pemohon ≠ NIK pasangan
         if (\App\Models\PublicSubmission::isSameNik($petitionerNik, $spouseNik)) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'errors' => ['istri_nik' => ['NIK suami tidak boleh sama dengan NIK istri.']]], 422);
+            }
             return back()->withErrors([
                 'istri_nik' => 'NIK suami tidak boleh sama dengan NIK istri.',
             ])->withInput();
@@ -644,7 +751,7 @@ class DashboardController extends Controller
 
         $user = auth()->user();
 
-        DB::transaction(function () use ($request, $case, $user) {
+        DB::transaction(function () use ($request, $case, $user, $ceraiType) {
             // Update case data
             $case->update([
                 'petitioner_nik'    => $request->suami_nik,
@@ -654,6 +761,7 @@ class DashboardController extends Controller
                 'petitioner_rt_rw' => $request->suami_rt_rw,
                 'petitioner_kelurahan' => $request->suami_kelurahan,
                 'petitioner_kecamatan' => $request->suami_kecamatan,
+                'cerai_type'       => $ceraiType ?: null,
                 'institution_id'    => $request->institution_id,
                 'spouse_nik'        => $request->istri_nik,
                 'spouse_name'       => $request->istri_name,
@@ -673,37 +781,42 @@ class DashboardController extends Controller
                     ->delete();
             }
 
-            // Tambah dokumen baru
-            if ($request->hasFile('documents')) {
-                $documentTypeAliases = [
-                    'SURAT_NIKAH' => 'AKTA_NIKAH',
-                    'FOTO_DIRI'   => 'OTHER',
-                    'LAINNYA'     => 'OTHER',
-                ];
+            // Tambah dokumen baru - access files using dot notation for each doc type
+            $docTypes = ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'PUTUSAN_PA', 'AKTA_CERAI', 'AKTA_NIKAH',
+                         'AKTA_KEMATIAN', 'SURAT_KETERANGAN_AHLI_WARIS', 'SURAT_PINDAH',
+                         'SURAT_KETERANGAN_GHAIB', 'AKTA_KELAHIRAN_ANAK'];
 
-                foreach ($request->file('documents') as $docType => $file) {
-                    if (!$file) continue;
-
-                    $normalizedDocType = $documentTypeAliases[$docType] ?? $docType;
-
-                    $storedName = Str::uuid() . '.' . $file->getClientOriginalExtension();
-                    $path = $file->storeAs("cases/{$case->id}", $storedName, 'public');
-                    $checksum = hash_file('sha256', $file->getPathname());
-                    
-                    \App\Models\Document::create([
-                        'case_id'       => $case->id,
-                        'uploaded_by'   => $user->id,
-                        'original_name' => $file->getClientOriginalName(),
-                        'stored_name'   => $storedName,
-                        'disk'          => 'public',
-                        'path'          => $path,
-                        'mime_type'     => $file->getMimeType(),
-                        'size_bytes'    => $file->getSize(),
-                        'document_type' => $normalizedDocType,
-                        'checksum'      => $checksum,
-                        'status'        => 'PENDING',
-                    ]);
+            $docFiles = [];
+            foreach ($docTypes as $docType) {
+                $file = $request->file('documents.' . $docType);
+                if ($file && $file->isValid()) {
+                    $docFiles[$docType] = $file;
                 }
+            }
+
+            \Log::info('=== Document Processing ===', ['docFiles_count' => count($docFiles), 'docFiles_keys' => array_keys($docFiles)]);
+
+            foreach ($docFiles as $docType => $file) {
+                $normalizedDocType = DocumentTypeMapper::toCaseType($docType);
+
+                $storedName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs("cases/{$case->id}", $storedName, 'public');
+                $checksum = hash_file('sha256', $file->getPathname());
+
+                $doc = \App\Models\Document::create([
+                    'case_id'       => $case->id,
+                    'uploaded_by'   => $user->id,
+                    'original_name' => $file->getClientOriginalName(),
+                    'stored_name'   => $storedName,
+                    'disk'          => 'public',
+                    'path'          => $path,
+                    'mime_type'     => $file->getMimeType(),
+                    'size_bytes'    => $file->getSize(),
+                    'document_type' => $normalizedDocType,
+                    'checksum'      => $checksum,
+                    'status'        => 'PENDING',
+                ]);
+                \Log::info('Document saved', ['doc_id' => $doc->id, 'type' => $docType]);
             }
 
             // Log update
@@ -734,69 +847,236 @@ class DashboardController extends Controller
             ]);
         }
 
+        // Check for AJAX request - Laravel's expectsJson() + check X-Requested-With
+        $isAjax = $request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest';
+
+        if ($isAjax) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Draft berhasil diperbarui',
+                'redirect' => route('dashboard.cases.edit-draft', $case->id),
+            ]);
+        }
+
         return redirect()->route('dashboard.cases.edit-draft', $case->id)
             ->with('success', 'Draft berhasil diperbarui');
     }
 
     /**
      * Submit draft case - change status from DRAFT to SUBMITTED
+     * Also handles file uploads for direct submission
      */
     public function submitDraftCase(Request $request, int $id)
     {
+        \Log::info('=== SUBMIT DRAFT REQUEST START ===', [
+            'expects_json' => $request->expectsJson(),
+            'header_x_req' => $request->header('X-Requested-With'),
+            'files_count' => count($request->allFiles()),
+            'files_keys' => array_keys($request->allFiles()),
+        ]);
+
+        $isAjax = $request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest';
+
         $case = CaseModel::with('documents')->findOrFail($id);
-        
+
         // Only owner or admin dapat submit
         if ($case->submitter_id !== auth()->id() && !auth()->user()->hasRole('super_admin')) {
+            if ($isAjax) {
+                return response()->json(['success' => false, 'errors' => ['Akses ditolak']], 403);
+            }
             return back()->withErrors('Anda tidak memiliki akses');
         }
 
         // Only DRAFT status dapat disubmit
         if ($case->status !== 'DRAFT') {
+            if ($isAjax) {
+                return response()->json(['success' => false, 'errors' => ['Hanya draft dapat dikirim']], 400);
+            }
             return back()->withErrors('Hanya draft dapat dikirim');
         }
 
-        // Validasi bahwa dokumen required sudah ada
-        $requiredDocTypes = ['KTP_SUAMI', 'KTP_ISTRI'];
-        $uploadedDocsTypes = $case->documents->pluck('document_type')->toArray();
-        
-        $missingDocs = array_diff($requiredDocTypes, $uploadedDocsTypes);
-        if (!empty($missingDocs)) {
-            return back()->withErrors('Dokumen yang diperlukan belum lengkap: ' . implode(', ', $missingDocs));
-        }
+        $ceraiOptions = $this->ceraiOptions();
+        $ceraiType = $request->input('cerai_type') ?: $case->cerai_type;
+        $isGroupedFlow = is_string($ceraiType) && array_key_exists($ceraiType, $ceraiOptions);
+
+        // Validasi form
+        $rules = [
+            'suami_nik'      => 'required|digits:16',
+            'suami_name'     => 'required|string|max:255',
+            'suami_alamat'   => 'required|string|max:255',
+            'suami_rt_rw'    => ['required', 'string', 'max:10', 'regex:/^\d{3}\/\d{3}$/'],
+            'suami_kelurahan'=> 'required|string|max:255',
+            'suami_kecamatan'=> 'required|string|max:255',
+            'istri_nik'      => 'required|digits:16',
+            'istri_name'     => 'required|string|max:255',
+            'istri_alamat'   => 'required|string|max:255',
+            'istri_rt_rw'    => ['required', 'string', 'max:10', 'regex:/^\d{3}\/\d{3}$/'],
+            'istri_kelurahan'=> 'required|string|max:255',
+            'istri_kecamatan'=> 'required|string|max:255',
+            'phone_wa'       => ['required', 'string', 'max:20', 'regex:/^[0-9]{9,15}$/'],
+            'institution_id' => 'required|exists:institutions,id',
+            'cerai_type'     => 'nullable|in:' . implode(',', array_keys($ceraiOptions)),
+            'divorce_date'   => 'nullable|date|before_or_equal:today',
+            'verdict_number' => 'nullable|string|max:100',
+            'notes'          => 'nullable|string|max:1000',
+            'documents'      => 'nullable|array',
+            'documents.*'    => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ];
+
+        $messages = [
+            'suami_nik.required'     => 'NIK suami wajib diisi.',
+            'suami_nik.digits'       => 'NIK suami harus 16 digit angka.',
+            'suami_name.required'    => 'Nama suami wajib diisi.',
+            'suami_alamat.required'  => 'Alamat suami wajib diisi.',
+            'suami_rt_rw.required'   => 'RT/RW suami wajib diisi.',
+            'suami_rt_rw.regex'      => 'Format RT/RW suami harus 000/000.',
+            'suami_kelurahan.required' => 'Kelurahan suami wajib diisi.',
+            'suami_kecamatan.required' => 'Kecamatan suami wajib diisi.',
+            'istri_nik.required'     => 'NIK istri wajib diisi.',
+            'istri_nik.digits'       => 'NIK istri harus 16 digit angka.',
+            'istri_name.required'    => 'Nama istri wajib diisi.',
+            'istri_alamat.required'  => 'Alamat istri wajib diisi.',
+            'istri_rt_rw.required'   => 'RT/RW istri wajib diisi.',
+            'istri_rt_rw.regex'      => 'Format RT/RW istri harus 000/000.',
+            'istri_kelurahan.required' => 'Kelurahan istri wajib diisi.',
+            'istri_kecamatan.required' => 'Kecamatan istri wajib diisi.',
+            'phone_wa.required'      => 'Nomor WhatsApp wajib diisi.',
+            'phone_wa.regex'         => 'Format nomor WhatsApp tidak valid (gunakan angka saja, 9-15 digit).',
+            'institution_id.required' => 'Institusi wajib dipilih.',
+            'documents.*.mimes'      => 'Format file harus JPG, PNG, atau PDF.',
+            'documents.*.max'       => 'Ukuran file maksimal 5 MB.',
+        ];
+
+        $request->validate($rules, $messages);
+
+        \Log::info('=== SUBMIT DRAFT AFTER VALIDATION ===', [
+            'doc_KTP_SUAMI' => $request->hasFile('documents.KTP_SUAMI'),
+            'doc_KTP_ISTRI' => $request->hasFile('documents.KTP_ISTRI'),
+            'doc_KK' => $request->hasFile('documents.KK'),
+        ]);
 
         $user = auth()->user();
 
-        DB::transaction(function () use ($case, $user) {
-            // Update status to SUBMITTED
-            $case->update([
-                'status'       => 'SUBMITTED',
-                'submitted_at' => now(),
-            ]);
+        // Clean phone number
+        $phoneWa = $request->input('phone_wa', '');
+        $phoneWa = preg_replace('/^(\+62|0)/', '', $phoneWa);
+        $phoneWa = preg_replace('/\s+/', '', $phoneWa);
+        $phoneWa = preg_replace('/[-.]/', '', $phoneWa);
 
-            // Log transition
-            \App\Models\CaseTransition::create([
-                'case_id'         => $case->id,
-                'from_state'      => 'DRAFT',
-                'to_state'        => 'SUBMITTED',
-                'transitioned_by' => $user->id,
-                'reason'          => 'Draft disubmit untuk diproses',
-                'metadata'        => ['source' => 'dashboard.submitDraftCase'],
-            ]);
+        try {
+            DB::transaction(function () use ($request, $case, $user, $ceraiType, $phoneWa) {
+                // Update case data
+                $case->update([
+                    'petitioner_nik'    => $request->suami_nik,
+                    'petitioner_name'   => $request->suami_name,
+                    'petitioner_phone'  => $phoneWa,
+                    'petitioner_alamat' => $request->suami_alamat,
+                    'petitioner_rt_rw' => $request->suami_rt_rw,
+                    'petitioner_kelurahan' => $request->suami_kelurahan,
+                    'petitioner_kecamatan' => $request->suami_kecamatan,
+                    'cerai_type'       => $ceraiType ?: null,
+                    'institution_id'    => $request->institution_id,
+                    'spouse_nik'        => $request->istri_nik,
+                    'spouse_name'       => $request->istri_name,
+                    'spouse_alamat'     => $request->istri_alamat,
+                    'spouse_rt_rw'      => $request->istri_rt_rw,
+                    'spouse_kelurahan'  => $request->istri_kelurahan,
+                    'spouse_kecamatan'  => $request->istri_kecamatan,
+                    'divorce_date'      => $request->divorce_date,
+                    'verdict_number'    => $request->verdict_number,
+                    'notes'             => $request->notes,
+                ]);
 
-            // Fire DocumentUploaded event untuk setiap dokumen (untuk OCR processing)
-            foreach ($case->documents as $document) {
-                event(new \App\Events\DocumentUploaded($document));
+                // Upload documents - use dot notation for array inputs
+                $docTypes = ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'PUTUSAN_PA', 'AKTA_CERAI', 'AKTA_NIKAH',
+                             'AKTA_KEMATIAN', 'SURAT_KETERANGAN_AHLI_WARIS', 'SURAT_PINDAH',
+                             'SURAT_KETERANGAN_GHAIB', 'AKTA_KELAHIRAN_ANAK'];
+
+                $uploadedCount = 0;
+                foreach ($docTypes as $docType) {
+                    $file = $request->file('documents.' . $docType);
+                    if (!$file || !$file->isValid()) continue;
+
+                    $normalizedDocType = DocumentTypeMapper::toCaseType($docType);
+                    $storedName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+                    $path = $file->storeAs("cases/{$case->id}", $storedName, 'public');
+                    $checksum = hash_file('sha256', $file->getPathname());
+
+                    \App\Models\Document::create([
+                        'case_id'       => $case->id,
+                        'uploaded_by'   => $user->id,
+                        'original_name' => $file->getClientOriginalName(),
+                        'stored_name'   => $storedName,
+                        'disk'          => 'public',
+                        'path'          => $path,
+                        'mime_type'     => $file->getMimeType(),
+                        'size_bytes'    => $file->getSize(),
+                        'document_type' => $normalizedDocType,
+                        'checksum'      => $checksum,
+                        'status'        => 'PENDING',
+                    ]);
+                    $uploadedCount++;
+                    \Log::info('Document uploaded via submit', ['type' => $normalizedDocType]);
+                }
+                \Log::info('SubmitDraft uploaded documents count', ['count' => $uploadedCount]);
+
+                // Check required documents
+                $requiredDocTypes = array_keys($this->ceraiOptions()[$ceraiType]['docs'] ?? $this->ceraiOptions()['cerai_normal']['docs']);
+                $uploadedDocsTypes = $case->fresh()->documents->pluck('document_type')->toArray();
+
+                \Log::info('Document check', [
+                    'required' => $requiredDocTypes,
+                    'uploaded' => $uploadedDocsTypes,
+                ]);
+
+                // Handle OTHER type - if OTHER exists, it can count as any missing document
+                $hasOther = in_array('OTHER', $uploadedDocsTypes);
+                $missingDocs = array_diff($requiredDocTypes, $uploadedDocsTypes);
+                if ($hasOther) {
+                    $missingDocs = [];
+                }
+
+                if (!empty($missingDocs)) {
+                    throw new \Exception('Dokumen yang diperlukan belum lengkap: ' . implode(', ', $missingDocs));
+                }
+
+                // Update status to SUBMITTED
+                $case->update([
+                    'status'       => 'SUBMITTED',
+                    'submitted_at' => now(),
+                ]);
+
+                // Log transition
+                \App\Models\CaseTransition::create([
+                    'case_id'         => $case->id,
+                    'from_state'      => 'DRAFT',
+                    'to_state'        => 'SUBMITTED',
+                    'transitioned_by' => $user->id,
+                    'reason'          => 'Pengajuan langsung dikirim',
+                    'metadata'        => ['source' => 'dashboard.submitDraftCase'],
+                ]);
+
+                // Fire DocumentUploaded event for OCR processing
+                foreach ($case->fresh()->documents as $document) {
+                    event(new \App\Events\DocumentUploaded($document));
+                }
+
+                // Outbox event
+                \App\Models\IntegrationQueue::create([
+                    'aggregate_type' => 'Case',
+                    'aggregate_id'   => $case->id,
+                    'event_type'     => 'submitted',
+                    'payload'        => ['institution_id' => $case->institution_id, 'submitter_id' => $case->submitter_id],
+                    'available_at'   => now(),
+                ]);
+            });
+        } catch (\Exception $e) {
+            \Log::error('Submit draft failed', ['error' => $e->getMessage()]);
+            if ($isAjax) {
+                return response()->json(['success' => false, 'errors' => [$e->getMessage()]], 422);
             }
-
-            // Outbox event
-            \App\Models\IntegrationQueue::create([
-                'aggregate_type' => 'Case',
-                'aggregate_id'   => $case->id,
-                'event_type'     => 'submitted',
-                'payload'        => ['institution_id' => $case->institution_id, 'submitter_id' => $case->submitter_id],
-                'available_at'   => now(),
-            ]);
-        });
+            return back()->withErrors($e->getMessage());
+        }
 
         // Sync to Neo4j
         try {
@@ -815,7 +1095,17 @@ class DashboardController extends Controller
             ]);
         }
 
-        return redirect()->route('dashboard.cases.show', $case->id)
+        $redirectUrl = route('dashboard.cases.show', $case->id);
+
+        if ($isAjax) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pengajuan berhasil dikirim! Tracking token: ' . $case->tracking_token,
+                'redirect' => $redirectUrl,
+            ]);
+        }
+
+        return redirect($redirectUrl)
             ->with('success', 'Pengajuan berhasil dikirim! Tracking token: ' . $case->tracking_token);
     }
 
@@ -1429,5 +1719,60 @@ class DashboardController extends Controller
             'validation_completed' => $disdukcapilCompleted,
             'validation_rejected' => $disdukcapilRejected,
         ];
+    }
+
+    private function ceraiOptions(): array
+    {
+        $baseDocs = [
+            'KTP_SUAMI'  => 'Upload KTP Suami',
+            'KTP_ISTRI'  => 'Upload KTP Istri',
+            'KK'         => 'Upload Kartu Keluarga (KK)',
+            'PUTUSAN_PA' => 'Upload Putusan Pengadilan',
+            'AKTA_CERAI' => 'Upload Akta Cerai',
+            'AKTA_NIKAH' => 'Upload Akta Kawin / Buku Nikah',
+        ];
+
+        return [
+            'cerai_normal' => [
+                'label'       => 'Cerai Normal',
+                'description' => 'Untuk pembaruan dokumen standar setelah putusan cerai.',
+                'docs'        => $baseDocs,
+            ],
+            'cerai_mati' => [
+                'label'       => 'Cerai Mati',
+                'description' => 'Untuk pembaruan dokumen ketika pasangan meninggal dunia.',
+                'docs'        => $baseDocs + [
+                    'AKTA_KEMATIAN'                    => 'Upload Akta Kematian',
+                    'SURAT_KETERANGAN_AHLI_WARIS'      => 'Upload Surat Keterangan Ahli Waris',
+                ],
+            ],
+            'cerai_pindah' => [
+                'label'       => 'Cerai Pindah',
+                'description' => 'Untuk pembaruan dokumen ketika ada perubahan domisili disertai surat pindah.',
+                'docs'        => $baseDocs + [
+                    'SURAT_PINDAH' => 'Upload Surat Pindah',
+                ],
+            ],
+            'cerai_ghaib' => [
+                'label'       => 'Cerai Ghaib (Kehilangan)',
+                'description' => 'Untuk pembaruan dokumen ketika pasangan tidak diketahui keberadaannya.',
+                'docs'        => $baseDocs + [
+                    'SURAT_KETERANGAN_GHAIB' => 'Upload Surat Keterangan Ghaib',
+                ],
+            ],
+            'cerai_hak_asuh' => [
+                'label'       => 'Cerai Terkait Hak Asuh Anak',
+                'description' => 'Untuk pembaruan dokumen yang berkaitan dengan penetapan hak asuh anak.',
+                'docs'        => $baseDocs + [
+                    'AKTA_KELAHIRAN_ANAK' => 'Upload Akta Kelahiran Anak',
+                ],
+            ],
+        ];
+    }
+
+    private function documentsForCeraiType(string $ceraiType): array
+    {
+        $options = $this->ceraiOptions();
+        return array_keys($options[$ceraiType]['docs'] ?? $options['cerai_normal']['docs']);
     }
 }

@@ -20,25 +20,25 @@ class ContentService
     }
 
     /**
-     * Fetch about sections by key (hero, visi_misi, layanan, etc.)
+     * Fetch about sections by content_type (hero, visi_misi, layanan, etc.)
      * Falls back to default content if not found.
      */
-    public function getAboutSection(string $key): ?CmsAboutSection
+    public function getAboutSection(string $contentType): ?CmsAboutSection
     {
-        return CmsAboutSection::where('section_key', $key)
+        return CmsAboutSection::where('content_type', $contentType)
             ->where('is_active', true)
             ->first();
     }
 
     /**
-     * Fetch all active about sections, keyed by section_key.
+     * Fetch all active about sections, keyed by content_type.
      */
     public function getAllAboutSections(): Collection
     {
         return CmsAboutSection::where('is_active', true)
             ->orderBy('display_order')
             ->get()
-            ->keyBy('section_key');
+            ->keyBy('content_type');
     }
 
     /**

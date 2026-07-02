@@ -258,11 +258,11 @@ class SyncReBACGraph extends Command
         }
         $this->newLine();
 
-        // Step 10: Clear ReBAC cache
-        $this->info('🧹 Clearing ReBAC policy cache...');
+        // Step 10: Refresh ReBAC cache version
+        $this->info('🧹 Refreshing ReBAC policy cache...');
         try {
-            \Illuminate\Support\Facades\Cache::forget('rebac:*');
-            $this->line('   ✅ Policy cache cleared');
+            app(\App\Services\ReBACService::class)->bumpCacheVersion();
+            $this->line('   ✅ Policy cache version bumped');
         } catch (\Throwable $e) {
             $this->warn("   ⚠️ Failed to clear cache (non-critical): {$e->getMessage()}");
         }

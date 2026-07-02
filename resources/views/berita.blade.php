@@ -24,8 +24,14 @@
 @endpush
 
 @section('content')
-{{-- Hero Banner --}}
-<section class="relative bg-[#0D1F08] text-[#F7F4EB] py-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
+{{-- Hero Banner (CMS-managed) --}}
+@php
+    $heroTitle = $heroBanner->title ?? 'Berita & Pengumuman';
+    $heroSubtitle = $heroBanner->subtitle ?? 'Informasi terbaru seputar kerja sama Pengadilan Agama Painan dan Disdukcapil Kabupaten Pesisir Selatan, pengumuman layanan SiPadu, dan update sistem pembaruan dokumen pasca perceraian.';
+    $heroBg = $heroBanner->content ?? '#0D1F08';
+    $searchPlaceholder = $heroBanner->cta_label ?? 'Cari berita...';
+@endphp
+<section class="relative bg-[{{ $heroBg }}] text-[#F7F4EB] py-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
   {{-- Decorative gradient blurs --}}
   <div class="absolute inset-0 overflow-hidden pointer-events-none">
     <div class="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-white/5 blur-[120px]"></div>
@@ -34,10 +40,10 @@
   <div class="max-w-7xl mx-auto relative">
     <div class="max-w-3xl">
       <h1 class="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.15] observe-fade fade-up">
-        Berita <span class="italic font-light">&amp;</span> Pengumuman
+        {!! str_replace('&amp;', '<span class="italic font-light">&amp;</span>', $heroTitle) !!}
       </h1>
       <p class="mt-5 text-base/7 text-[#FFF0C4]/80 max-w-xl observe-fade fade-up fade-up-delay-1">
-        Informasi terbaru seputar layanan SiPadu, pengumuman penting, dan update sistem pembaruan dokumen pasca perceraian.
+        {{ $heroSubtitle }}
       </p>
     </div>
 
@@ -47,12 +53,12 @@
         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#31110F]/40">
           <i class="fas fa-search"></i>
         </span>
-        <input type="text" placeholder="Cari berita..." id="searchInput"
-          class="w-full pl-11 pr-4 py-3 rounded-xl bg-white text-[#31110F] placeholder:text-[#31110F]/30 border-0 focus:ring-2 focus:ring-[#0D1F08]/30 outline-none text-sm">
+        <input type="text" placeholder="{{ $searchPlaceholder }}" id="searchInput"
+          class="w-full pl-11 pr-4 py-3 rounded-xl bg-white text-[#31110F] placeholder:text-[#31110F]/30 border-0 focus:ring-2 focus:ring-[{{ $heroBg }}]/30 outline-none text-sm">
       </div>
       <div class="relative">
         <select id="categoryFilter"
-          class="appearance-none w-full sm:w-52 pl-4 pr-10 py-3 rounded-xl bg-white text-[#31110F] border-0 focus:ring-2 focus:ring-[#0D1F08]/30 outline-none text-sm cursor-pointer">
+          class="appearance-none w-full sm:w-52 pl-4 pr-10 py-3 rounded-xl bg-white text-[#31110F] border-0 focus:ring-2 focus:ring-[{{ $heroBg }}]/30 outline-none text-sm cursor-pointer">
           <option value="">Semua Kategori</option>
           <option value="Pengumuman">Pengumuman</option>
           <option value="Update Sistem">Update Sistem</option>

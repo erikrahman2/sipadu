@@ -16,11 +16,20 @@
   .input-field {
     @apply w-full px-4 py-3 border border-gray-300 rounded-xl text-[#31110F] placeholder-[#31110F] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent;
   }
+  .cerai-option-card {
+    @apply border-emerald-500 bg-emerald-50;
+  }
 </style>
 @endpush
 
 @section('content')
 <div class="max-w-4xl mx-auto">
+
+  {{-- Page Title --}}
+  <div class="text-center mb-10">
+    <h1 class="text-2xl font-bold text-[#31110F]">Pengajuan Pembaruan Dokumen</h1>
+    <p class="text-sm text-[#31110F]/60 mt-1">Fokus input pada data KTP suami dan istri agar validasi OCR lebih akurat.</p>
+  </div>
 
   @if($errors->any())
     <div class="mb-6 bg-red-50 border border-red-200 rounded-xl px-5 py-3 text-[#31110F] text-sm">
@@ -139,41 +148,6 @@
           </div>
         </div>
 
-        {{-- Upload KTP --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-100 pt-4">
-          <div>
-            <label for="file-KTP_SUAMI" class="block text-sm  text-[#31110F] mb-1">Upload KTP Suami <span class="text-[#31110F]">*</span></label>
-            <div class="doc-upload-area" id="area-KTP_SUAMI" onclick="document.getElementById('file-KTP_SUAMI').click()">
-              <input type="file" name="documents[KTP_SUAMI]" id="file-KTP_SUAMI" class="hidden" accept=".jpg,.jpeg,.png,.pdf"
-                onchange="handleFileSelect(this, 'KTP_SUAMI')">
-              <div id="placeholder-KTP_SUAMI">
-                <p class="text-sm text-[#31110F]">Klik untuk pilih file</p>
-              </div>
-              <div id="selected-KTP_SUAMI" class="hidden">
-                <p class="text-sm text-[#31110F] " id="filename-KTP_SUAMI"></p>
-                <p class="text-xs text-[#31110F]" id="filesize-KTP_SUAMI"></p>
-              </div>
-            </div>
-            @error('documents.KTP_SUAMI') <p class="mt-1 text-xs text-[#31110F]">{{ $message }}</p> @enderror
-          </div>
-
-          <div>
-            <label for="file-KTP_ISTRI" class="block text-sm  text-[#31110F] mb-1">Upload KTP Istri <span class="text-[#31110F]">*</span></label>
-            <div class="doc-upload-area" id="area-KTP_ISTRI" onclick="document.getElementById('file-KTP_ISTRI').click()">
-              <input type="file" name="documents[KTP_ISTRI]" id="file-KTP_ISTRI" class="hidden" accept=".jpg,.jpeg,.png,.pdf"
-                onchange="handleFileSelect(this, 'KTP_ISTRI')">
-              <div id="placeholder-KTP_ISTRI">
-                <p class="text-sm text-[#31110F]">Klik untuk pilih file</p>
-              </div>
-              <div id="selected-KTP_ISTRI" class="hidden">
-                <p class="text-sm text-[#31110F] " id="filename-KTP_ISTRI"></p>
-                <p class=\"text-xs text-[#31110F]\" id=\"filesize-KTP_ISTRI\"></p>
-              </div>
-            </div>
-            @error('documents.KTP_ISTRI') <p class="mt-1 text-xs text-[#31110F]">{{ $message }}</p> @enderror
-          </div>
-        </div>
-
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5 border-t border-gray-100 pt-4">
           <div class="md:col-span-2">
             <label for="phone_wa" class="block text-sm  text-[#31110F] mb-1">Nomor WhatsApp Aktif <span class="text-[#31110F]">*</span></label>
@@ -225,30 +199,6 @@
           @error('verdict_number') <p class="mt-1 text-xs text-[#31110F]">{{ $message }}</p> @enderror
         </div>
 
-        @php
-          $divorceDocs = [
-            'PUTUSAN_PA' => 'Upload Berkas Putusan Cerai',
-            'AKTA_NIKAH' => 'Upload Buku Nikah',
-          ];
-        @endphp
-        @foreach($divorceDocs as $key => $label)
-          <div>
-            <label for="file-{{ $key }}" class="block text-sm  text-[#31110F] mb-1">{{ $label }}</label>
-            <div class="doc-upload-area" id="area-{{ $key }}" onclick="document.getElementById('file-{{ $key }}').click()">
-              <input type="file" name="documents[{{ $key }}]" id="file-{{ $key }}" class="hidden" accept=".jpg,.jpeg,.png,.pdf"
-                onchange="handleFileSelect(this, '{{ $key }}')">
-              <div id="placeholder-{{ $key }}">
-                <p class="text-sm text-[#31110F]">Klik untuk pilih file</p>
-              </div>
-              <div id="selected-{{ $key }}" class="hidden">
-                <p class="text-sm text-[#31110F] " id="filename-{{ $key }}"></p>
-                <p class="text-xs text-[#31110F]" id="filesize-{{ $key }}"></p>
-              </div>
-            </div>
-            @error('documents.' . $key) <p class="mt-1 text-xs text-[#31110F]">{{ $message }}</p> @enderror
-          </div>
-        @endforeach
-
         <div class="md:col-span-2">
           <label for="notes" class="block text-sm  text-[#31110F] mb-1">Catatan Tambahan</label>
           <textarea id="notes" name="notes" rows="3" placeholder="Keterangan tambahan (opsional)..." class="input-field resize-none">{{ old('notes') }}</textarea>
@@ -257,36 +207,70 @@
       </div>
     </div>
 
-    {{-- === Langkah 3: Upload Berkas Lainnya === --}}
+    {{-- === Langkah 3: Pilih Jenis Cerai === --}}
     <div class="bg-[#F7F4EB] rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
         <span class="step-badge">3</span>
-        <h2 class=" text-[#31110F]">Upload Berkas Lainnya</h2>
-        <span class="text-xs text-[#31110F] ml-auto">Maks. 10 MB per file - JPG, PNG, PDF</span>
+        <h2 class=" text-[#31110F]">Pilih Jenis Cerai</h2>
       </div>
-      <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-        @php
-          $otherDocs = [
-            'AKTA_CERAI' => 'Akta Perceraian',
-            'SURAT_PENGANTAR' => 'Surat Pengantar',
-            'OTHER' => 'Dokumen Lainnya',
-          ];
-        @endphp
-        @foreach($otherDocs as $key => $label)
-          <div>
-            <label for="file-{{ $key }}" class="block text-sm  text-[#31110F] mb-1">{{ $label }}</label>
-            <div class="doc-upload-area" id="area-{{ $key }}" onclick="document.getElementById('file-{{ $key }}').click()">
-              <input type="file" name="documents[{{ $key }}]" id="file-{{ $key }}" class="hidden" accept=".jpg,.jpeg,.png,.pdf"
-                onchange="handleFileSelect(this, '{{ $key }}')">
-              <div id="placeholder-{{ $key }}">
-                <p class="text-sm text-[#31110F]">Klik untuk pilih file</p>
+      <div class="p-6">
+        <label class="block text-sm font-medium text-[#31110F] mb-2">Jenis Cerai</label>
+        <select name="cerai_type" id="cerai-type-select" class="input-field @error('cerai_type') border-red-400 @enderror" required>
+          @foreach($ceraiOptions as $key => $option)
+            <option value="{{ $key }}" {{ old('cerai_type', 'cerai_normal') === $key ? 'selected' : '' }}
+              data-docs="{{ count($option['docs']) }}">
+              {{ $option['label'] }} ({{ count($option['docs']) }} dokumen)
+            </option>
+          @endforeach
+        </select>
+        @error('cerai_type') <p class="mt-1 text-xs text-[#31110F]">{{ $message }}</p> @enderror
+        <p class="mt-2 text-xs text-[#31110F]/60">Dokumen yang perlu diunggah akan disesuaikan secara otomatis.</p>
+      </div>
+    </div>
+
+    {{-- === Langkah 4: Upload Dokumen === --}}
+    <div class="bg-[#F7F4EB] rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+        <span class="step-badge">4</span>
+        <h2 class=" text-[#31110F]">Upload Dokumen</h2>
+        <span class="text-xs text-[#31110F] ml-auto">Maks. 5 MB per file - JPG, PNG, PDF</span>
+      </div>
+      <div class="p-6 space-y-6">
+        @foreach($ceraiOptions as $key => $option)
+          <div data-cerai-panel="{{ $key }}" class="cerai-panel hidden">
+            <div class="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
+              <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-5">
+                <div>
+                  <p class="text-[10px] uppercase tracking-[0.18em] text-[#31110F]/40 mb-2">{{ $option['label'] }}</p>
+                  <h3 class="text-lg font-semibold text-[#31110F] mb-1">Dokumen untuk {{ $option['label'] }}</h3>
+                  <p class="text-sm text-[#31110F]/60 max-w-2xl">{{ $option['description'] }}</p>
+                </div>
+                <div class="rounded-full bg-emerald-50 text-emerald-700 px-3 py-1.5 text-xs font-semibold">
+                  {{ count($option['docs']) }} dokumen
+                </div>
               </div>
-              <div id="selected-{{ $key }}" class="hidden">
-                <p class="text-sm text-[#31110F] " id="filename-{{ $key }}"></p>
-                <p class="text-xs text-[#31110F]" id="filesize-{{ $key }}"></p>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @foreach($option['docs'] as $docKey => $docLabel)
+                  @php $inputId = $key . '-' . $docKey; @endphp
+                  <div>
+                    <label for="file-{{ $inputId }}" class="block text-sm text-[#31110F] mb-1">{{ $docLabel }}</label>
+                    <div class="doc-upload-area" id="area-{{ $inputId }}" onclick="document.getElementById('file-{{ $inputId }}').click()">
+                      <input type="file" name="documents[{{ $docKey }}]" id="file-{{ $inputId }}" class="hidden" accept=".jpg,.jpeg,.png,.pdf"
+                        onchange="handleFileSelect(this, '{{ $inputId }}')">
+                      <div id="placeholder-{{ $inputId }}">
+                        <p class="text-sm text-[#31110F]">Klik untuk pilih file</p>
+                      </div>
+                      <div id="selected-{{ $inputId }}" class="hidden">
+                        <p class="text-sm text-[#31110F]" id="filename-{{ $inputId }}"></p>
+                        <p class="text-xs text-[#31110F]" id="filesize-{{ $inputId }}"></p>
+                      </div>
+                    </div>
+                    @error('documents.' . $docKey) <p class="mt-1 text-xs text-[#31110F]">{{ $message }}</p> @enderror
+                  </div>
+                @endforeach
               </div>
             </div>
-            @error('documents.' . $key) <p class="mt-1 text-xs text-[#31110F]">{{ $message }}</p> @enderror
           </div>
         @endforeach
       </div>
@@ -306,7 +290,7 @@
       </div>
 
       <div class="mb-6 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3 text-[#31110F] text-xs">
-        Data Anda dilindungi sesuai ketentuan privasi SiPadu.
+        Data Anda dilindungi sesuai ketentuan kerja sama SiPadu antara Pengadilan Agama Painan dan Disdukcapil Kabupaten Pesisir Selatan.
         Token tracking akan dikirimkan ke nomor WhatsApp yang Anda daftarkan.
         Tidak ada password yang perlu diingat.
       </div>
@@ -373,6 +357,16 @@ function handleFileSelect(input, key) {
   }
 }
 
+function syncCeraiPanels() {
+  const select = document.getElementById('cerai-type-select');
+  const activeType = select ? select.value : 'cerai_normal';
+
+  document.querySelectorAll('[data-cerai-panel]').forEach(function(panel) {
+    const isActive = panel.dataset.ceraiPanel === activeType;
+    panel.classList.toggle('hidden', !isActive);
+  });
+}
+
 // Refresh CSRF token before submission to prevent 419 expiration errors
 function refreshCsrfToken() {
   return fetch('/pengajuan', { credentials: 'include' })
@@ -393,6 +387,13 @@ setInterval(refreshCsrfToken, 30 * 60 * 1000);
 
 // Initialize form handlers on load
 document.addEventListener('DOMContentLoaded', function() {
+  syncCeraiPanels();
+
+  const select = document.getElementById('cerai-type-select');
+  if (select) {
+    select.addEventListener('change', syncCeraiPanels);
+  }
+
   // WhatsApp number formatting
   const phoneWaField = document.querySelector('input[name="phone_wa"]');
   if (phoneWaField) {
@@ -410,25 +411,42 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Form submission - refresh CSRF token before submit
+  // Form submission - validate documents and refresh CSRF token
   const form = document.getElementById('submissionForm');
   const btn = document.getElementById('submitBtn');
-  
+
   if (form) {
     form.addEventListener('submit', function(e) {
-      // Let browser handle submission if valid
-      if (!form.checkValidity()) {
+      const select = document.getElementById('cerai-type-select');
+      const activeType = select ? select.value : 'cerai_normal';
+
+      const requiredDocs = {
+        'cerai_normal': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'SURAT_NIKAH', 'KTP_Saksi1', 'KTP_Saksi2'],
+        'cerai_mati': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'SURAT_NIKAH', 'KTP_Saksi1', 'KTP_Saksi2', 'AKTA_KEMATIAN'],
+        'cerai_pindah': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'SURAT_NIKAH', 'KTP_Saksi1', 'KTP_Saksi2', 'SURAT_PINDAH'],
+        'cerai_ghaib': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'SURAT_NIKAH', 'KTP_Saksi1', 'KTP_Saksi2', 'SURAT_KETERANGAN_GHAIB'],
+      };
+
+      const docs = requiredDocs[activeType] || requiredDocs['cerai_normal'];
+      const missing = docs.filter(docType => {
+        const input = document.getElementById('file-' + activeType + '-' + docType);
+        return !input || !input.files || !input.files[0];
+      });
+
+      if (missing.length > 0) {
         e.preventDefault();
-        return false;
+        btn.disabled = false;
+        btn.innerHTML = 'Kirim Pengajuan';
+        alert('Dokumen belum lengkap! Upload dulu: ' + missing.join(', '));
+        return;
       }
-      // Valid - refresh token first, then update button
+
+      // Valid - refresh token first, then submit
       e.preventDefault();
       btn.disabled = true;
       btn.innerHTML = 'Mengirim...';
-      
-      // Refresh CSRF token before submitting
+
       refreshCsrfToken().then(() => {
-        // Token refreshed, now submit form
         form.submit();
       });
     });

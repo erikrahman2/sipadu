@@ -15,11 +15,11 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Section Key</label>
-            <input type="text" value="{{ $section->section_key }}" disabled
+            <label class="block text-sm font-medium text-gray-700 mb-1">Content Type</label>
+            <input type="text" value="{{ $section->content_type }}" disabled
                    class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-500 bg-gray-50 font-mono outline-none">
-            <input type="hidden" name="section_key" value="{{ old('section_key', $section->section_key) }}">
-            @error('section_key')
+            <input type="hidden" name="content_type" value="{{ old('content_type', $section->content_type) }}">
+            @error('content_type')
                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
             @enderror
         </div>

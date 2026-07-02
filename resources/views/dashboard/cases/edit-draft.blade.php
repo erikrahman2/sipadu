@@ -28,6 +28,13 @@
   .doc-item {
     @apply flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-200;
   }
+  .cerai-option-card {
+    @apply border-emerald-500 bg-emerald-50;
+  }
+  /* Panel visibility - hidden but inputs still accessible */
+  .hidden-panel-only {
+    display: none;
+  }
 </style>
 @endpush
 
@@ -46,7 +53,7 @@
         </div>
       </div>
     </div>
-    
+
     <div class="bg-blue-50 border border-blue-200 rounded-2xl p-6">
       <div class="flex items-start gap-3">
         <div class="mt-1">
@@ -70,19 +77,12 @@
     </div>
   @endif
 
-  @if(session('success'))
-    <div class="mb-6 bg-green-50 border border-green-200 text-green-800 px-5 py-3 rounded-xl text-sm">
-      <i class="fas fa-check-circle mr-1"></i>
-      <strong>{{ session('success') }}</strong>
-    </div>
-  @endif
-
   <form id="draftForm" method="POST" action="{{ route('dashboard.cases.update-draft', $case->id) }}" enctype="multipart/form-data" class="space-y-8">
     @csrf
     @method('PATCH')
     <input type="hidden" id="formAction" value="update">
 
-    {{-- ── DATA PASANGAN ─────────────────────────────────────────── --}}
+    {{-- === Langkah 1: Data Pasangan === --}}
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
         <span class="step-badge">1</span>
@@ -178,7 +178,7 @@
       </div>
     </div>
 
-    {{-- ── DATA CERAI ─────────────────────────────────────────────── --}}
+    {{-- ── DATA CERAI & KONTAK ─────────────────────────────────── --}}
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
         <span class="step-badge">2</span>
@@ -187,7 +187,7 @@
       <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Putusan Cerai</label>
-          <input type="date" name="divorce_date" value="{{ old('divorce_date', $case->divorce_date) }}" max="{{ date('Y-m-d') }}"
+          <input type="date" name="divorce_date" value="{{ old('divorce_date', $case->divorce_date ? \Carbon\Carbon::parse($case->divorce_date)->format('Y-m-d') : '') }}" max="{{ date('Y-m-d') }}"
             class="input-field @error('divorce_date') border-red-400 @enderror">
           @error('divorce_date') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
         </div>
@@ -228,11 +228,33 @@
       </div>
     </div>
 
-    {{-- ── DOKUMEN ─────────────────────────────────────────────────── --}}
+    {{-- === Langkah 3: Pilih Jenis Cerai === --}}
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
         <span class="step-badge">3</span>
+        <h2 class="font-semibold text-gray-800">Pilih Jenis Cerai</h2>
+      </div>
+      <div class="p-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Cerai</label>
+        <select name="cerai_type" id="cerai-type-select" class="input-field @error('cerai_type') border-red-400 @enderror" required>
+          @foreach($ceraiOptions as $key => $option)
+            <option value="{{ $key }}" {{ old('cerai_type', $case->cerai_type ?? 'cerai_normal') === $key ? 'selected' : '' }}
+              data-docs="{{ count($option['docs']) }}">
+              {{ $option['label'] }} ({{ count($option['docs']) }} dokumen)
+            </option>
+          @endforeach
+        </select>
+        @error('cerai_type') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+        <p class="mt-2 text-xs text-gray-500">Dokumen yang perlu diunggah akan disesuaikan secara otomatis.</p>
+      </div>
+    </div>
+
+    {{-- ── DOKUMEN (Dynamic) ─────────────────────────────────────── --}}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+        <span class="step-badge">4</span>
         <h2 class="font-semibold text-gray-800">Dokumen Pendukung</h2>
+        <span class="text-xs text-gray-400 ml-auto">Maks. 5 MB per file - JPG, PNG, PDF</span>
       </div>
       <div class="p-6 space-y-6">
         {{-- Dokumen yang sudah ada --}}
@@ -244,7 +266,7 @@
                 <div class="doc-item">
                   <div class="flex-1">
                     <div class="font-medium text-sm text-gray-800">{{ $doc->original_name }}</div>
-                    <div class="text-xs text-gray-500">{{ $doc->document_type }} • {{ round($doc->size_bytes / 1024, 1) }} KB</div>
+                    <div class="text-xs text-gray-500">{{ $doc->document_type }} &bull; {{ round($doc->size_bytes / 1024, 1) }} KB</div>
                   </div>
                   <div>
                     <label class="flex items-center gap-2 cursor-pointer">
@@ -258,38 +280,71 @@
           </div>
         @endif
 
-        {{-- Form upload dokumen tambahan --}}
-        <div>
-          <h3 class="font-semibold text-gray-800 mb-3">{{ $case->documents->count() > 0 ? 'Tambah Dokumen' : 'Upload Dokumen' }}</h3>
-          @php
-            $divorceDocs = [
-              'KTP_SUAMI' => 'Upload KTP Suami',
-              'KTP_ISTRI' => 'Upload KTP Istri',
-              'KK' => 'Upload Kartu Keluarga (KK)',
-              'AKTA_CERAI' => 'Upload Akta Cerai / SKBF',
-              'PUTUSAN_PA' => 'Upload Berkas Putusan Cerai',
-              'AKTA_NIKAH' => 'Upload Buku Nikah',
-            ];
-          @endphp
-          @foreach($divorceDocs as $key => $label)
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">{{ $label }}</label>
-              <div class="doc-upload-area" id="area-{{ $key }}" onclick="document.getElementById('file-{{ $key }}').click()">
-                <input type="file" name="documents[{{ $key }}]" id="file-{{ $key }}" class="hidden" accept=".jpg,.jpeg,.png,.pdf"
-                  onchange="handleFileSelect(this, '{{ $key }}')">
-                <div id="placeholder-{{ $key }}">
-                  <i class="fas fa-cloud-upload-alt text-gray-400 text-2xl mb-1"></i>
-                  <p class="text-sm text-gray-500">Klik untuk pilih file</p>
-                </div>
-                <div id="selected-{{ $key }}" class="hidden">
-                  <i class="fas fa-file text-emerald-500 text-2xl mb-1"></i>
-                  <p class="text-sm font-medium text-emerald-700" id="filename-{{ $key }}"></p>
-                  <p class="text-xs text-emerald-600" id="filesize-{{ $key }}"></p>
-                </div>
-              </div>
-            </div>
+        {{-- File inputs directly in form - not hidden, triggered via JS --}}
+        <div style="position:fixed;left:-9999px;top:-9999px;">
+          @foreach($ceraiOptions as $key => $option)
+            @foreach($option['docs'] as $docKey => $docLabel)
+              @php $inputId = $key . '-' . $docKey; @endphp
+              <input type="file" name="documents[{{ $docKey }}]" id="file-{{ $inputId }}" class="file-input" data-cerai-type="{{ $key }}" accept=".jpg,.jpeg,.png,.pdf"
+                onchange="handleFileSelect(this, '{{ $inputId }}')">
+            @endforeach
           @endforeach
         </div>
+
+        {{-- Document panels - just UI, not form inputs --}}
+        @foreach($ceraiOptions as $key => $option)
+          <div data-cerai-panel="{{ $key }}" class="hidden-panel-only">
+            <div class="rounded-2xl border border-gray-200 bg-gray-50 p-5 md:p-6">
+              <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-5">
+                <div>
+                  <p class="text-[10px] uppercase tracking-[0.18em] text-gray-400 mb-2">{{ $option['label'] }}</p>
+                  <h3 class="text-lg font-semibold text-gray-900 mb-1">Dokumen untuk {{ $option['label'] }}</h3>
+                  <p class="text-sm text-gray-500 max-w-2xl">{{ $option['description'] }}</p>
+                </div>
+                <div class="rounded-full bg-emerald-100 text-emerald-700 px-3 py-1.5 text-xs font-semibold">
+                  {{ count($option['docs']) }} dokumen
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @foreach($option['docs'] as $docKey => $docLabel)
+                  @php
+                    $inputId = $key . '-' . $docKey;
+                    $normalizedDocType = \App\Services\DocumentTypeMapper::toCaseType($docKey);
+                    $isUploaded = in_array($normalizedDocType, $uploadedDocTypes);
+                  @endphp
+                  <div>
+                    @if($isUploaded)
+                      {{-- Tampilkan info dokumen yang sudah diupload --}}
+                      <label class="block text-sm text-gray-700 mb-1">{{ $docLabel }}</label>
+                      <div class="doc-upload-area has-file" style="cursor: default;">
+                        <div>
+                          <i class="fas fa-check-circle text-emerald-500 text-2xl mb-1"></i>
+                          <p class="text-sm font-medium text-emerald-700">Sudah diupload</p>
+                          <p class="text-xs text-emerald-600">Dokumen tersimpan di sistem</p>
+                        </div>
+                      </div>
+                    @else
+                      {{-- Tampilkan form upload --}}
+                      <label for="file-{{ $inputId }}" class="block text-sm text-gray-700 mb-1">{{ $docLabel }}</label>
+                      <div class="doc-upload-area" id="area-{{ $inputId }}" onclick="document.getElementById('file-{{ $inputId }}').click()">
+                        <div id="placeholder-{{ $inputId }}">
+                          <i class="fas fa-cloud-upload-alt text-gray-400 text-2xl mb-1"></i>
+                          <p class="text-sm text-gray-500">Klik untuk pilih file</p>
+                        </div>
+                        <div id="selected-{{ $inputId }}" class="hidden">
+                          <i class="fas fa-file text-emerald-500 text-2xl mb-1"></i>
+                          <p class="text-sm font-medium text-emerald-700" id="filename-{{ $inputId }}"></p>
+                          <p class="text-xs text-emerald-600" id="filesize-{{ $inputId }}"></p>
+                        </div>
+                      </div>
+                    @endif
+                  </div>
+                @endforeach
+              </div>
+            </div>
+          </div>
+        @endforeach
       </div>
     </div>
 
@@ -311,15 +366,9 @@
           <i class="fas fa-times mr-1"></i> Kembali
         </a>
         <button type="button" id="saveBtn" onclick="saveDraft()"
-          class="flex-1 py-3 bg-amber-500 text-white font-medium rounded-xl hover:bg-amber-600 transition flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
-          <i class="fas fa-save mr-1"></i>
-          Simpan Draft
-        </button>
-        <button type="button" id="submitBtn" onclick="submitDraft()"
-          class="flex-1 py-4 bg-emerald-600 text-white font-bold text-base rounded-xl hover:bg-emerald-700 transition flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
-          <i class="fas fa-paper-plane"></i>
-          Kirim Pengajuan
-        </button>
+          class="flex-1 py-3 bg-[#8b6f47] text-white font-medium rounded-xl hover:bg-[#7a5c3c] transition disabled:opacity-60 disabled:cursor-not-allowed">Simpan Draft</button>
+        <button type="button" id="submitBtn" onclick="console.log('SUBMIT BTN CLICKED'); submitDraft(event)"
+          class="flex-1 py-3 bg-[#2d3a27] text-white font-bold rounded-xl hover:bg-[#1a2515] transition disabled:opacity-60 disabled:cursor-not-allowed">Kirim Pengajuan</button>
       </div>
     </div>
 
@@ -327,8 +376,17 @@
 </div>
 @endsection
 
+@php
+  // Debug: show what document types are already uploaded
+  $uploadedDocTypesJson = json_encode($uploadedDocTypes);
+@endphp
+
 @push('scripts')
 <script>
+// Debug: log uploaded document types from server
+const uploadedDocTypes = {{ Js::from($uploadedDocTypes) }};
+console.log('Uploaded doc types from server:', uploadedDocTypes);
+
 function handleFileSelect(input, key) {
   const area  = document.getElementById('area-' + key);
   const ph    = document.getElementById('placeholder-' + key);
@@ -352,53 +410,185 @@ function handleFileSelect(input, key) {
   }
 }
 
+function syncCeraiPanels() {
+  const select = document.getElementById('cerai-type-select');
+  const activeType = select ? select.value : 'cerai_normal';
+
+  document.querySelectorAll('[data-cerai-panel]').forEach(function(panel) {
+    const isActive = panel.dataset.ceraiPanel === activeType;
+    panel.classList.toggle('hidden-panel-only', !isActive);
+  });
+}
+
 function saveDraft() {
   const btn = document.getElementById('saveBtn');
   const form = document.getElementById('draftForm');
-  
+
   btn.disabled = true;
-  btn.innerHTML = '<svg class="animate-spin h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>Menyimpan...';
-  
-  // Set action untuk update draft
-  document.getElementById('formAction').value = 'update';
-  form.method = 'POST';
-  form.action = '{{ route("dashboard.cases.update-draft", $case->id) }}';
-  
-  // Uncheck agreement checkbox
-  const agreementCheckbox = form.querySelector('input[name="agreement"]');
-  agreementCheckbox.checked = false;
-  
-  form.submit();
+  btn.innerHTML = 'Menyimpan...';
+
+  const formData = new FormData(form);
+
+  // Explicitly append all file inputs to FormData (handles inputs outside form or in hidden divs)
+  const ceraiOptions = ['cerai_normal', 'cerai_mati', 'cerai_pindah', 'cerai_ghaib', 'cerai_hak_asuh'];
+  const docTypes = ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'PUTUSAN_PA', 'AKTA_CERAI', 'AKTA_NIKAH',
+                     'AKTA_KEMATIAN', 'SURAT_KETERANGAN_AHLI_WARIS', 'SURAT_PINDAH',
+                     'SURAT_KETERANGAN_GHAIB', 'AKTA_KELAHIRAN_ANAK'];
+
+  ceraiOptions.forEach(ceraiType => {
+    docTypes.forEach(docType => {
+      const input = document.getElementById('file-' + ceraiType + '-' + docType);
+      if (input && input.files && input.files[0]) {
+        formData.append('documents[' + docType + ']', input.files[0]);
+      }
+    });
+  });
+
+  console.log('=== Save Draft Debug ===');
+  for (let [key, value] of formData.entries()) {
+    console.log(key + ':', value instanceof File ? value.name + ' (' + value.size + ' bytes)' : value);
+  }
+
+  fetch('{{ route("dashboard.cases.update-draft", $case->id) }}', {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+      'X-Requested-With': 'XMLHttpRequest',
+      'Accept': 'application/json',
+    },
+    credentials: 'same-origin'
+  })
+  .then(res => {
+    console.log('Response status:', res.status);
+    if (res.redirected) {
+      console.log('Redirected to:', res.url);
+      window.location.href = res.url;
+      return null;
+    }
+    return res.json().catch(() => null);
+  })
+  .then(data => {
+    console.log('Response data:', data);
+    if (!data) return;
+    if (data.success || data.error) {
+      window.location.href = '{{ route("dashboard.cases.edit-draft", $case->id) }}?saved=1';
+    } else if (data.errors) {
+      btn.disabled = false;
+      btn.innerHTML = 'Simpan Draft';
+      const msgs = Object.values(data.errors).flat().join('\n');
+      alert('Error:\n' + msgs);
+    } else {
+      window.location.reload();
+    }
+  })
+  .catch(err => {
+    console.error('Save draft error:', err);
+    btn.disabled = false;
+    btn.innerHTML = 'Simpan Draft';
+    alert('Gagal menyimpan draft: ' + err.message);
+  });
 }
 
-function submitDraft() {
+function submitDraft(e) {
+  e.preventDefault();
+  console.log('=== submitDraft called ===');
   const btn = document.getElementById('submitBtn');
   const form = document.getElementById('draftForm');
-  
-  btn.disabled = true;
-  btn.innerHTML = '<svg class="animate-spin h-5 w-5 text-white mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>Mengirim...';
-  
-  // Validate agreement
+
+  const select = document.getElementById('cerai-type-select');
+  const activeType = select ? select.value : 'cerai_normal';
+
+  const requiredDocs = {
+    'cerai_normal': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'PUTUSAN_PA', 'AKTA_CERAI', 'AKTA_NIKAH'],
+    'cerai_mati': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'PUTUSAN_PA', 'AKTA_CERAI', 'AKTA_NIKAH', 'AKTA_KEMATIAN', 'SURAT_KETERANGAN_AHLI_WARIS'],
+    'cerai_pindah': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'PUTUSAN_PA', 'AKTA_CERAI', 'AKTA_NIKAH', 'SURAT_PINDAH'],
+    'cerai_ghaib': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'PUTUSAN_PA', 'AKTA_CERAI', 'AKTA_NIKAH', 'SURAT_KETERANGAN_GHAIB'],
+    'cerai_hak_asuh': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'PUTUSAN_PA', 'AKTA_CERAI', 'AKTA_NIKAH', 'AKTA_KELAHIRAN_ANAK'],
+  };
+
+  // Skip document validation - let server handle it
+
   const agreementCheckbox = form.querySelector('input[name="agreement"]');
   if (!agreementCheckbox.checked) {
     btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim Pengajuan';
+    btn.innerHTML = 'Kirim Pengajuan';
     alert('Anda harus menyetujui pernyataan kebenaran data terlebih dahulu');
     return;
   }
-  
-  // Change form action to submit-draft
-  document.getElementById('formAction').value = 'submit';
-  form.method = 'POST';
-  form.action = '{{ route("dashboard.cases.submit-draft", $case->id) }}';
-  
-  // Remove PATCH method override
-  const patchInput = form.querySelector('input[name="_method"]');
-  if (patchInput) {
-    patchInput.remove();
+
+  btn.disabled = true;
+  btn.innerHTML = 'Mengirim...';
+
+  const formData = new FormData(form);
+
+  // Explicitly append all file inputs to FormData
+  const ceraiOptions = ['cerai_normal', 'cerai_mati', 'cerai_pindah', 'cerai_ghaib', 'cerai_hak_asuh'];
+  const docTypes = ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'PUTUSAN_PA', 'AKTA_CERAI', 'AKTA_NIKAH',
+                     'AKTA_KEMATIAN', 'SURAT_KETERANGAN_AHLI_WARIS', 'SURAT_PINDAH',
+                     'SURAT_KETERANGAN_GHAIB', 'AKTA_KELAHIRAN_ANAK'];
+
+  ceraiOptions.forEach(ceraiType => {
+    docTypes.forEach(docType => {
+      const input = document.getElementById('file-' + ceraiType + '-' + docType);
+      if (input && input.files && input.files[0]) {
+        formData.append('documents[' + docType + ']', input.files[0]);
+      }
+    });
+  });
+
+  console.log('=== FormData Debug ===');
+  for (let [key, value] of formData.entries()) {
+    console.log(key + ':', value instanceof File ? value.name + ' (' + value.size + ' bytes)' : value);
   }
-  
-  form.submit();
+
+  fetch('{{ route("dashboard.cases.submit-draft", $case->id) }}', {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+      'X-Requested-With': 'XMLHttpRequest',
+      'Accept': 'application/json',
+    },
+    credentials: 'same-origin'
+  })
+  .then(res => {
+    if (res.redirected) {
+      window.location.href = res.url;
+      return null;
+    }
+    return res.json().catch(() => null);
+  })
+  .then(data => {
+    if (!data) return;
+    if (data.success) {
+      window.location.href = data.redirect || '{{ route("dashboard.cases.show", $case->id) }}';
+    } else if (data.errors) {
+      btn.disabled = false;
+      btn.innerHTML = 'Kirim Pengajuan';
+      const errMsg = Object.values(data.errors).flat().join('\n');
+      alert('Error:\n' + errMsg);
+    } else if (data.redirect) {
+      window.location.href = data.redirect;
+    } else {
+      window.location.reload();
+    }
+  })
+  .catch(err => {
+    console.error('Submit error:', err);
+    btn.disabled = false;
+    btn.innerHTML = 'Kirim Pengajuan';
+    alert('Gagal mengirim pengajuan');
+  });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+  syncCeraiPanels();
+
+  const select = document.getElementById('cerai-type-select');
+  if (select) {
+    select.addEventListener('change', syncCeraiPanels);
+  }
+});
 </script>
 @endpush

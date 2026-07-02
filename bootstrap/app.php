@@ -30,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role'            => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission'      => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'auto.logout'     => \App\Http\Middleware\AutoLogoutOnPublicPage::class,
+            'track.activity'  => \App\Http\Middleware\TrackLastActivity::class,
         ]);
 
         // API rate limiting

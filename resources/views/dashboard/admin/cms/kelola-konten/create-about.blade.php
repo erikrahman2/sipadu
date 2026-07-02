@@ -14,10 +14,18 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Section Key *</label>
-            <input type="text" name="section_key" value="{{ old('section_key') }}" placeholder="hero, visi_misi, fitur"
-                   class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none font-mono @error('section_key') border-red-400 @enderror">
-            @error('section_key')
+            <label class="block text-sm font-medium text-gray-700 mb-1">Content Type *</label>
+            <select name="content_type"
+                    class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none font-mono @error('content_type') border-red-400 @enderror">
+                <option value="">— Pilih Type —</option>
+                <option value="tentang_sipadu" {{ old('content_type') == 'tentang_sipadu' ? 'selected' : '' }}>Tentang SIPADU</option>
+                <option value="hero"           {{ old('content_type') == 'hero'           ? 'selected' : '' }}>Hero</option>
+                <option value="statistik"      {{ old('content_type') == 'statistik'      ? 'selected' : '' }}>Statistik</option>
+                <option value="layanan"        {{ old('content_type') == 'layanan'        ? 'selected' : '' }}>Layanan</option>
+                <option value="faqs"           {{ old('content_type') == 'faqs'           ? 'selected' : '' }}>FAQs</option>
+                <option value="cta_kontak"     {{ old('content_type') == 'cta_kontak'     ? 'selected' : '' }}>CTA Kontak</option>
+            </select>
+            @error('content_type')
                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
             @enderror
         </div>

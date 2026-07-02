@@ -83,10 +83,9 @@
       <label class="block text-xs text-gray-500 mb-1">Status OCR</label>
       <select name="status" class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
         <option value="">Semua Status</option>
-        <option value="MATCH" {{ request('status') === 'MATCH' ? 'selected' : '' }}>Match</option>
-        <option value="PARTIAL_MATCH" {{ request('status') === 'PARTIAL_MATCH' ? 'selected' : '' }}>Partial Match</option>
-        <option value="MISMATCH" {{ request('status') === 'MISMATCH' ? 'selected' : '' }}>Mismatch</option>
-        <option value="MISMATCH" {{ request('status') === 'MISMATCH' ? 'selected' : '' }}>Mismatch</option>
+        <option value="SUCCESS" {{ request('status') === 'SUCCESS' ? 'selected' : '' }}>Success</option>
+        <option value="PARTIAL" {{ request('status') === 'PARTIAL' ? 'selected' : '' }}>Partial</option>
+        <option value="FAILED" {{ request('status') === 'FAILED' ? 'selected' : '' }}>Failed</option>
       </select>
     </div>
 
@@ -133,10 +132,9 @@
               $validationStatus = $ocrValidation?->validation_status ?? 'UNKNOWN';
               
               $statusColor = match($validationStatus) {
-                'MATCH' => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'icon' => 'fa-check'],
-                'PARTIAL_MATCH' => ['bg' => 'bg-amber-100', 'text' => 'text-amber-700', 'icon' => 'fa-exclamation'],
-                'MISMATCH' => ['bg' => 'bg-red-100', 'text' => 'text-red-700', 'icon' => 'fa-times'],
-                'MISMATCH' => ['bg' => 'bg-danger', 'text' => 'text-white', 'icon' => 'fa-times-circle'],
+                'SUCCESS' => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'icon' => 'fa-check'],
+                'PARTIAL' => ['bg' => 'bg-amber-100', 'text' => 'text-amber-700', 'icon' => 'fa-exclamation'],
+                'FAILED' => ['bg' => 'bg-red-100', 'text' => 'text-red-700', 'icon' => 'fa-times'],
                 default => ['bg' => 'bg-gray-100', 'text' => 'text-gray-700', 'icon' => 'fa-question'],
               };
             @endphp

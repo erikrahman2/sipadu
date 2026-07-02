@@ -36,29 +36,41 @@ class PublicSubmissionService
     /**
      * Periksa apakah NIK masih boleh mengajukan.
      */
-    public function isAllowed(string $nik): bool
+    public function isAllowed(?string $nik): bool
     {
+        if (empty($nik)) return true;
         return PublicSubmission::countActiveByNik($nik) < PublicSubmission::MAX_SUBMISSIONS;
     }
 
     /**
      * Sisa kuota pengajuan untuk NIK ini.
      */
-    public function remainingQuota(string $nik): int
+    public function remainingQuota(?string $nik): int
     {
+        if (empty($nik)) return PublicSubmission::MAX_SUBMISSIONS;
         $used = PublicSubmission::countActiveByNik($nik);
         return max(0, PublicSubmission::MAX_SUBMISSIONS - $used);
     }
 
     /**
      * Tanggal kapan NIK bisa mengajukan lagi (null = sudah bisa sekarang).
+     * Cek berdasarkan pasangan (suami + istri).
      */
-    public function nextAllowedDate(string $nik): ?\Carbon\Carbon
+    public function nextAllowedDate(?string $nikSuami, ?string $nikIstri): ?\Carbon\Carbon
     {
-        if ($this->isAllowed($nik)) return null;
+        if ($this->isAllowed($nikSuami ?? '')) return null;
 
         $oldest = PublicSubmission::withoutTrashed()
-            ->where('nik', $nik)
+            ->where(function ($query) use ($nikSuami, $nikIstri) {
+                if ($nikSuami) {
+                    $query->orWhere('nik_suami', $nikSuami)
+                          ->orWhere('nik_istri', $nikSuami);
+                }
+                if ($nikIstri) {
+                    $query->orWhere('nik_suami', $nikIstri)
+                          ->orWhere('nik_istri', $nikIstri);
+                }
+            })
             ->where('status', '!=', 'REJECTED')
             ->where('created_at', '>=', now()->subDays(PublicSubmission::LIMIT_DAYS))
             ->oldest()
@@ -116,6 +128,7 @@ class PublicSubmissionService
                 $submission = PublicSubmission::create([
                     'nik'               => $data['nik_suami'] ?? $data['nik_istri'] ?? null,
                     'petitioner_name'   => $petitionerName,  // REQUIRED field for database
+                    'cerai_type'        => $data['cerai_type'] ?? null,
                     
                     // Data Suami
                     'nik_suami'         => $data['nik_suami'] ?? null,
@@ -307,17 +320,7 @@ class PublicSubmissionService
 
     private function mapPublicDocumentType(string $publicType): string
     {
-        return match ($publicType) {
-            'KTP'                    => 'KTP',
-            'KTP_SUAMI'              => 'KTP_SUAMI',
-            'KTP_ISTRI'              => 'KTP_ISTRI',
-            'KK'                     => 'KK',
-            'AKTA_NIKAH'             => 'AKTA_NIKAH',
-            'AKTA_CERAI'             => 'AKTA_CERAI',
-            'PUTUSAN_PA'             => 'PUTUSAN_PA',
-            'SURAT_PENGANTAR'        => 'SURAT_PENGANTAR',
-            default                  => 'OTHER',
-        };
+        return DocumentTypeMapper::toCaseType($publicType);
     }
 
     /**

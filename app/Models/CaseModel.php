@@ -18,6 +18,7 @@ class CaseModel extends Model
         'public_submission_id', 'source_type',
         'petitioner_nik', 'petitioner_name', 'petitioner_phone',
         'petitioner_alamat', 'petitioner_rt_rw', 'petitioner_kelurahan', 'petitioner_kecamatan',
+        'cerai_type',
         'institution_id', 'spouse_nik', 'spouse_name',
         'spouse_alamat', 'spouse_rt_rw', 'spouse_kelurahan', 'spouse_kecamatan',
         'divorce_date', 'verdict_number', 'status', 'notes',

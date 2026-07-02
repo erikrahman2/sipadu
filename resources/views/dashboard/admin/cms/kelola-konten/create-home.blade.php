@@ -14,13 +14,24 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Section Key *</label>
-            <input type="text" name="section_key" value="{{ old('section_key') }}" placeholder="hero, features, stats"
-                   class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none font-mono @error('section_key') border-red-400 @enderror">
-            @error('section_key')
+            <label class="block text-sm font-medium text-gray-700 mb-1">Content Type *</label>
+            <select name="content_type"
+                    class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none font-mono @error('content_type') border-red-400 @enderror">
+                <option value="">— Pilih Type —</option>
+                <option value="hero"           {{ old('content_type') == 'hero'           ? 'selected' : '' }}>Hero (Headline Utama)</option>
+                <option value="home_seo"       {{ old('content_type') == 'home_seo'       ? 'selected' : '' }}>SEO Meta</option>
+                <option value="proses_metodologi" {{ old('content_type') == 'proses_metodologi' ? 'selected' : '' }}>Proses Metodologi</option>
+                <option value="fitur_unggulan" {{ old('content_type') == 'fitur_unggulan' ? 'selected' : '' }}>Fitur Unggulan</option>
+                <option value="statistik"      {{ old('content_type') == 'statistik'      ? 'selected' : '' }}>Statistik</option>
+                <option value="blog_header"    {{ old('content_type') == 'blog_header'    ? 'selected' : '' }}>Blog Header</option>
+                <option value="cta_footer"     {{ old('content_type') == 'cta_footer'     ? 'selected' : '' }}>CTA Footer</option>
+                <option value="testimoni"      {{ old('content_type') == 'testimoni'      ? 'selected' : '' }}>Testimoni</option>
+                <option value="cta_layanan"    {{ old('content_type') == 'cta_layanan'    ? 'selected' : '' }}>CTA Layanan</option>
+            </select>
+            @error('content_type')
                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
             @enderror
-            <p class="text-xs text-gray-400 mt-1">Huruf kecil, angka, underscore (contoh: hero_features)</p>
+            <p class="text-xs text-gray-400 mt-1">Pilih jenis section yang akan dikelola. Tidak boleh duplikat.</p>
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Display Order</label>
@@ -69,6 +80,12 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">CTA URL</label>
                 <input type="text" name="cta_url" value="{{ old('cta_url') }}" placeholder="/pengajuan"
                        class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Secondary CTA URL</label>
+                <input type="text" name="secondary_cta_url" value="{{ old('secondary_cta_url') }}" placeholder="/layanan"
+                       class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">
+                <p class="text-xs text-gray-400 mt-1">Link untuk tombol sekunder (mis. tombol "Layanan").</p>
             </div>
         </div>
     </div>

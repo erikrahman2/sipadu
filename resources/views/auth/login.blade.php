@@ -34,7 +34,7 @@
     <div class="text-center mb-8">
       <img src="{{ asset('assets/logo dark.png') }}" alt="SiPadu" class="w-24 h-24 mx-auto mb-4 rounded-2xl shadow-lg" />
       <h1 class="text-2xl font-bold text-white">Sistem Integrasi</h1>
-      <p class="text-earth-muted text-sm">PA — Disdukcapil</p>
+      <p class="text-earth-muted text-sm">PA Painan — Disdukcapil Pessel</p>
     </div>
 
     {{-- Login Card --}}

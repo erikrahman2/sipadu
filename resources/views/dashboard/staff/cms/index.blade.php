@@ -9,71 +9,66 @@
 
 @section('content')
 <div class="space-y-6">
-  <div>
-    <h1 class="text-xl font-bold text-darktext"><i class="fas fa-layer-group mr-2 text-primary"></i>Kelola Konten</h1>
-    <p class="text-sm text-earth-muted mt-1">Pilih modul konten untuk dikelola</p>
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-xl font-bold text-darktext"><i class="fas fa-layer-group mr-2 text-primary"></i>Kelola Konten</h1>
+      <p class="text-sm text-earth-muted mt-1">Pilih modul konten untuk dikelola</p>
+    </div>
   </div>
 
-  {{-- ── Card Grid ──────────────────────────────────────────────── --}}
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+    {{-- Kiri: Gambar --}}
+    <div>
+      <img src="{{ asset('assets/asset(1).jpg') }}" alt="Kelola Konten" class="w-full object-cover rounded-2xl" style="aspect-ratio: 4/3" />
+    </div>
+    {{-- Kanan: Menu List --}}
+    <div class="divide-y divide-gray-200">
 
-    {{-- ── Homepage ─────────────────────────────────────────────── --}}
-    <a href="{{ route('dashboard.admin.cms.home.index') }}"
-       class="group bg-white rounded-2xl shadow-sm border border-cream overflow-hidden hover:shadow-lg hover:border-primary/30 transition-all duration-200">
-      <div class="bg-gradient-to-br from-primary to-brand-dark h-28 flex items-center justify-center">
-        <i class="fas fa-house-chimney text-white text-4xl group-hover:scale-110 transition-transform duration-200"></i>
-      </div>
-      <div class="p-5">
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="font-bold text-lg text-darktext">Homepage</h3>
+      {{-- Homepage --}}
+      <a href="{{ route('dashboard.admin.cms.home.index') }}" class="block py-5">
+        <div class="flex items-start gap-4">
+          <div class="flex-grow min-w-0">
+            <span class="text-xs text-earth-muted uppercase tracking-wider">Homepage</span>
+            <p class="text-sm text-earth-muted mt-1">Kelola section halaman beranda website</p>
+          </div>
+          <i class="fas fa-chevron-right text-gray-300 flex-shrink-0 mt-1"></i>
         </div>
-        <p class="text-sm text-earth-muted mb-3">Kelola section halaman beranda website</p>
-        <div class="px-5 py-3 bg-earth-bg border-t border-cream group-hover:bg-primary/5 transition-colors">
-          <span class="text-sm font-medium text-primary group-hover:text-primary-dark">
-            Kelola Homepage <i class="fas fa-arrow-right ml-1 text-xs group-hover:translate-x-1 transition-transform"></i>
-          </span>
-        </div>
-      </div>
-    </a>
+      </a>
 
-    {{-- ── Tentang ─────────────────────────────────────────────── --}}
-    <a href="{{ route('dashboard.admin.cms.about.index') }}"
-       class="group bg-white rounded-2xl shadow-sm border border-cream overflow-hidden hover:shadow-lg hover:border-coral/30 transition-all duration-200">
-      <div class="bg-gradient-to-br from-coral to-coral-dark h-28 flex items-center justify-center">
-        <i class="fas fa-info-circle text-white text-4xl group-hover:scale-110 transition-transform duration-200"></i>
-      </div>
-      <div class="p-5">
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="font-bold text-lg text-darktext">Tentang</h3>
+      {{-- Tentang --}}
+      <a href="{{ route('dashboard.admin.cms.about.index') }}" class="block py-5">
+        <div class="flex items-start gap-4">
+          <div class="flex-grow min-w-0">
+            <span class="text-xs text-earth-muted uppercase tracking-wider">Tentang</span>
+            <p class="text-sm text-earth-muted mt-1">Kelola halaman informasi tentang instansi</p>
+          </div>
+          <i class="fas fa-chevron-right text-gray-300 flex-shrink-0 mt-1"></i>
         </div>
-        <p class="text-sm text-earth-muted mb-3">Kelola halaman informasi tentang instansi</p>
-        <div class="px-5 py-3 bg-earth-bg border-t border-cream group-hover:bg-coral/5 transition-colors">
-          <span class="text-sm font-medium text-coral group-hover:text-coral-dark">
-            Kelola Tentang <i class="fas fa-arrow-right ml-1 text-xs group-hover:translate-x-1 transition-transform"></i>
-          </span>
-        </div>
-      </div>
-    </a>
+      </a>
 
-    {{-- ── Berita ─────────────────────────────────────────────── --}}
-    <a href="{{ route('dashboard.admin.cms.blog.index') }}"
-       class="group bg-white rounded-2xl shadow-sm border border-cream overflow-hidden hover:shadow-lg hover:border-accent/30 transition-all duration-200">
-      <div class="bg-gradient-to-br from-accent to-accent-dark h-28 flex items-center justify-center">
-        <i class="fas fa-newspaper text-white text-4xl group-hover:scale-110 transition-transform duration-200"></i>
-      </div>
-      <div class="p-5">
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="font-bold text-lg text-darktext">Berita</h3>
+      {{-- Berita --}}
+      <a href="{{ route('dashboard.admin.cms.blog.index') }}" class="block py-5">
+        <div class="flex items-start gap-4">
+          <div class="flex-grow min-w-0">
+            <span class="text-xs text-earth-muted uppercase tracking-wider">Berita</span>
+            <p class="text-sm text-earth-muted mt-1">Kelola artikel dan postingan berita</p>
+          </div>
+          <i class="fas fa-chevron-right text-gray-300 flex-shrink-0 mt-1"></i>
         </div>
-        <p class="text-sm text-earth-muted mb-3">Kelola artikel dan postingan berita</p>
-        <div class="px-5 py-3 bg-earth-bg border-t border-cream group-hover:bg-accent/5 transition-colors">
-          <span class="text-sm font-medium text-accent group-hover:text-accent-dark">
-            Kelola Berita <i class="fas fa-arrow-right ml-1 text-xs group-hover:translate-x-1 transition-transform"></i>
-          </span>
-        </div>
-      </div>
-    </a>
+      </a>
 
+      {{-- Layanan --}}
+      <a href="{{ route('dashboard.admin.cms.layan.index') }}" class="block py-5">
+        <div class="flex items-start gap-4">
+          <div class="flex-grow min-w-0">
+            <span class="text-xs text-earth-muted uppercase tracking-wider">Layanan</span>
+            <p class="text-sm text-earth-muted mt-1">Kelola daftar layanan pengadilan</p>
+          </div>
+          <i class="fas fa-chevron-right text-gray-300 flex-shrink-0 mt-1"></i>
+        </div>
+      </a>
+
+    </div>
   </div>
 </div>
 @endsection

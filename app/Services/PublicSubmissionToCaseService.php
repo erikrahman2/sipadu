@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\CaseModel;
 use App\Models\PublicSubmission;
+use App\Services\DocumentTypeMapper;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -49,10 +50,11 @@ class PublicSubmissionToCaseService
                 'spouse_kecamatan'      => $submission->kecamatan_istri,
                 
                 // Perceraian & Institusi
-                'divorce_date'          => $submission->divorce_date,
-                'verdict_number'        => $submission->verdict_number,
-                'institution_id'        => $submission->institution_id,
-                'notes'                 => $submission->notes,
+                'cerai_type'         => $submission->cerai_type,
+                'divorce_date'       => $submission->divorce_date,
+                'verdict_number'     => $submission->verdict_number,
+                'institution_id'     => $submission->institution_id,
+                'notes'              => $submission->notes,
                 
                 'status'                => 'SUBMITTED',
             ]);
@@ -72,16 +74,15 @@ class PublicSubmissionToCaseService
 
     /**
      * Copy dokumen dari public submission ke case documents.
-     * 
+     *
      * @param PublicSubmission $submission
      * @param CaseModel $case
      */
     private function copyDocuments(PublicSubmission $submission, CaseModel $case): void
     {
         foreach ($submission->documents as $pubDoc) {
-            // Map public submission document types to case document types
-            $docType = $this->mapDocumentType($pubDoc->document_type);
-            
+            $docType = DocumentTypeMapper::toCaseType($pubDoc->document_type);
+
             \App\Models\Document::create([
                 'case_id'            => $case->id,
                 'document_type'      => $docType,
@@ -91,23 +92,6 @@ class PublicSubmissionToCaseService
                 'mime_type'          => $pubDoc->mime_type,
             ]);
         }
-    }
-
-    /**
-     * Map public submission document types to case document types.
-     */
-    private function mapDocumentType(string $publicDocType): string
-    {
-        return match($publicDocType) {
-            'KTP_SUAMI'         => 'KTP_SUAMI',
-            'KTP_ISTRI'         => 'KTP_ISTRI',
-            'AKTA_NIKAH'        => 'SURAT_NIKAH',
-            'AKTA_CERAI'        => 'AKTA_CERAI',
-            'PUTUSAN_PA'        => 'PUTUSAN_PA',
-            'SURAT_PENGANTAR'   => 'SURAT_PENGANTAR',
-            'OTHER'             => 'OTHER',
-            default             => 'OTHER'
-        };
     }
 
     /**

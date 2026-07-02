@@ -34,6 +34,9 @@ class PublicSubmission extends Model
         // Petitioner (untuk backward compatibility & database requirement)
         'petitioner_name',
 
+        // Jenis pengajuan pembaruan dokumen
+        'cerai_type',
+
         // Kontak & Institusi
         'phone_wa',
         'institution_id',

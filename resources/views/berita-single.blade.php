@@ -100,7 +100,7 @@
 
 {{-- Related Posts --}}
 @php
-  $relatedPosts = \App\Models\BlogPost::published()
+  $relatedPosts = \App\Models\CmsBlogPost::published()
     ->where('slug', '!=', $post->slug)
     ->orderBy('published_at', 'desc')
     ->take(3)

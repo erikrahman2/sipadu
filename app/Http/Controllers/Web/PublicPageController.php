@@ -35,11 +35,11 @@ class PublicPageController extends Controller
     {
         $cmsData = $this->contentService->getAllAboutSections();
 
-        $hero      = $cmsData->get('hero') ?? null;
-        $visiMisi  = $cmsData->get('visi_misi') ?? null;
-        $process   = $cmsData->get('proses') ?? null;
-        $services  = $cmsData->get('layanan') ?? null;
-        $faq       = $cmsData->get('faq') ?? null;
+        $about    = $cmsData->get('tentang_sipadu') ?? null;
+        $partner  = $cmsData->get('institusi_kerja_sama') ?? null;
+        $support  = $cmsData->get('institusi_pendukung') ?? null;
+        $visiMisi = $cmsData->get('visi_misi') ?? null;
+        $features = $cmsData->get('fitur_keunggulan') ?? null;
 
         return view('tentang', [
             'hero'      => $hero,

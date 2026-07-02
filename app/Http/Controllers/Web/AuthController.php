@@ -11,9 +11,20 @@ class AuthController extends Controller
 {
     public function __construct(private readonly AuditService $audit) {}
 
+    private function homeRouteFor($user): string
+    {
+        if ($user?->hasRole('super_admin')) {
+            return 'dashboard.admin.users';
+        }
+
+        return 'dashboard.index';
+    }
+
     public function showLogin()
     {
-        return auth()->check() ? redirect()->route('dashboard.index') : view('auth.login');
+        return auth()->check()
+            ? redirect()->route($this->homeRouteFor(auth()->user()))
+            : view('auth.login');
     }
 
     public function login(Request $request)
@@ -35,7 +46,8 @@ class AuthController extends Controller
 
         $this->audit->log($user, 'auth.login', 'User', $user->id, null, null, $request);
         $request->session()->regenerate();
-        return redirect()->intended(route('dashboard.index'));
+
+        return redirect()->intended(route($this->homeRouteFor($user)));
     }
 
     public function logout(Request $request)

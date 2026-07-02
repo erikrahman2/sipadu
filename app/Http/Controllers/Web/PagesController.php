@@ -14,7 +14,7 @@ class PagesController extends Controller
         $sections = CmsHomeSection::where('is_active', true)
             ->orderBy('display_order', 'asc')
             ->get()
-            ->keyBy('section_key');
+            ->keyBy('content_type');
 
         return view('welcome-new', [
             'homeSections' => $sections,
@@ -26,7 +26,7 @@ class PagesController extends Controller
         $sections = CmsAboutSection::where('is_active', true)
             ->orderBy('display_order', 'asc')
             ->get()
-            ->keyBy('section_key');
+            ->keyBy('content_type');
 
         return view('tentang', [
             'aboutSections' => $sections,
@@ -35,7 +35,10 @@ class PagesController extends Controller
 
     public function berita()
     {
-        $header = CmsHomeSection::where('section_key', 'blog_header')
+        $heroBanner = CmsHomeSection::where('content_type', 'hero_banner')
+            ->first();
+
+        $header = CmsHomeSection::where('content_type', 'blog_header')
             ->first();
 
         $posts = CmsBlogPost::published()
@@ -44,6 +47,7 @@ class PagesController extends Controller
             ->paginate(12);
 
         return view('berita', [
+            'heroBanner' => $heroBanner,
             'blogHeader' => $header,
             'posts'      => $posts,
         ]);

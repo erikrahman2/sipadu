@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\CMSKelolaKontenController;
 use App\Http\Controllers\Admin\CmsBlogPostController;
 use App\Http\Controllers\Admin\CmsHomeSectionController;
 use App\Http\Controllers\Admin\CmsAboutSectionController;
+use App\Http\Controllers\Admin\CmsLayanController;
 use App\Http\Controllers\Web\PublicPageController;
 use Illuminate\Support\Facades\Route;
 
@@ -34,28 +35,33 @@ Route::get('/', function () {
         ->orderByDesc('published_at')
         ->take(10)
         ->get();
-    $sections = CmsHomeSection::where('is_active', 1)->orderBy('display_order')->get()->keyBy('section_key');
+    $sections = CmsHomeSection::where('is_active', 1)->orderBy('display_order')->get()->keyBy('content_type');
 
-    // Prepare each section with fallbacks
-    $sHero       = $sections->get('hero')       ?? (object)['title'=>'','subtitle'=>'','cta_label'=>'','cta_url'=>null];
-    $sAbout      = $sections->get('about_header') ?? $sections->get('fitur_unggulan') ?? (object)['title'=>'Apa itu SiPadu?','subtitle'=>'','content'=>''];
-    $sProses     = $sections->get('proses_metodologi') ?? (object)['title'=>'Proses','subtitle'=>'','content'=>''];
-    $sFitur      = $sections->get('fitur_unggulan') ?? (object)['title'=>'','subtitle'=>'','content'=>''];
-    $sStatistik  = $sections->get('statistik') ?? (object)['title'=>'','content'=>''];
-    $sCta        = $sections->get('cta_footer') ?? (object)['title'=>'Siap Mulai?','subtitle'=>'','cta_label'=>'','cta_url'=>null];
-    $sBlog       = $sections->get('blog_header') ?? (object)['title'=>''];
-    $sSeo        = $sections->get('home_seo') ?? (object)['title'=>'','subtitle'=>'','content'=>''];
+    // Map content_type from admin CMS to view variables
+    // Urutan di sini mengikuti urutan section di halaman publik (welcome-new.blade.php)
+    //   home_seo           = SEO meta (title, content)
+    //   hero               = Headline Utama (title, subtitle, cta_label, cta_url, secondary_cta_url)
+    //   proses_metodologi  = Cara Kerja / Process Timeline (title, subtitle)
+    //   fitur_unggulan     = Layanan / Fitur Unggulan (title, subtitle)
+    //   statistik          = Angka & Statistik (title, subtitle)
+    //   blog_header        = Judul Halaman Berita (title, subtitle)
+    //   cta_footer         = Ajakan Bertindak CTA (title, subtitle, cta_label, cta_url)
+    $sSeo        = $sections->get('home_seo')             ?? (object)['title'=>'','subtitle'=>'','content'=>''];
+    $sHero       = $sections->get('hero')                 ?? (object)['title'=>'','subtitle'=>'','cta_label'=>'','cta_url'=>null,'secondary_cta_url'=>null];
+    $sProses     = $sections->get('proses_metodologi')    ?? (object)['title'=>'','subtitle'=>'','content'=>''];
+    $sFitur      = $sections->get('fitur_unggulan')       ?? (object)['title'=>'','subtitle'=>'','content'=>''];
+    $sStatistik  = $sections->get('statistik')            ?? (object)['title'=>'','subtitle'=>'','content'=>''];
+    $sBlog       = $sections->get('blog_header')          ?? (object)['title'=>'','subtitle'=>'','content'=>''];
+    $sCta        = $sections->get('cta_footer')           ?? (object)['title'=>'Siap untuk memulai?','subtitle'=>'','cta_label'=>'','cta_url'=>null];
 
     return view('welcome-new', compact(
-        'blogPosts', 'sections',
-        'sHero', 'sAbout', 'sProses', 'sFitur', 'sStatistik', 'sCta', 'sBlog', 'sSeo'
+        'blogPosts',
+        'sHero', 'sProses', 'sFitur', 'sStatistik', 'sCta', 'sBlog', 'sSeo'
     ));
 })->middleware('auto.logout')->name('home');
 
 // Halaman Layanan / Services
-Route::get('/layanan', function () {
-    return view('services');
-})->middleware('auto.logout')->name('services');
+Route::get('/layanan', [\App\Http\Controllers\Web\ContentController::class, 'layananPage'])->name('services');
 
 Route::redirect('/login', '/auth/login')->name('login');
 
@@ -95,8 +101,14 @@ Route::prefix('auth')->name('auth.')->middleware('web')->group(function () {
     Route::get('logout',  [AuthController::class, 'logout'])->name('logout.get')->middleware('auth');
 });
 
+// Keepalive endpoint — bumps session last_activity without changing page
+Route::post('/keepalive', function () {
+    \Illuminate\Support\Facades\Session::put('last_activity', now()->timestamp);
+    return response()->json(['ok' => true]);
+})->middleware(['auth', 'track.activity'])->name('keepalive');
+
 // Dashboard (protected)
-Route::middleware(['auth', 'security.headers', 'access.log'])->prefix('dashboard')->name('dashboard.')->group(function () {
+Route::middleware(['auth', 'security.headers', 'access.log', 'track.activity'])->prefix('dashboard')->name('dashboard.')->group(function () {
 
     // Dashboard utama â€“ semua role yang terautentikasi
     Route::get('/', [DashboardController::class, 'index'])->name('index');
@@ -166,10 +178,17 @@ Route::middleware(['auth', 'security.headers', 'access.log'])->prefix('dashboard
         Route::patch('/about/{about}',  [CmsAboutSectionController::class, 'update'])->name('about.update');
         Route::delete('/about/{about}', [CmsAboutSectionController::class, 'destroy'])->name('about.destroy');
 
-        // Kelola Konten – card index (homepage, tentang, berita)
-        Route::get('/kelola-konten', function () {
-            return view('dashboard.staff.cms.index');
-        })->name('kelola-konten.index');
+        // Layanan
+        Route::get('/layanan',             [CmsLayanController::class, 'index'])->name('layan.index');
+        Route::get('/layanan/create',      [CmsLayanController::class, 'create'])->name('layan.create');
+        Route::post('/layanan',            [CmsLayanController::class, 'store'])->name('layan.store');
+        Route::get('/layanan/{layan}/edit',[CmsLayanController::class, 'edit'])->name('layan.edit');
+        Route::patch('/layanan/{layan}',   [CmsLayanController::class, 'update'])->name('layan.update');
+        Route::delete('/layanan/{layan}',  [CmsLayanController::class, 'destroy'])->name('layan.destroy');
+
+        // Kelola Konten – unified tabs index (beranda / tentang / berita)
+        Route::get('/kelola-konten', [\App\Http\Controllers\Admin\CMSKelolaKontenController::class, 'index'])
+            ->name('kelola-konten.index');
 
         // Unified Kelola Konten (legacy)
         Route::get('/kelola-konten-legacy', [CMSKelolaKontenController::class, 'index'])->name('kelola-konten-legacy.index');

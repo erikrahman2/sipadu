@@ -7,8 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class CmsAboutSection extends Model
 {
     protected $fillable = [
-        'section_key',
+        'content_type',
         'title',
+        'subtitle',
         'content',
         'image_path',
         'display_order',

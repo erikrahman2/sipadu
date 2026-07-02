@@ -7,15 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 class CmsHomeSection extends Model
 {
     protected $fillable = [
-        'section_key',
         'title',
         'subtitle',
         'content',
         'image_path',
         'cta_label',
         'cta_url',
+        'secondary_cta_url',
         'display_order',
         'is_active',
+        'content_type',
     ];
 
     protected $casts = [

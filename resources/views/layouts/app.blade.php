@@ -193,6 +193,50 @@
   </div>
   @endif
 
+  {{-- ─── SESSION TIMEOUT WARNING MODAL ─────────────────────────────── --}}
+  @auth
+  <div id="sessionTimeoutModal"
+       x-data="sessionTimeout()"
+       x-show="showModal"
+       x-cloak
+       x-transition:enter="transition ease-out duration-200"
+       x-transition:enter-start="opacity-0"
+       x-transition:enter-end="opacity-100"
+       x-transition:leave="transition ease-in duration-150"
+       x-transition:leave-start="opacity-100"
+       x-transition:leave-end="opacity-0"
+       class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+       style="display:none">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 overflow-hidden">
+      <div class="bg-yellow-50 px-6 py-4 border-b border-yellow-200 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center flex-shrink-0">
+          <i class="fas fa-clock text-white"></i>
+        </div>
+        <div>
+          <h3 class="font-semibold text-yellow-900 text-sm">Sesi Akan Berakhir</h3>
+          <p class="text-xs text-yellow-700">Aktivitas terdeteksi terakhir</p>
+        </div>
+      </div>
+      <div class="p-6 text-center">
+        <p class="text-sm text-gray-600 mb-1">Sesi Anda akan berakhir dalam</p>
+        <div class="text-4xl font-bold text-gray-900 mb-1" x-text="remainingSeconds"></div>
+        <p class="text-xs text-gray-400 mb-5">detik</p>
+        <p class="text-xs text-gray-500 mb-5">Klik tombol di bawah untuk tetap masuk.</p>
+        <div class="flex gap-3">
+          <button @click="logout"
+                  class="flex-1 px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition">
+            Keluar
+          </button>
+          <button @click="extend"
+                  class="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-primary hover:bg-primary-dark rounded-xl transition">
+            <i class="fas fa-check mr-1"></i> Tetap Masuk
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  @endauth
+
   {{-- ─── MAIN CONTENT ────────────────────────────────────────────────── --}}
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
     @yield('content')
@@ -209,6 +253,64 @@
 
 {{-- Alpine.js for dropdowns --}}
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<script>
+  function sessionTimeout() {
+    const SESSION_LIFETIME = {{ config('session.lifetime', 60) * 60 }};
+    const WARNING_BEFORE  = 60;
+    const KEEPALIVE_URL   = '{{ route("keepalive") }}';
+    const LOGOUT_URL      = '{{ route("auth.logout") }}';
+    const LOGOUT_AFTER_URL = '{{ route("auth.login") }}';
+    const CSRF_TOKEN      = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+    return {
+      showModal: false,
+      remainingSeconds: 0,
+      _interval: null,
+
+      init() {
+        this._resetTimer();
+        ['mousemove','keydown','click','scroll','touchstart'].forEach(evt => {
+          document.addEventListener(evt, () => this._resetTimer(), { passive: true });
+        });
+      },
+
+      _resetTimer() {
+        clearInterval(this._interval);
+        this.showModal = false;
+        this.remainingSeconds = SESSION_LIFETIME;
+        this._interval = setInterval(() => {
+          if (--this.remainingSeconds <= WARNING_BEFORE && !this.showModal) {
+            this.showModal = true;
+          }
+          if (this.remainingSeconds <= 0) {
+            this.logout();
+          }
+        }, 1000);
+      },
+
+      extend() {
+        fetch(KEEPALIVE_URL, {
+          method: 'POST',
+          headers: { 'X-CSRF-TOKEN': CSRF_TOKEN, 'Accept': 'application/json' },
+          credentials: 'same-origin'
+        }).catch(() => {});
+        this.showModal = false;
+        this._resetTimer();
+      },
+
+      logout() {
+        clearInterval(this._interval);
+        fetch(LOGOUT_URL, {
+          method: 'POST',
+          headers: { 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+          credentials: 'same-origin'
+        }).finally(() => {
+          window.location.href = LOGOUT_AFTER_URL;
+        });
+      }
+    }
+  }
+</script>
 
 <style>
   .nav-link {

@@ -31,7 +31,7 @@
 @endsection
 
 @section('content')
-<div class="space-y-4">
+<div class="space-y-8">
 
   {{-- Status Banner (jika filter) --}}
   @if(request('status'))
@@ -94,8 +94,8 @@
       <label class="block text-xs text-gray-500 mb-1">Jenis Pengajuan</label>
       <select name="type" class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
         <option value="all" {{ request('type', 'all') === 'all' ? 'selected' : '' }}>Semua ({{ $counts['all'] ?? 0 }})</option>
-        <option value="cases" {{ request('type') === 'cases' ? 'selected' : '' }}>Kasus Manual ({{ $counts['cases'] ?? 0 }})</option>
-        <option value="public" {{ request('type') === 'public' ? 'selected' : '' }}>Pengajuan Publik ({{ $counts['public'] ?? 0 }})</option>
+        <option value="manual" {{ request('type') === 'manual' ? 'selected' : '' }}>Kasus Manual ({{ $counts['cases'] ?? 0 }})</option>
+        <option value="public" {{ request('type') === 'public' ? 'selected' : '' }}>Dari Publik ({{ $counts['public'] ?? 0 }})</option>
       </select>
     </div>
     <div>
@@ -130,13 +130,17 @@
         @forelse($cases as $case)
         <tr class="hover:bg-blue-50/40 transition">
           <td class="px-4 py-3">
-            @if($case->source_type === 'internal')
-              <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700">
-                <i class="fas fa-briefcase mr-1"></i> Kasus
+            @if($case->source_type === 'public')
+              <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-purple-100 text-purple-700">
+                <i class="fas fa-globe mr-1"></i> Publik
+              </span>
+            @elseif($case->public_submission_id)
+              <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-teal-100 text-teal-700">
+                <i class="fas fa-file-import mr-1"></i> Dari Publik
               </span>
             @else
-              <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-purple-100 text-purple-700">
-                <i class="fas fa-users mr-1"></i> Publik
+              <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700">
+                <i class="fas fa-pen mr-1"></i> Manual
               </span>
             @endif
           </td>

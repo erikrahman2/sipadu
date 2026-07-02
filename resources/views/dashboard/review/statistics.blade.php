@@ -39,9 +39,9 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <p class="text-muted mb-1 small">MATCH (≥95%)</p>
-                            <h2 class="mb-0">{{ $stats['match'] }}</h2>
-                            <small class="text-success">{{ $stats['total'] > 0 ? number_format(($stats['match'] / $stats['total']) * 100, 1) : 0 }}%</small>
+                            <p class="text-muted mb-1 small">SUCCESS (≥90%)</p>
+                            <h2 class="mb-0">{{ $stats['success'] ?? 0 }}</h2>
+                            <small class="text-success">{{ $stats['total'] > 0 ? number_format(($stats['success'] / $stats['total']) * 100, 1) : 0 }}%</small>
                         </div>
                         <div class="text-success">
                             <i class="fas fa-check-circle fa-3x opacity-50"></i>
@@ -55,9 +55,9 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <p class="text-muted mb-1 small">PARTIAL MATCH (80-94%)</p>
-                            <h2 class="mb-0">{{ $stats['partial_match'] }}</h2>
-                            <small class="text-warning">{{ $stats['total'] > 0 ? number_format(($stats['partial_match'] / $stats['total']) * 100, 1) : 0 }}%</small>
+                            <p class="text-muted mb-1 small">PARTIAL (70-89%)</p>
+                            <h2 class="mb-0">{{ $stats['partial'] ?? 0 }}</h2>
+                            <small class="text-warning">{{ $stats['total'] > 0 ? number_format(($stats['partial'] / $stats['total']) * 100, 1) : 0 }}%</small>
                         </div>
                         <div class="text-warning">
                             <i class="fas fa-exclamation-triangle fa-3x opacity-50"></i>
@@ -71,9 +71,9 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <p class="text-muted mb-1 small">MISMATCH</p>
-                            <h2 class="mb-0">{{ $stats['mismatch'] }}</h2>
-                            <small class="text-danger">{{ $stats['total'] > 0 ? number_format(($stats['mismatch'] / $stats['total']) * 100, 1) : 0 }}%</small>
+                            <p class="text-muted mb-1 small">FAILED (&lt;70%)</p>
+                            <h2 class="mb-0">{{ $stats['failed'] ?? 0 }}</h2>
+                            <small class="text-danger">{{ $stats['total'] > 0 ? number_format(($stats['failed'] / $stats['total']) * 100, 1) : 0 }}%</small>
                         </div>
                         <div class="text-danger">
                             <i class="fas fa-times-circle fa-3x opacity-50"></i>
@@ -123,23 +123,23 @@
                         <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                             <span>
                                 <i class="fas fa-check-circle text-success me-2"></i>
-                                MATCH
+                                SUCCESS
                             </span>
-                            <span class="badge bg-success rounded-pill">{{ $stats['match'] }}</span>
+                            <span class="badge bg-success rounded-pill">{{ $stats['success'] ?? 0 }}</span>
                         </div>
                         <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                             <span>
                                 <i class="fas fa-exclamation-triangle text-warning me-2"></i>
-                                PARTIAL_MATCH
+                                PARTIAL
                             </span>
-                            <span class="badge bg-warning rounded-pill">{{ $stats['partial_match'] }}</span>
+                            <span class="badge bg-warning rounded-pill">{{ $stats['partial'] ?? 0 }}</span>
                         </div>
                         <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                             <span>
                                 <i class="fas fa-times-circle text-danger me-2"></i>
-                                MISMATCH
+                                FAILED
                             </span>
-                            <span class="badge bg-danger rounded-pill">{{ $stats['mismatch'] }}</span>
+                            <span class="badge bg-danger rounded-pill">{{ $stats['failed'] ?? 0 }}</span>
                         </div>
                     </div>
                 </div>
@@ -356,7 +356,7 @@ document.addEventListener('DOMContentLoaded', function() {
     new Chart(statusCtx, {
         type: 'doughnut',
         data: {
-            labels: ['MATCH', 'PARTIAL MATCH', 'MISMATCH'],
+            labels: ['SUCCESS (≥90%)', 'PARTIAL (70-89%)', 'FAILED (<70%)'],
             datasets: [{
                 data: [
                     {{ $stats['match'] }},

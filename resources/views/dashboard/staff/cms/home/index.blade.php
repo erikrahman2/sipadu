@@ -42,7 +42,7 @@
         @forelse($homeSections as $section)
         <tr class="hover:bg-gray-50 transition">
           <td class="px-4 py-3 text-gray-500">{{ $section->display_order }}</td>
-          <td class="px-4 py-3 font-mono text-xs text-brand">{{ $section->section_key }}</td>
+          <td class="px-4 py-3 font-mono text-xs text-brand">{{ $section->content_type }}</td>
           <td class="px-4 py-3 font-medium text-gray-800">{{ $section->title }}</td>
           <td class="px-4 py-3 text-gray-600">{{ Str::limit($section->subtitle, 30) ?: '-' }}</td>
           <td class="px-4 py-3 text-gray-600">{{ $section->cta_label ?: '-' }}</td>

@@ -35,7 +35,7 @@ class PublicSubmissionController extends Controller
             'max'       => PublicSubmission::MAX_SUBMISSIONS,
             'days'      => PublicSubmission::LIMIT_DAYS,
             'next_date' => $quota === 0
-                ? $this->service->nextAllowedDate($nik)?->toDateString()
+                ? $this->service->nextAllowedDate($nik, null)?->toDateString()
                 : null,
         ]);
     }

@@ -30,14 +30,15 @@ class PublicSubmissionController extends Controller
         $nik = $request->query('nik');
 
         $quota        = $nik ? $this->service->remainingQuota($nik) : null;
-        $nextDate     = ($nik && $quota === 0) ? $this->service->nextAllowedDate($nik) : null;
+        $nextDate     = ($nik && $quota === 0) ? $this->service->nextAllowedDate($nik, null) : null;
         $docTypes     = PublicSubmissionDocument::$typeLabels;
+        $ceraiOptions = $this->ceraiOptions();
         $institutions = Institution::active()->orderBy('name')->get(['id', 'name', 'type']);
         $maxFiles     = config('public_submission.max_files_per_type', 3);
         $maxSizeMb    = config('public_submission.max_file_size_mb', 5);
 
         return view('pengajuan.publik', compact(
-            'nik', 'quota', 'nextDate', 'docTypes', 'institutions', 'maxFiles', 'maxSizeMb'
+            'nik', 'quota', 'nextDate', 'docTypes', 'ceraiOptions', 'institutions', 'maxFiles', 'maxSizeMb'
         ));
     }
 
@@ -51,7 +52,7 @@ class PublicSubmissionController extends Controller
 
         $nik      = $request->input('nik');
         $quota    = $this->service->remainingQuota($nik);
-        $nextDate = $quota === 0 ? $this->service->nextAllowedDate($nik) : null;
+        $nextDate = $quota === 0 ? $this->service->nextAllowedDate($nik, null) : null;
 
         return response()->json([
             'allowed'    => $quota > 0,
@@ -66,91 +67,110 @@ class PublicSubmissionController extends Controller
 
     public function store(Request $request)
     {
-        // Validasi input form
         $maxSizeByte = (config('public_submission.max_file_size_mb', 5) * 1024);
-        
+        $ceraiOptions = $this->ceraiOptions();
+        $ceraiType = $request->input('cerai_type');
+        $isGroupedFlow = is_string($ceraiType) && array_key_exists($ceraiType, $ceraiOptions);
+
         // Clean phone number: remove +62, spaces, and dashes
         $phoneWa = $request->input('phone_wa', '');
-        $phoneWa = preg_replace('/^(\+62|0)/', '', $phoneWa);  // Remove +62 or leading 0
-        $phoneWa = preg_replace('/\s+/', '', $phoneWa);       // Remove spaces
-        $phoneWa = preg_replace('/[-.]/', '', $phoneWa);      // Remove dashes/dots
-        
+        $phoneWa = preg_replace('/^(\+62|0)/', '', $phoneWa);
+        $phoneWa = preg_replace('/\s+/', '', $phoneWa);
+        $phoneWa = preg_replace('/[-.]/', '', $phoneWa);
+
         $request->merge(['phone_wa' => $phoneWa]);
-        
-        $validated = $request->validate([
-            // Data Suami
-            'nik_suami'           => 'required|digits:16',
-            'nama_suami'          => 'required|string|max:255',
-            'alamat_suami'        => 'required|string|max:255',
-            'rt_rw_suami'         => 'required|string|max:10',
-            'kelurahan_suami'     => 'required|string|max:100',
-            'kecamatan_suami'     => 'required|string|max:100',
 
-            // Data Istri
-            'nik_istri'           => 'required|digits:16',
-            'nama_istri'          => 'required|string|max:255',
-            'alamat_istri'        => 'required|string|max:255',
-            'rt_rw_istri'         => 'required|string|max:10',
-            'kelurahan_istri'     => 'required|string|max:100',
-            'kecamatan_istri'     => 'required|string|max:100',
+        $rules = [
+            'nik_suami'       => 'required|digits:16',
+            'nama_suami'      => 'required|string|max:255',
+            'alamat_suami'    => 'required|string|max:255',
+            'rt_rw_suami'     => 'required|string|max:10',
+            'kelurahan_suami' => 'required|string|max:100',
+            'kecamatan_suami' => 'required|string|max:100',
 
-            // Kontak & Institusi
-            'phone_wa'            => ['required', 'string', 'max:20', 'regex:/^[0-9]{9,15}$/'],
-            'institution_id'      => 'required|exists:institutions,id',
+            'nik_istri'       => 'required|digits:16',
+            'nama_istri'      => 'required|string|max:255',
+            'alamat_istri'    => 'required|string|max:255',
+            'rt_rw_istri'     => 'required|string|max:10',
+            'kelurahan_istri' => 'required|string|max:100',
+            'kecamatan_istri' => 'required|string|max:100',
 
-            // Data Cerai (opsional)
-            'respondent_name'     => 'nullable|string|max:255',
-            'respondent_nik'      => 'nullable|digits:16',
-            'divorce_date'        => 'nullable|date|before_or_equal:today',
-            'verdict_number'      => 'nullable|string|max:100',
-            'notes'               => 'nullable|string|max:1000',
+            'phone_wa'        => ['required', 'string', 'max:20', 'regex:/^[0-9]{9,15}$/'],
+            'institution_id'  => 'required|exists:institutions,id',
 
-            // Dokumen
-            'documents'                => 'required|array|min:2',
-            'documents.KTP_SUAMI'      => 'required|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte,
-            'documents.KTP_ISTRI'      => 'required|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte,
-            'documents.AKTA_CERAI'     => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte,
-            'documents.PUTUSAN_PA'     => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte,
-            'documents.AKTA_NIKAH'     => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte,
-            'documents.SURAT_PENGANTAR' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte,
-            'documents.OTHER'          => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte,
+            'respondent_name' => 'nullable|string|max:255',
+            'respondent_nik'  => 'nullable|digits:16',
+            'divorce_date'    => 'nullable|date|before_or_equal:today',
+            'verdict_number'  => 'nullable|string|max:100',
+            'notes'           => 'nullable|string|max:1000',
 
-            'agreement'           => 'required|accepted',
-        ], [
-            'nik_suami.required'        => 'NIK Suami wajib diisi.',
-            'nik_suami.digits'          => 'NIK Suami harus tepat 16 digit angka.',
-            'nama_suami.required'       => 'Nama Suami wajib diisi.',
-            'alamat_suami.required'     => 'Alamat Suami wajib diisi.',
-            'rt_rw_suami.required'      => 'RT/RW Suami wajib diisi.',
-            'kelurahan_suami.required'  => 'Kelurahan Suami wajib diisi.',
-            'kecamatan_suami.required'  => 'Kecamatan Suami wajib diisi.',
+            'agreement'       => 'required|accepted',
+        ];
 
-            'nik_istri.required'        => 'NIK Istri wajib diisi.',
-            'nik_istri.digits'          => 'NIK Istri harus tepat 16 digit angka.',
-            'nama_istri.required'       => 'Nama Istri wajib diisi.',
-            'alamat_istri.required'     => 'Alamat Istri wajib diisi.',
-            'rt_rw_istri.required'      => 'RT/RW Istri wajib diisi.',
-            'kelurahan_istri.required'  => 'Kelurahan Istri wajib diisi.',
-            'kecamatan_istri.required'  => 'Kecamatan Istri wajib diisi.',
+        $messages = [
+            'nik_suami.required'       => 'NIK Suami wajib diisi.',
+            'nik_suami.digits'         => 'NIK Suami harus tepat 16 digit angka.',
+            'nama_suami.required'      => 'Nama Suami wajib diisi.',
+            'alamat_suami.required'    => 'Alamat Suami wajib diisi.',
+            'rt_rw_suami.required'     => 'RT/RW Suami wajib diisi.',
+            'kelurahan_suami.required' => 'Kelurahan Suami wajib diisi.',
+            'kecamatan_suami.required' => 'Kecamatan Suami wajib diisi.',
 
-            'phone_wa.required'         => 'Nomor WhatsApp wajib diisi.',
-            'phone_wa.regex'            => 'Nomor WhatsApp tidak valid. Masukkan hanya angka (9–15 digit) tanpa +62 atau simbol lainnya. Contoh: 812345678 atau 08123456789',
-            'institution_id.required'   => 'Pilih Pengadilan Agama/Institusi.',
-            'institution_id.exists'     => 'Institusi yang dipilih tidak valid.',
+            'nik_istri.required'       => 'NIK Istri wajib diisi.',
+            'nik_istri.digits'         => 'NIK Istri harus tepat 16 digit angka.',
+            'nama_istri.required'      => 'Nama Istri wajib diisi.',
+            'alamat_istri.required'    => 'Alamat Istri wajib diisi.',
+            'rt_rw_istri.required'     => 'RT/RW Istri wajib diisi.',
+            'kelurahan_istri.required' => 'Kelurahan Istri wajib diisi.',
+            'kecamatan_istri.required' => 'Kecamatan Istri wajib diisi.',
 
-            'documents.KTP_SUAMI.required'  => 'Dokumen KTP Suami wajib diunggah.',
-            'documents.KTP_ISTRI.required'  => 'Dokumen KTP Istri wajib diunggah.',
-            'documents.*.mimes'             => 'Format dokumen harus JPG, PNG, atau PDF.',
-            'documents.*.max'               => 'Ukuran dokumen maksimal ' . config('public_submission.max_file_size_mb', 5) . ' MB.',
+            'phone_wa.required'        => 'Nomor WhatsApp wajib diisi.',
+            'phone_wa.regex'           => 'Nomor WhatsApp tidak valid. Masukkan hanya angka (9–15 digit) tanpa +62 atau simbol lainnya. Contoh: 812345678 atau 08123456789',
+            'institution_id.required'  => 'Pilih Pengadilan Agama/Institusi.',
+            'institution_id.exists'    => 'Institusi yang dipilih tidak valid.',
 
-            'agreement.required'        => 'Anda harus menyetujui pernyataan kebenaran data.',
-            'agreement.accepted'        => 'Anda harus menyetujui pernyataan kebenaran data.',
-        ]);
+            'agreement.required'       => 'Anda harus menyetujui pernyataan kebenaran data.',
+            'agreement.accepted'       => 'Anda harus menyetujui pernyataan kebenaran data.',
+
+            'documents.*.mimes'        => 'Format dokumen harus JPG, PNG, atau PDF.',
+            'documents.*.max'          => 'Ukuran dokumen maksimal ' . config('public_submission.max_file_size_mb', 5) . ' MB.',
+        ];
+
+        if ($isGroupedFlow) {
+            $rules['cerai_type'] = 'required|in:' . implode(',', array_keys($ceraiOptions));
+
+            $requiredDocs = $this->documentsForCeraiType($ceraiType);
+            $rules['documents'] = 'required|array|min:' . count($requiredDocs);
+
+            foreach ($requiredDocs as $documentType) {
+                $rules['documents.' . $documentType] = 'required|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte;
+                $messages['documents.' . $documentType . '.required'] = 'Dokumen ' . ($ceraiOptions[$ceraiType]['docs'][$documentType] ?? $documentType) . ' wajib diunggah.';
+            }
+        } else {
+            $rules['documents'] = 'required|array|min:2';
+            $rules['documents.KTP_SUAMI'] = 'required|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte;
+            $rules['documents.KTP_ISTRI'] = 'required|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte;
+            $rules['documents.AKTA_CERAI'] = 'nullable|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte;
+            $rules['documents.PUTUSAN_PA'] = 'nullable|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte;
+            $rules['documents.AKTA_NIKAH'] = 'nullable|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte;
+            $rules['documents.SURAT_PENGANTAR'] = 'nullable|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte;
+            $rules['documents.OTHER'] = 'nullable|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte;
+
+            $messages['documents.KTP_SUAMI.required'] = 'Dokumen KTP Suami wajib diunggah.';
+            $messages['documents.KTP_ISTRI.required'] = 'Dokumen KTP Istri wajib diunggah.';
+        }
+
+        $validated = $request->validate($rules, $messages);
+
+        if (! $isGroupedFlow) {
+            $validated['cerai_type'] = null;
+        }
 
         try {
             Log::info('[DEBUG] PublicSubmission.store() - About to call service->create()', [
                 'nik_suami' => $validated['nik_suami'] ?? null,
                 'nik_istri' => $validated['nik_istri'] ?? null,
+                'cerai_type' => $validated['cerai_type'] ?? null,
             ]);
 
             $files      = $request->file('documents', []);
@@ -187,5 +207,61 @@ class PublicSubmissionController extends Controller
         }
 
         return view('pengajuan.sukses', compact('submission'));
+    }
+
+    private function ceraiOptions(): array
+    {
+        $baseDocs = [
+            'KTP_SUAMI' => 'Upload KTP Suami',
+            'KTP_ISTRI' => 'Upload KTP Istri',
+            'KK'        => 'Upload Kartu Keluarga',
+            'PUTUSAN_PA' => 'Upload Putusan Pengadilan',
+            'AKTA_CERAI' => 'Upload Akta Cerai',
+            'AKTA_NIKAH' => 'Upload Akta Kawin / Buku Nikah',
+        ];
+
+        return [
+            'cerai_normal' => [
+                'label' => 'Cerai Normal',
+                'description' => 'Untuk pembaruan dokumen standar setelah putusan cerai.',
+                'docs' => $baseDocs,
+            ],
+            'cerai_mati' => [
+                'label' => 'Cerai Mati',
+                'description' => 'Untuk pembaruan dokumen ketika pasangan meninggal dunia.',
+                'docs' => $baseDocs + [
+                    'AKTA_KEMATIAN' => 'Upload Akta Kematian',
+                    'SURAT_KETERANGAN_AHLI_WARIS' => 'Upload Surat Keterangan Ahli Waris',
+                ],
+            ],
+            'cerai_pindah' => [
+                'label' => 'Cerai Pindah',
+                'description' => 'Untuk pembaruan dokumen ketika ada perubahan domisili disertai surat pindah.',
+                'docs' => $baseDocs + [
+                    'SURAT_PINDAH' => 'Upload Surat Pindah',
+                ],
+            ],
+            'cerai_ghaib' => [
+                'label' => 'Cerai Ghaib (Kehilangan)',
+                'description' => 'Untuk pembaruan dokumen ketika pasangan tidak diketahui keberadaannya.',
+                'docs' => $baseDocs + [
+                    'SURAT_KETERANGAN_GHAIB' => 'Upload Surat Keterangan Ghaib',
+                ],
+            ],
+            'cerai_hak_asuh' => [
+                'label' => 'Cerai Terkait Hak Asuh Anak',
+                'description' => 'Untuk pembaruan dokumen yang berkaitan dengan penetapan hak asuh anak.',
+                'docs' => $baseDocs + [
+                    'AKTA_KELAHIRAN_ANAK' => 'Upload Akta Kelahiran Anak',
+                ],
+            ],
+        ];
+    }
+
+    private function documentsForCeraiType(string $ceraiType): array
+    {
+        $options = $this->ceraiOptions();
+
+        return array_keys($options[$ceraiType]['docs'] ?? $options['cerai_normal']['docs']);
     }
 }

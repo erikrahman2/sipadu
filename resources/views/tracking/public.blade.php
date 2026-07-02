@@ -8,7 +8,7 @@
     <div class="text-center mb-8">
       <h1 class="text-3xl  text-[#31110F] mb-2">Lacak Pengajuan</h1>
       <p class="text-[#31110F]">
-        Masukkan kode token yang Anda terima via WhatsApp untuk memantau status pengajuan.
+        Pantau status pembaruan dokumen kependudukan Anda melalui kerja sama <strong>Pengadilan Agama Painan</strong> dan <strong>Disdukcapil Pessel</strong>. Masukkan kode token yang Anda terima via WhatsApp.
       </p>
     </div>
 

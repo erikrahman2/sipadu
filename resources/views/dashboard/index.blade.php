@@ -9,7 +9,7 @@
 @endsection
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-10">
 
   {{-- Disdukcapil Staff: Dashboard Validasi --}}
   @role('disdukcapil_staff')
@@ -247,7 +247,7 @@
   @endunless
 
   {{-- Stat Cards & Chart Card untuk PA Assistant --}}
-  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
     {{-- Left: Stat Cards --}}
     <div class="lg:col-span-2">
       <div class="grid grid-cols-2 gap-4">
@@ -646,7 +646,7 @@
   </div>
   {{-- ── Super Admin Cards ────────────────────────────────────────── --}}
   @role('super_admin')
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
     <a href="{{ route('dashboard.admin.users') }}"
          class="bg-white border-2 border-brand rounded-2xl p-6 flex items-center gap-4 hover:bg-brand/10 transition group shadow-md">
         <div class="w-12 h-12 bg-brand rounded-xl flex items-center justify-center group-hover:scale-110 transition">

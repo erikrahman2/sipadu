@@ -402,13 +402,16 @@ class OCRValidationService
      */
     private function determineValidationStatus(float $score, array $results): string
     {
-        // Score-based logic only (3 statuses)
+        // Score-based logic (3 statuses):
+        // ≥90% = SUCCESS (cocok sempurna)
+        // 70-89% = PARTIAL (sebagian cocok, perlu review)
+        // <70% = FAILED (tidak cukup cocok)
         if ($score >= 90) {
-            return 'MATCH';              // ≥90%: Excellent similarity
-        } elseif ($score >= 75) {
-            return 'PARTIAL_MATCH';      // 75-89%: Good similarity
+            return 'SUCCESS';
+        } elseif ($score >= 70) {
+            return 'PARTIAL';
         } else {
-            return 'MISMATCH';           // <75%: Poor similarity
+            return 'FAILED';
         }
     }
     

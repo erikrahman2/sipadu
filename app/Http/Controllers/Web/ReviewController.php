@@ -134,9 +134,9 @@ class ReviewController extends Controller
         
         // Statistics for summary cards - aligned with dashboard PA Management
         $stats = [
-            'match' => OcrValidation::where('validation_status', 'MATCH')->count(),
-            'partial_match' => OcrValidation::where('validation_status', 'PARTIAL_MATCH')->count(),
-            'mismatch' => OcrValidation::where('validation_status', 'MISMATCH')->count(),
+            'success' => OcrValidation::where('validation_status', 'SUCCESS')->count(),
+            'partial' => OcrValidation::where('validation_status', 'PARTIAL')->count(),
+            'failed' => OcrValidation::where('validation_status', 'FAILED')->count(),
             'unreviewed' => OcrValidation::where('is_reviewed', false)->count(),
             'sent_to_disdukcapil' => CaseModel::where('status', 'DISDUKCAPIL_VALIDATION')->count(),
         ];

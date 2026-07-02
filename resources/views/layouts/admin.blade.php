@@ -43,6 +43,8 @@
 {{-- ══════════════════════════════════════════════════════════════════════
      MOBILE OVERLAY
 ══════════════════════════════════════════════════════════════════════ --}}
+<!-- Mobile overlay — hanya untuk role yang pakai sidebar fixed (bukan admin CMS biasa) -->
+@if(auth()->user()->hasRole('pa_assistant') || auth()->user()->hasRole('pa_management') || auth()->user()->hasRole('pa_staff'))
 <div x-show="sidebarOpen"
      x-transition:enter="transition-opacity ease-linear duration-300"
      x-transition:enter-start="opacity-0"
@@ -53,13 +55,19 @@
      @click="sidebarOpen = false"
      class="fixed inset-0 z-40 bg-black/50 lg:hidden"
      style="display:none"></div>
+@endif
 
 {{-- ═══════════════��══════════════════════════════════════════════════════
      SIDEBAR
 ══════════════════════════════════════════════════════════════════════ --}}
 <aside id="sidebar"
-       :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-       class="fixed inset-y-0 left-0 z-50 w-64 bg-sidebar flex flex-col transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:flex-shrink-0">
+       @if(!auth()->user()->hasRole(['pa_assistant', 'pa_management', 'pa_staff']))
+          class="lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 w-64 bg-sidebar flex flex-col flex-shrink-0"
+       @else
+          :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+       class="fixed inset-y-0 left-0 z-50 w-64 bg-sidebar flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0"
+       @endif
+>
 
   {{-- Brand --}}
   <div class="flex items-center gap-3 px-5 py-5 border-b border-white/5 flex-shrink-0">
@@ -68,10 +76,12 @@
       <p class="text-white font-bold text-sm truncate">SiPadu</p>
       <p class="text-earth-muted text-xs truncate">Sistem Integrasi PA-Diskcapil</p>
     </div>
-    {{-- Close button mobile --}}
+    {{-- Close button mobile — hanya pa_staff/manajemen --}}
+    @if(auth()->user()->hasRole(['pa_assistant', 'pa_management', 'pa_staff']))
     <button @click="sidebarOpen = false" class="ml-auto text-earth-muted hover:text-white lg:hidden flex-shrink-0">
       <i class="fas fa-times"></i>
     </button>
+    @endif
   </div>
 
   {{-- Navigation --}}
@@ -154,18 +164,19 @@
 {{-- ══════════════════════════════════════════════════════════════════════
      MAIN WRAPPER
 ══════════════════════════════════════════════════════════════════════ --}}
-<div class="flex-1 flex flex-col min-w-0 overflow-auto">
+<div class="flex-1 flex flex-col min-w-0 overflow-auto lg:h-[100dvh]">
 
   {{-- ─── TOP HEADER ─────────────────────────────────────────────────── --}}
-  @unless(auth()->user()->hasRole('pa_assistant') || auth()->user()->hasRole('pa_management') || auth()->user()->hasRole('pa_staff'))
-  <header class="sticky top-0 z-30 bg-white border-b border-cream shadow-sm">
+  <header class="sticky top-0 z-30 bg-white border-b border-cream shadow-sm lg:hidden">
     <div class="flex items-center gap-4 px-4 sm:px-6 h-14">
 
-      {{-- Hamburger --}}
+      {{-- Hamburger — hanya pa_staff/manajemen --}}
+      @if(auth()->user()->hasRole(['pa_assistant', 'pa_management', 'pa_staff']))
       <button @click="sidebarOpen = true"
               class="lg:hidden -ml-1 p-2 rounded-lg text-earth-muted hover:bg-earth-bg transition">
         <i class="fas fa-bars"></i>
       </button>
+      @endif
 
       {{-- Page Title --}}
       <div class="flex-1 min-w-0">
@@ -243,8 +254,6 @@
       </div>
     </div>
   </header>
-  @endunless
-
   {{-- ─── FLASH MESSAGES ─────────────────────────────────────────────── --}}
   @if(session('success'))
   <div class="mx-4 sm:mx-6 mt-4">
@@ -293,8 +302,50 @@
   </div>
   @endif
 
+  {{-- ─── SESSION TIMEOUT WARNING MODAL ─────────────────────────────── --}}
+  <div id="sessionTimeoutModal"
+       x-data="sessionTimeout()"
+       x-show="showModal"
+       x-cloak
+       x-transition:enter="transition ease-out duration-200"
+       x-transition:enter-start="opacity-0"
+       x-transition:enter-end="opacity-100"
+       x-transition:leave="transition ease-in duration-150"
+       x-transition:leave-start="opacity-100"
+       x-transition:leave-end="opacity-0"
+       class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+       style="display:none">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 overflow-hidden">
+      <div class="bg-yellow-50 px-6 py-4 border-b border-yellow-200 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center flex-shrink-0">
+          <i class="fas fa-clock text-white"></i>
+        </div>
+        <div>
+          <h3 class="font-semibold text-yellow-900 text-sm">Sesi Akan Berakhir</h3>
+          <p class="text-xs text-yellow-700">Aktivitas terdeteksi terakhir</p>
+        </div>
+      </div>
+      <div class="p-6 text-center">
+        <p class="text-sm text-gray-600 mb-1">Sesi Anda akan berakhir dalam</p>
+        <div class="text-4xl font-bold text-gray-900 mb-1" x-text="remainingSeconds"></div>
+        <p class="text-xs text-gray-400 mb-5">detik</p>
+        <p class="text-xs text-gray-500 mb-5">Klik tombol di bawah untuk tetap masuk.</p>
+        <div class="flex gap-3">
+          <button @click="logout"
+                  class="flex-1 px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition">
+            Keluar
+          </button>
+          <button @click="extend"
+                  class="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition">
+            <i class="fas fa-check mr-1"></i> Tetap Masuk
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   {{-- ─── MAIN CONTENT ────────────────────────────────────────────────── --}}
-  <main class="flex-1 px-4 sm:px-6 py-6">
+  <main class="flex-1 px-4 sm:px-6 py-6 @if(auth()->user()->hasRole(['pa_assistant', 'pa_management', 'pa_staff'])) lg:pl-[18rem] lg:pr-6 @endif">
     @yield('content')
   </main>
 
@@ -308,6 +359,73 @@
   function adminLayout() {
     return {
       sidebarOpen: false,
+    }
+  }
+
+  function sessionTimeout() {
+    const SESSION_LIFETIME = {{ config('session.lifetime', 60) * 60 }}; // seconds
+    const WARNING_BEFORE  = 60; // show modal this many seconds before expiry
+    const KEEPALIVE_URL   = '{{ route("keepalive") }}';
+    const LOGOUT_URL      = '{{ route("auth.logout") }}';
+    const LOGOUT_AFTER_URL = '{{ route("auth.login") }}';
+    const CSRF_TOKEN      = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+    return {
+      showModal: false,
+      remainingSeconds: 0,
+      _interval: null,
+      _lastPing: Date.now(),
+
+      init() {
+        this._resetTimer();
+        ['mousemove','keydown','click','scroll','touchstart'].forEach(evt => {
+          document.addEventListener(evt, () => this._resetTimer(), { passive: true });
+        });
+      },
+
+      _resetTimer() {
+        clearInterval(this._interval);
+        this.showModal = false;
+        this.remainingSeconds = SESSION_LIFETIME;
+
+        this._interval = setInterval(() => {
+          if (--this.remainingSeconds <= WARNING_BEFORE && !this.showModal) {
+            this.showModal = true;
+          }
+          if (this.remainingSeconds <= 0) {
+            this.logout();
+          }
+        }, 1000);
+      },
+
+      extend() {
+        // Re-fetch a protected page to bump Laravel session lifetime
+        fetch(KEEPALIVE_URL, {
+          headers: { 'X-CSRF-TOKEN': CSRF_TOKEN, 'Accept': 'text/html' },
+          credentials: 'same-origin'
+        }).then(() => {
+          // Update last activity server-side
+          fetch('/api/keepalive', {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF_TOKEN, 'Accept': 'application/json' },
+            credentials: 'same-origin'
+          }).catch(() => {});
+        }).catch(() => {});
+
+        this.showModal = false;
+        this._resetTimer();
+      },
+
+      logout() {
+        clearInterval(this._interval);
+        fetch(LOGOUT_URL, {
+          method: 'POST',
+          headers: { 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+          credentials: 'same-origin'
+        }).finally(() => {
+          window.location.href = LOGOUT_AFTER_URL;
+        });
+      }
     }
   }
 </script>

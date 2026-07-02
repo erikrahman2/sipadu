@@ -18,6 +18,39 @@ class ReBACService
 {
     public function __construct(private readonly GraphService $graph) {}
 
+    private function cacheVersion(): int
+    {
+        return (int) Cache::get('rebac:version', 1);
+    }
+
+    private function cacheContext(User $user): string
+    {
+        $roles = $user->getRoleNames()->sort()->values()->implode('|');
+
+        return implode(':', [
+            $user->id,
+            $user->institution_id ?? 'none',
+            $roles !== '' ? $roles : 'no-roles',
+        ]);
+    }
+
+    private function buildCacheKey(User $user, string $action, string $resourceType, int $resourceId): string
+    {
+        return implode(':', [
+            'rebac',
+            'v'.$this->cacheVersion(),
+            $this->cacheContext($user),
+            $action,
+            $resourceType,
+            $resourceId,
+        ]);
+    }
+
+    public function bumpCacheVersion(): void
+    {
+        Cache::put('rebac:version', $this->cacheVersion() + 1, now()->addYears(5));
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // PEP  (Policy Enforcement Point) – called from controllers / middleware
     // ─────────────────────────────────────────────────────────────────────────
@@ -53,7 +86,7 @@ class ReBACService
             return true;
         }
 
-        $cacheKey = "rebac:{$user->id}:{$action}:{$resourceType}:{$resourceId}";
+        $cacheKey = $this->buildCacheKey($user, $action, $resourceType, $resourceId);
         $ttl      = config('neo4j.policy_cache_ttl', 300);
 
         $decision = Cache::remember($cacheKey, $ttl, function () use ($user, $action, $resourceType, $resourceId) {
@@ -84,7 +117,7 @@ class ReBACService
     public function invalidateCache(User $user, string $resourceType, int $resourceId): void
     {
         foreach (['view', 'edit', 'approve', 'validate', 'download', 'delete'] as $action) {
-            Cache::forget("rebac:{$user->id}:{$action}:{$resourceType}:{$resourceId}");
+            Cache::forget($this->buildCacheKey($user, $action, $resourceType, $resourceId));
         }
     }
 

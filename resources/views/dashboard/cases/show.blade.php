@@ -303,9 +303,9 @@
         <div class="flex items-center gap-2 flex-1">
           @php
             $badge = match($v->validation_status) {
-              'MATCH' => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'label' => '✓ Match'],
-              'PARTIAL_MATCH' => ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-700', 'label' => '~ Partial'],
-              'MISMATCH' => ['bg' => 'bg-red-100', 'text' => 'text-red-700', 'label' => '✗ Mismatch'],
+              'SUCCESS' => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'label' => '✓ Success'],
+              'PARTIAL' => ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-700', 'label' => '~ Partial'],
+              'FAILED' => ['bg' => 'bg-red-100', 'text' => 'text-red-700', 'label' => '✗ Failed'],
               default => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'label' => 'Review'],
             };
           @endphp

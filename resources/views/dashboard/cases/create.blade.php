@@ -25,36 +25,24 @@
   .input-field {
     @apply w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent;
   }
+  .cerai-option-card {
+    @apply border-emerald-500 bg-emerald-50;
+  }
 </style>
 @endpush
 
 @section('content')
 <div class="max-w-4xl mx-auto">
 
-  <div class="text-center mb-8">
-    <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-500 mb-4 shadow-lg">
-      <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-      </svg>
-    </div>
-    <h1 class="text-3xl font-extrabold text-gray-900 mb-2">Pengajuan Pembaruan Dokumen</h1>
-    <p class="text-gray-500 max-w-xl mx-auto">
-      Fokus input pada data KTP suami dan istri agar validasi OCR lebih akurat.
-    </p>
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">Buat Kasus Baru</h1>
+    <p class="text-gray-500 text-sm mt-1">Lengkapi data di bawah ini untuk membuat kasus baru.</p>
   </div>
 
   @if($errors->any() && !$errors->has('suami_nik') && !$errors->has('istri_nik'))
     <div class="mb-6 bg-red-50 border border-red-200 rounded-xl px-5 py-3 text-red-700 text-sm">
       <i class="fas fa-exclamation-circle mr-1"></i>
       Terdapat kesalahan pada form. Mohon periksa kembali.
-    </div>
-  @endif
-
-  @if(session('success'))
-    <div class="mb-6 bg-green-50 border border-green-200 text-green-800 px-5 py-3 rounded-xl text-sm">
-      <i class="fas fa-check-circle mr-1"></i>
-      <strong>{{ session('success') }}</strong>
     </div>
   @endif
 
@@ -68,11 +56,12 @@
   <form id="caseForm" method="POST" action="{{ route('dashboard.cases.store') }}" enctype="multipart/form-data" class="space-y-8">
     @csrf
 
+    {{-- === Langkah 1: Input Data Pasangan === --}}
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
         <span class="step-badge">1</span>
         <h2 class="font-semibold text-gray-800">Input Data Pasangan</h2>
-        <span class="text-xs text-gray-400 ml-auto">Maks. 10 MB per file - JPG, PNG, PDF</span>
+        <span class="text-xs text-gray-400 ml-auto">Maks. 5 MB per file - JPG, PNG, PDF</span>
       </div>
       <div class="p-6 space-y-6">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -162,37 +151,6 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-100 pt-4">
-          @php
-            $pairDocs = [
-              'KTP_SUAMI' => 'Upload KTP Suami *',
-              'KTP_ISTRI' => 'Upload KTP Istri *',
-              'KK' => 'Upload Kartu Keluarga (KK)',
-            ];
-          @endphp
-          @foreach($pairDocs as $key => $label)
-            <div class="{{ $key === 'KK' ? 'md:col-span-2' : '' }}">
-              <label class="block text-sm font-medium text-gray-700 mb-1">{{ $label }}</label>
-              <div class="doc-upload-area" id="area-{{ $key }}" onclick="document.getElementById('file-{{ $key }}').click()">
-                <input type="file" name="documents[{{ $key }}]" id="file-{{ $key }}" class="hidden" accept=".jpg,.jpeg,.png,.pdf"
-                  onchange="handleFileSelect(this, '{{ $key }}')">
-                <div id="placeholder-{{ $key }}">
-                  <i class="fas fa-cloud-upload-alt text-gray-400 text-2xl mb-1"></i>
-                  <p class="text-sm text-gray-500">Klik untuk pilih file</p>
-                </div>
-                <div id="selected-{{ $key }}" class="hidden">
-                  <i class="fas fa-check-circle text-emerald-500 text-2xl mb-1"></i>
-                  <p class="text-sm text-emerald-700 font-medium" id="filename-{{ $key }}"></p>
-                  <p class="text-xs text-gray-500" id="filesize-{{ $key }}"></p>
-                </div>
-              </div>
-              @error('documents.' . $key)
-                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-              @enderror
-            </div>
-          @endforeach
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 border-t border-gray-100 pt-4">
           <div class="md:col-span-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">
               Nomor WhatsApp Aktif <span class="text-red-500">*</span>
@@ -225,6 +183,7 @@
       </div>
     </div>
 
+    {{-- === Langkah 2: Data Cerai === --}}
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
         <span class="step-badge">2</span>
@@ -245,34 +204,6 @@
           @error('verdict_number') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
         </div>
 
-        @php
-          $divorceDocs = [
-            'PUTUSAN_PA' => 'Upload Berkas Putusan Cerai',
-            'AKTA_NIKAH' => 'Upload Buku Nikah',
-          ];
-        @endphp
-        @foreach($divorceDocs as $key => $label)
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">{{ $label }}</label>
-            <div class="doc-upload-area" id="area-{{ $key }}" onclick="document.getElementById('file-{{ $key }}').click()">
-              <input type="file" name="documents[{{ $key }}]" id="file-{{ $key }}" class="hidden" accept=".jpg,.jpeg,.png,.pdf"
-                onchange="handleFileSelect(this, '{{ $key }}')">
-              <div id="placeholder-{{ $key }}">
-                <i class="fas fa-cloud-upload-alt text-gray-400 text-2xl mb-1"></i>
-                <p class="text-sm text-gray-500">Klik untuk pilih file</p>
-              </div>
-              <div id="selected-{{ $key }}" class="hidden">
-                <i class="fas fa-check-circle text-emerald-500 text-2xl mb-1"></i>
-                <p class="text-sm text-emerald-700 font-medium" id="filename-{{ $key }}"></p>
-                <p class="text-xs text-gray-500" id="filesize-{{ $key }}"></p>
-              </div>
-            </div>
-            @error('documents.' . $key)
-              <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-            @enderror
-          </div>
-        @endforeach
-
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-gray-700 mb-1">Catatan Tambahan</label>
           <textarea name="notes" rows="3" placeholder="Keterangan tambahan (opsional)..." class="input-field resize-none">{{ old('notes') }}</textarea>
@@ -281,44 +212,78 @@
       </div>
     </div>
 
+    {{-- === Langkah 3: Pilih Jenis Cerai === --}}
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
         <span class="step-badge">3</span>
-        <h2 class="font-semibold text-gray-800">Upload Berkas Lainnya</h2>
-        <span class="text-xs text-gray-400 ml-auto">Maks. 10 MB per file – JPG, PNG, PDF</span>
+        <h2 class="font-semibold text-gray-800">Pilih Jenis Cerai</h2>
       </div>
-      <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-        @php
-          $otherDocs = [
-            'AKTA_CERAI' => 'Akta Perceraian',
-            'SURAT_PENGANTAR' => 'Surat Pengantar',
-            'OTHER' => 'Dokumen Lainnya',
-          ];
-        @endphp
-        @foreach($otherDocs as $key => $label)
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">{{ $label }}</label>
-            <div class="doc-upload-area" id="area-{{ $key }}" onclick="document.getElementById('file-{{ $key }}').click()">
-              <input type="file" name="documents[{{ $key }}]" id="file-{{ $key }}" class="hidden" accept=".jpg,.jpeg,.png,.pdf"
-                onchange="handleFileSelect(this, '{{ $key }}')">
-              <div id="placeholder-{{ $key }}">
-                <i class="fas fa-cloud-upload-alt text-gray-400 text-2xl mb-1"></i>
-                <p class="text-sm text-gray-500">Klik untuk pilih file</p>
+      <div class="p-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Cerai</label>
+        <select name="cerai_type" id="cerai-type-select" class="input-field @error('cerai_type') border-red-400 @enderror" required>
+          @foreach($ceraiOptions as $key => $option)
+            <option value="{{ $key }}" {{ old('cerai_type', 'cerai_normal') === $key ? 'selected' : '' }}
+              data-docs="{{ count($option['docs']) }}">
+              {{ $option['label'] }} ({{ count($option['docs']) }} dokumen)
+            </option>
+          @endforeach
+        </select>
+        @error('cerai_type') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+        <p class="mt-2 text-xs text-gray-500">Dokumen yang perlu diunggah akan disesuaikan secara otomatis.</p>
+      </div>
+    </div>
+
+    {{-- === Langkah 4: Upload Dokumen === --}}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+        <span class="step-badge">4</span>
+        <h2 class="font-semibold text-gray-800">Upload Dokumen</h2>
+        <span class="text-xs text-gray-400 ml-auto">Maks. 5 MB per file - JPG, PNG, PDF</span>
+      </div>
+      <div class="p-6 space-y-6">
+        @foreach($ceraiOptions as $key => $option)
+          <div data-cerai-panel="{{ $key }}" class="cerai-panel hidden">
+            <div class="rounded-2xl border border-gray-200 bg-gray-50 p-5 md:p-6">
+              <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-5">
+                <div>
+                  <p class="text-[10px] uppercase tracking-[0.18em] text-gray-400 mb-2">{{ $option['label'] }}</p>
+                  <h3 class="text-lg font-semibold text-gray-900 mb-1">Dokumen untuk {{ $option['label'] }}</h3>
+                  <p class="text-sm text-gray-500 max-w-2xl">{{ $option['description'] }}</p>
+                </div>
+                <div class="rounded-full bg-emerald-100 text-emerald-700 px-3 py-1.5 text-xs font-semibold">
+                  {{ count($option['docs']) }} dokumen
+                </div>
               </div>
-              <div id="selected-{{ $key }}" class="hidden">
-                <i class="fas fa-check-circle text-emerald-500 text-2xl mb-1"></i>
-                <p class="text-sm text-emerald-700 font-medium" id="filename-{{ $key }}"></p>
-                <p class="text-xs text-gray-500" id="filesize-{{ $key }}"></p>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @foreach($option['docs'] as $docKey => $docLabel)
+                  @php $inputId = $key . '-' . $docKey; @endphp
+                  <div>
+                    <label for="file-{{ $inputId }}" class="block text-sm text-gray-700 mb-1">{{ $docLabel }}</label>
+                    <div class="doc-upload-area" id="area-{{ $inputId }}" onclick="document.getElementById('file-{{ $inputId }}').click()">
+                      <input type="file" name="documents[{{ $docKey }}]" id="file-{{ $inputId }}" class="hidden" accept=".jpg,.jpeg,.png,.pdf"
+                        onchange="handleFileSelect(this, '{{ $inputId }}')">
+                      <div id="placeholder-{{ $inputId }}">
+                        <i class="fas fa-cloud-upload-alt text-gray-400 text-2xl mb-1"></i>
+                        <p class="text-sm text-gray-500">Klik untuk pilih file</p>
+                      </div>
+                      <div id="selected-{{ $inputId }}" class="hidden">
+                        <i class="fas fa-check-circle text-emerald-500 text-2xl mb-1"></i>
+                        <p class="text-sm text-emerald-700 font-medium" id="filename-{{ $inputId }}"></p>
+                        <p class="text-xs text-emerald-600" id="filesize-{{ $inputId }}"></p>
+                      </div>
+                    </div>
+                    @error('documents.' . $docKey) <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                  </div>
+                @endforeach
               </div>
             </div>
-            @error('documents.' . $key)
-              <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-            @enderror
           </div>
         @endforeach
       </div>
     </div>
 
+    {{-- === Pernyataan & Submit === --}}
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
       <div class="mb-5">
         <label class="flex items-start gap-3 cursor-pointer">
@@ -332,19 +297,11 @@
       </div>
 
       <div class="flex gap-3">
-        <a href="{{ route('dashboard.cases') }}" class="flex-1 py-3 bg-gray-100 text-gray-700 font-medium text-center rounded-xl hover:bg-gray-200 transition">
-          <i class="fas fa-times mr-1"></i> Batal
-        </a>
+        <a href="{{ route('dashboard.cases') }}" class="flex-1 py-3 bg-gray-100 text-gray-700 font-medium text-center rounded-xl hover:bg-gray-200 transition">Batal</a>
         <button type="button" id="draftBtn" onclick="saveDraft()"
-          class="flex-1 py-3 bg-amber-500 text-white font-medium rounded-xl hover:bg-amber-600 transition flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
-          <i class="fas fa-save mr-1"></i>
-          Simpan Draft
-        </button>
+          class="flex-1 py-3 bg-[#8b6f47] text-white font-medium rounded-xl hover:bg-[#7a5c3c] transition disabled:opacity-60 disabled:cursor-not-allowed">Simpan Draft</button>
         <button type="submit" id="submitBtn"
-          class="flex-1 py-4 bg-emerald-600 text-white font-bold text-base rounded-xl hover:bg-emerald-700 transition flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
-          <i class="fas fa-paper-plane"></i>
-          Kirim Pengajuan
-        </button>
+          class="flex-1 py-3 bg-[#2d3a27] text-white font-bold rounded-xl hover:bg-[#1a2515] transition disabled:opacity-60 disabled:cursor-not-allowed">Kirim Pengajuan</button>
       </div>
     </div>
 
@@ -354,6 +311,7 @@
 
 @push('scripts')
 <script>
+// Handle file selection UI
 function handleFileSelect(input, key) {
   const area  = document.getElementById('area-' + key);
   const ph    = document.getElementById('placeholder-' + key);
@@ -362,9 +320,8 @@ function handleFileSelect(input, key) {
   const fsize = document.getElementById('filesize-' + key);
 
   if (input.files && input.files[0]) {
-    const f = input.files[0];
+    const f    = input.files[0];
     const size = f.size < 1048576 ? (f.size / 1024).toFixed(1) + ' KB' : (f.size / 1048576).toFixed(2) + ' MB';
-
     fname.textContent = f.name;
     fsize.textContent = size;
     ph.classList.add('hidden');
@@ -380,19 +337,65 @@ function handleFileSelect(input, key) {
 function saveDraft() {
   const btn = document.getElementById('draftBtn');
   const form = document.getElementById('caseForm');
-  
+
   btn.disabled = true;
-  btn.innerHTML = '<svg class="animate-spin h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg> Menyimpan...';
-  
-  // Set action untuk draft
+  btn.innerHTML = 'Menyimpan...';
+
   form.action = '{{ route("dashboard.cases.save-draft") }}';
   form.submit();
 }
 
-document.getElementById('caseForm').addEventListener('submit', function () {
+function syncCeraiPanels() {
+  const select = document.getElementById('cerai-type-select');
+  const activeType = select ? select.value : 'cerai_normal';
+
+  document.querySelectorAll('[data-cerai-panel]').forEach(function(panel) {
+    const isActive = panel.dataset.ceraiPanel === activeType;
+    // Jangan disable input - browser tidak kirim field disabled
+    // Hanya hide panel secara visual
+    panel.classList.toggle('hidden', !isActive);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  syncCeraiPanels();
+
+  const select = document.getElementById('cerai-type-select');
+  if (select) {
+    select.addEventListener('change', syncCeraiPanels);
+  }
+});
+
+document.getElementById('caseForm').addEventListener('submit', function (e) {
   const btn = document.getElementById('submitBtn');
+
+  const select = document.getElementById('cerai-type-select');
+  const activeType = select ? select.value : 'cerai_normal';
+
+  const requiredDocs = {
+    'cerai_normal': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'PUTUSAN_PA', 'AKTA_CERAI', 'AKTA_NIKAH'],
+    'cerai_mati': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'PUTUSAN_PA', 'AKTA_CERAI', 'AKTA_NIKAH', 'AKTA_KEMATIAN', 'SURAT_KETERANGAN_AHLI_WARIS'],
+    'cerai_pindah': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'PUTUSAN_PA', 'AKTA_CERAI', 'AKTA_NIKAH', 'SURAT_PINDAH'],
+    'cerai_ghaib': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'PUTUSAN_PA', 'AKTA_CERAI', 'AKTA_NIKAH', 'SURAT_KETERANGAN_GHAIB'],
+    'cerai_hak_asuh': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'PUTUSAN_PA', 'AKTA_CERAI', 'AKTA_NIKAH', 'AKTA_KELAHIRAN_ANAK'],
+  };
+
+  const docs = requiredDocs[activeType] || requiredDocs['cerai_normal'];
+  const missing = docs.filter(docType => {
+    const input = document.getElementById('file-' + activeType + '-' + docType);
+    return !input || !input.files || !input.files[0];
+  });
+
+  if (missing.length > 0) {
+    e.preventDefault();
+    btn.disabled = false;
+    btn.innerHTML = 'Kirim Pengajuan';
+    alert('Dokumen belum lengkap! Upload dulu: ' + missing.join(', '));
+    return;
+  }
+
   btn.disabled = true;
-  btn.innerHTML = '<svg class="animate-spin h-5 w-5 text-white mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg> Mengirim...';
+  btn.innerHTML = 'Mengirim...';
 });
 </script>
 @endpush

@@ -66,65 +66,33 @@
 {{-- ===================================================================
     SECTION 1 — HERO (two columns: text left, collage right)
     =================================================================== --}}
-<section class="px-4 sm:px-6 lg:px-8 pt-16 pb-20 md:pb-28 overflow-hidden" style="background: url('{{ asset('assets-hero.jpg') }}') center/cover no-repeat; position: relative;">
-    <div class="absolute inset-0 bg-cream/65"></div>
-    <div class="max-w-7xl mx-auto relative z-10">
-    <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+<section class="h-[70vh] flex items-center relative overflow-hidden" style="background: url('{{ asset('assets-hero.jpg') }}') center/cover no-repeat; position: relative;">
+    {{-- Dark green gradient overlay --}}
+    <div class="absolute inset-0" style="background:linear-gradient(180deg,rgba(13,31,8,.45),rgba(13,31,8,.65));"></div>
+    <div class="w-[80%] mx-auto relative z-10">
 
-      {{-- Left: headline + buttons --}}
-      <div class="order-2 lg:order-1">
-        <h1 class="text-3xl sm:text-4xl md:text-[2.75rem] lg:text-5xl leading-[1.15] font-medium tracking-tight text-brand mb-6">
-          {{ $sHero->title ?: 'Quando Kepastian Hukum, Dokumen Menjadi Kunci' }}
+      <div class="max-w-2xl">
+        <h1 class="text-3xl sm:text-4xl md:text-[2.75rem] lg:text-5xl leading-[1.15] font-medium tracking-tight text-white mb-4">
+          {{ $sHero->title ?: 'Menjamin Kepastian Hukum, Dokumen Menjadi Kunci' }}
         </h1>
 
-        <p class="text-base md:text-lg text-brown/60 max-w-lg mb-8 leading-relaxed observe-fade">
+        <p class="text-base md:text-lg text-cream/70 mb-8 leading-relaxed">
           {{ $sHero->subtitle ?: 'Sistem terintegrasi pembaruan dokumen kependudukan pasca perceraian antara Pengadilan Agama dan Dinas Kependudukan.' }}
         </p>
 
-        <div class="flex flex-wrap gap-3 mb-10 observe-fade fade-up">
+        <div class="flex flex-wrap gap-3">
           <a href="{{ $sHero->cta_url ?: route('public.submit.create') }}"
-             class="px-6 py-3 bg-brand text-white font-medium text-sm rounded-full shadow-sm hover:opacity-90 transition inline-flex items-center gap-2">
+             class="px-6 py-3 bg-white text-brand font-medium text-sm rounded-full shadow-sm hover:opacity-90 transition inline-flex items-center gap-2">
             <i class="fas fa-file-alt"></i> {{ $sHero->cta_label ?: 'Mulai Pengajuan' }}
           </a>
-          <a href="{{ route('tracking.public') }}"
-             class="px-6 py-3 bg-white text-brand border border-brown/20 font-medium text-sm rounded-full hover:bg-brown/5 transition inline-flex items-center gap-2">
-            <i class="fas fa-search"></i> Lacak Pengajuan
-          </a>
-          <a href="{{ route('services') }}"
-             class="px-6 py-3 text-brown/70 font-medium text-sm hover:text-brown transition inline-flex items-center gap-2">
+          <a href="{{ $sHero->secondary_cta_url ?: route('services') }}"
+             class="px-6 py-3 bg-white/10 backdrop-blur-sm text-white border border-white/25 font-medium text-sm rounded-full hover:bg-white/20 transition inline-flex items-center gap-2">
             Layanan <i class="fas fa-arrow-right text-xs"></i>
           </a>
-          <a href="{{ route('tentang') }}"
-             class="px-6 py-3 text-brown/70 font-medium text-sm hover:text-brown transition inline-flex items-center gap-2">
-            Tentang <i class="fas fa-arrow-right text-xs"></i>
-          </a>
-        </div>
-
-        {{-- Portrait circles --}}
-        <div class="flex items-center gap-4 observe-fade fade-up">
-          <div class="flex -space-x-3">
-            <div class="w-11 h-11 rounded-full bg-green-sm border-2 border-cream flex items-center justify-center">
-              <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v1.2c0 .7.5 1.2 1.2 1.2h16.8c.7 0 1.2-.5 1.2-1.2v-1.2c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
-            </div>
-            <div class="w-11 h-11 rounded-full bg-brand border-2 border-cream flex items-center justify-center">
-              <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v1.2c0 .7.5 1.2 1.2 1.2h16.8c.7 0 1.2-.5 1.2-1.2v-1.2c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
-            </div>
-            <div class="w-11 h-11 rounded-full bg-coral border-2 border-cream flex items-center justify-center">
-              <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v1.2c0 .7.5 1.2 1.2 1.2h16.8c.7 0 1.2-.5 1.2-1.2v-1.2c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
-            </div>
-            <div class="w-11 h-11 rounded-full bg-accent border-2 border-cream flex items-center justify-center">
-              <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v1.2c0 .7.5 1.2 1.2 1.2h16.8c.7 0 1.2-.5 1.2-1.2v-1.2c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
-            </div>
-          </div>
-          <div class="flex items-center gap-2 bg-white rounded-full px-4 py-1.5 shadow-sm">
-            <div class="w-2 h-2 rounded-full bg-green-sm"></div>
-            <span class="text-xs text-brown/50 font-medium">Dipercaya oleh petugas PA di seluruh Indonesia</span>
-          </div>
         </div>
       </div>
 
     </div>
-  </div>
 </section>
 
 
@@ -145,41 +113,88 @@
 
 
 {{-- ===================================================================
-    SECTION 3 — SPLIT SCREEN (Image left, Text right)
+    SECTION 3 — SPLIT: Image left, Timeline right (institution & ecosystem)
     =================================================================== --}}
-<section class="py-20 md:py-28 px-4 sm:px-6 lg:px-8 bg-cream">
-  <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 md:gap-16 items-center">
+<section class="py-20 md:py-28 px-4 sm:px-6 lg:px-8 bg-[#F7F4EB]">
+  <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 md:gap-16 items-start">
 
-    {{-- Left: Image --}}
+    {{-- Left: Large portrait image --}}
     <div class="observe-fade fade-up">
-      <div class="rounded-2xl overflow-hidden bg-green-sm/20 shadow-sm" style="aspect-ratio:4/5;">
-        @if($sAbout->image_path)
-          <img src="{{ asset('storage/' . $sAbout->image_path) }}"
-               alt="{{ $sAbout->title ?: 'Tim SiPadu' }}"
-               class="w-full h-full object-cover">
-        @else
-          <img src="https://images.unsplash.com/photo-1521791136064-7986c2920210?w=800&q=80"
-               alt="Tim SiPadu"
-               class="w-full h-full object-cover">
-        @endif
+      <div class="rounded-2xl overflow-hidden bg-[#D5CEA3] relative" style="aspect-ratio:4/5;">
+        <div class="absolute inset-0 flex items-center justify-center">
+          <svg class="w-24 h-24 text-[#D5CEA3]" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M21 19V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5z"/>
+          </svg>
+        </div>
+        <img src="{{ asset('assets/asset disdukcapil.jpeg') }}"
+             alt="Kolaborasi Dua Institusi"
+             class="w-full h-full object-cover absolute inset-0">
       </div>
     </div>
 
-    {{-- Right: Text --}}
-    <div class="observe-fade fade-up">
-      <h2 class="text-2xl md:text-4xl font-medium text-brand leading-tight mb-6">
-        {{ $sAbout->title ?: 'Apa itu SiPadu?' }}
-      </h2>
-      <p class="text-brown/70 leading-relaxed mb-6">
-        {{ $sAbout->subtitle ?: 'SiPadu (Sistem Pembaruan Dokumen) adalah platform terintegrasi yang memudahkan proses pembaruan dokumen kependudukan bagi Anda yang baru saja mengalami perceraian.' }}
-      </p>
-      <p class="text-brown/70 leading-relaxed mb-8">
-        {{ $sAbout->content ?: 'Dengan SiPadu, proses pembaruan dokumen status perkawinan menjadi lebih cepat, transparan, dan dapat dilacak secara real-time.' }}
-      </p>
-      <a href="{{ route('tentang') }}"
-         class="inline-flex items-center gap-2 text-brand font-medium text-sm hover:gap-3 transition-all">
-        Pelajari Lebih Lanjut <i class="fas fa-arrow-right"></i>
-      </a>
+    {{-- Right: Timeline / Steps --}}
+    <div class="observe-fade fade-up" style="transition-delay:0.1s;">
+      <p class="text-[10px] font-semibold uppercase tracking-widest text-[#8E8E93]/70 mb-4">Dua Institusi, Satu Ekosistem</p>
+      <h2 class="text-2xl md:text-3xl font-medium text-[#31110F] leading-tight mb-10">Bagaimana SiPadu menghubungkan kami</h2>
+
+      <div class="relative">
+        {{-- Vertical line --}}
+        <div class="absolute left-0 top-0 bottom-0 w-px bg-[#8E8E93]/15"></div>
+
+        {{-- Step 1: Pengadilan Agama Painan --}}
+        <div class="group relative pl-6 pb-10">
+          <div class="absolute left-[9px] top-0.5 w-2.5 h-2.5 rounded-full bg-[#31110F]/25 group-hover:bg-[#31110F]/50 transition-colors"></div>
+          <span class="text-[11px] font-semibold uppercase tracking-widest text-[#8E8E93]/80 mb-1 block">Tentang Kami</span>
+          <h3 class="text-lg font-semibold text-[#31110F] leading-tight mb-2">Pengadilan Agama Painan</h3>
+          <p class="text-sm text-[#31110F]/65 leading-relaxed">
+            Berdiri sejak 1957, lembaga peradilan yang memberikan kepastian hukum dalam perkara perceraian. Gedung baru dibangun 2006–2007 dan beroperasi sejak 2007, berlokasi di Jalan Dr. Moh. Hatta, Painan.
+          </p>
+        </div>
+
+        <hr class="border-[#8E8E93]/10 mx-6">
+
+        {{-- Step 2: Dinas Kependudukan --}}
+        <div class="group relative pl-6 pb-10">
+          <div class="absolute left-[9px] top-0.5 w-2.5 h-2.5 rounded-full bg-[#31110F]/25 group-hover:bg-[#31110F]/50 transition-colors"></div>
+          <span class="text-[11px] font-semibold uppercase tracking-widest text-[#8E8E93]/80 mb-1 block">Tentang Kami</span>
+          <h3 class="text-lg font-semibold text-[#31110F] leading-tight mb-2">Dinas Kependudukan dan Pencatatan Sipil</h3>
+          <p class="text-sm text-[#31110F]/65 leading-relaxed">
+            Menyediakan layanan administrasi kependudukan untuk seluruh kabupaten — menerbitkan KK, KTP-el, Akta, dan berbagai dokumen kependudukan melalui sistem digital modern.
+          </p>
+        </div>
+
+        <hr class="border-[#8E8E93]/10 mx-6">
+
+        {{-- Step 3: SiPadu --}}
+        <div class="group relative pl-6 pb-10">
+          <div class="absolute left-[9px] top-0.5 w-2.5 h-2.5 rounded-full bg-[#31110F]/25 group-hover:bg-[#31110F]/50 transition-colors"></div>
+          <span class="text-[11px] font-semibold uppercase tracking-widest text-[#8E8E93]/80 mb-1 block">Kerja Sama</span>
+          <h3 class="text-lg font-semibold text-[#31110F] leading-tight mb-2">SiPadu — Satu Sistem, Tanpa Batas</h3>
+          <p class="text-sm text-[#31110F]/65 leading-relaxed">
+            Menghapus proses manual transmisi putusan perceraian. Sinkronisasi data otomatis dan real-time — tanpa bolak-balik ke kantor.
+          </p>
+        </div>
+
+        <hr class="border-[#8E8E93]/10 mx-6">
+
+        {{-- Step 4: Call to Action --}}
+        <div class="group relative pl-6 pb-4">
+          <div class="absolute left-[9px] top-0.5 w-2.5 h-2.5 rounded-full bg-[#31110F]/25 group-hover:bg-[#31110F]/50 transition-colors"></div>
+          <span class="text-[11px] font-semibold uppercase tracking-widest text-[#8E8E93]/80 mb-1 block">Mulai Sekarang</span>
+          <h3 class="text-lg font-semibold text-[#31110F] leading-tight mb-2">Buat Pengajuan Pertama Anda</h3>
+          <p class="text-sm text-[#31110F]/65 leading-relaxed">
+            Gunakan platform SiPadu untuk memproses pembaruan dokumen kependudukan pasca perceraian — terintegrasi, transparan, dan dapat dilacak.
+          </p>
+        </div>
+      </div>
+
+      {{-- CTA Button --}}
+      <div class="mt-8 ml-6">
+        <a href="{{ route('public.submit.create') }}"
+           class="inline-flex items-center gap-2 text-sm font-semibold text-[#31110F] hover:text-[#31110F]/70 transition-colors border-b border-[#31110F]/20 hover:border-[#31110F]/50 pb-0.5">
+          Mulai Pengajuan <i class="fas fa-arrow-right text-xs ml-1"></i>
+        </a>
+      </div>
     </div>
 
   </div>
@@ -208,7 +223,7 @@
         </div>
         <h3 class="text-sm font-semibold uppercase tracking-wider mb-2">1. Ajukan</h3>
         <p class="text-sm text-cream/50 leading-relaxed">
-          Buat pengajuan pembaruan dokumen melalui formulir online lengkap dengan persyaratan.
+          Isi formulir online dan unggah dokumen putusan perceraian serta data pendukung.
         </p>
       </div>
 
@@ -219,7 +234,7 @@
         </div>
         <h3 class="text-sm font-semibold uppercase tracking-wider mb-2">2. Verifikasi</h3>
         <p class="text-sm text-cream/50 leading-relaxed">
-          Petugas Pengadilan Agama memverifikasi kelengkapan dokumen dan putusan.
+          Petugas PA Painan memverifikasi kelengkapan dokumen putusan perceraian.
         </p>
       </div>
 
@@ -230,7 +245,7 @@
         </div>
         <h3 class="text-sm font-semibold uppercase tracking-wider mb-2">3. Sinkronisasi</h3>
         <p class="text-sm text-cream/50 leading-relaxed">
-          Data secara otomatis disinkronkan ke Disdukcapil untuk pembaruan KTP dan KK.
+          Data diverifikasi lalu disinkronkan ke Disdukcapil Pessel untuk pembaruan dokumen.
         </p>
       </div>
 
@@ -241,7 +256,7 @@
         </div>
         <h3 class="text-sm font-semibold uppercase tracking-wider mb-2">4. Selesai</h3>
         <p class="text-sm text-cream/50 leading-relaxed">
-          Dokumen Anda telah diperbarui. Notifikasi dikirim dan dapat diunduh.
+          Dokumen diperbarui. Notifikasi dikirim melalui WhatsApp dan dapat diunduh.
         </p>
       </div>
 
@@ -251,64 +266,117 @@
 
 
 {{-- ===================================================================
-    SECTION 5 — FEATURES GRID
+    SECTION 5 — LAYANAN SUMMARY CARDS (interactive accordion)
     =================================================================== --}}
+@php
+  $categories = [
+    [
+      'key'       => 'pembaruan_dokumen',
+      'title'     => 'Pembaruan Dokumen Kependudukan',
+      'icon'      => 'fas fa-file-alt',
+      'summary'   => 'Perbarui status perkawinan pada KTP-el, Kartu Keluarga, dan dokumen kependudukan lainnya setelah perceraian.',
+      'open_icon' => 'fas fa-chevron-up',
+      'close_icon'=> 'fas fa-chevron-down',
+      'options'   => [
+        [ 'title' => 'Pencatatan Perceraian',         'desc' => 'Pencatatan resmi atas putusan perceraian yang ditetapkan Pengadilan Agama Painan.' ],
+        [ 'title' => 'Penerbitan Akta Perceraian',    'desc' => 'Akta perceraian dari PA Painan disalurkan digital ke Disdukcapil Pessel untuk pemutakhiran data.' ],
+        [ 'title' => 'Pengurusan KK Baru',            'desc' => 'Pembuatan Kartu Keluarga baru sesuai kondisi status perkawinan pasca perceraian.' ],
+        [ 'title' => 'Perbarui KTP-el',               'desc' => 'Status perkawinan pada KTP-el diperbarui menjadi "Cerai" tanpa perlu datang ke kantor.' ],
+        [ 'title' => 'Ikhtisar Putusan',              'desc' => 'Ringkasan putusan perceraian sebagai dasar hukum perubahan dokumen kependudukan.' ],
+      ],
+    ],
+    [
+      'key'       => 'pencatatan_data',
+      'title'     => 'Pencatatan & Verifikasi Data',
+      'icon'      => 'fas fa-user-check',
+      'summary'   => 'Verifikasi berlapis oleh PA Painan dan Disdukcapil Pessel untuk memastikan data kependudukan akurat dan sah.',
+      'open_icon' => 'fas fa-chevron-up',
+      'close_icon'=> 'fas fa-chevron-down',
+      'options'   => [
+        [ 'title' => 'Verifikasi Dokumen PA',         'desc' => 'Petugas PA Painan memverifikasi kelengkapan putusan dan surat keterangan perceraian.' ],
+        [ 'title' => 'Sinkronisasi Data',             'desc' => 'Data yang sudah diverifikasi PA langsung tersinkronisasi ke database Disdukcapil Pessel.' ],
+        [ 'title' => 'Validasi Kependudukan',         'desc' => 'Disdukcapil memvalidasi identitas warga (NIK, nama, alamat) sesuai data resmi.' ],
+        [ 'title' => 'Verifikasi Berkas Fisik',       'desc' => 'Berkas fisik dapat diverifikasi ulang jika diperlukan untuk keperluan hukum.' ],
+      ],
+    ],
+    [
+      'key'       => 'layanan_lain',
+      'title'     => 'Layanan Pendukung Lainnya',
+      'icon'      => 'fas fa-concierge-bell',
+      'summary'   => 'Berbagai layanan tambahan untuk mendukung kemudahan akses dokumen kependudukan di Kabupaten Pesisir Selatan.',
+      'open_icon' => 'fas fa-chevron-up',
+      'close_icon'=> 'fas fa-chevron-down',
+      'options'   => [
+        [ 'title' => 'Pelacakan Online',              'desc' => 'Lacak posisi pengajuan dari mana pun dengan token yang dikirim via WhatsApp.' ],
+        [ 'title' => 'Konsultasi Prosedur',           'desc' => 'Tanya jawab langsung tentang dokumen dan prosedur yang dibutuhkan melalui CS.' ],
+        [ 'title' => 'Pengaduan Masyarakat',          'desc' => 'Sampaikan keluhan atau masukan atas pelayanan PA Painan dan Disdukcapil Pessel.' ],
+        [ 'title' => 'Unduh Dokumen',                 'desc' => 'Download surat keterangan, ikhtisar, dan dokumen lainnya secara langsung.' ],
+      ],
+    ],
+  ];
+@endphp
 <section class="py-20 md:py-28 px-4 sm:px-6 lg:px-8 bg-cream">
   <div class="max-w-6xl mx-auto">
     <div class="text-center mb-14">
-      <p class="text-[10px] font-semibold uppercase tracking-widest text-brown/25 mb-4">Keunggulan</p>
       <h2 class="text-2xl md:text-4xl font-medium mb-4">
-        {{ $sFitur->title ?: 'Fitur Unggulan Kami' }}
+        {{ $sFitur->title ?: 'Layanan Kami' }}
       </h2>
       <p class="text-brown/50 text-sm md:text-base max-w-xl mx-auto">
-        {{ $sFitur->subtitle ?: 'Fitur-fitur yang dirancang untuk memudahkan proses pembaruan dokumen Anda dari awal hingga selesai.' }}
+        {{ $sFitur->subtitle ?: 'Lihat detail layanan yang tersedia melalui kerja sama Pengadilan Agama Painan dan Disdukcapil Kabupaten Pesisir Selatan.' }}
       </p>
     </div>
 
-    <div class="grid md:grid-cols-3 gap-6">
-
-      {{-- Card 1 --}}
-      <div class="bg-white rounded-2xl p-7 card-lift observe-fade fade-up">
-        <div class="w-12 h-12 bg-brand/10 rounded-xl flex items-center justify-center mb-5">
-          <svg class="w-6 h-6 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+    <div class="space-y-4">
+      @foreach($categories as $catIndex => $cat)
+      <div class="bg-white rounded-2xl border border-brown/10 shadow-sm overflow-hidden observe-fade fade-up {{ $catIndex > 0 ? 'fade-up-delay-' . min($catIndex, 3) : '' }}"
+           data-category="{{ $cat['key'] }}">
+        <button type="button"
+                class="category-toggle w-full flex items-start gap-4 p-6 md:p-8 text-left hover:bg-brown/5 transition-colors"
+                aria-expanded="false">
+          <div class="w-12 h-12 bg-brand/10 rounded-xl flex items-center justify-center shrink-0 mt-0.5">
+            <i class="{{ $cat['icon'] }} text-brand text-lg"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="text-base md:text-lg font-semibold text-brown mb-1">{{ $cat['title'] }}</h3>
+            <p class="text-sm text-brown/50 leading-relaxed">{{ $cat['summary'] }}</p>
+          </div>
+          <i class="fas fa-chevron-down text-brown/30 text-sm category-icon"></i>
+        </button>
+        <div class="category-content hidden border-t border-brown/10">
+          <div class="p-6 md:p-8">
+            <div class="grid md:grid-cols-2 gap-4">
+              @foreach($cat['options'] as $optIndex => $opt)
+              <div class="option-item rounded-xl bg-[#F7F4EB] p-5">
+                <div class="flex items-start gap-3">
+                  <div class="w-7 h-7 bg-brand/10 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                    <i class="fas fa-file-alt text-brand text-xs"></i>
+                  </div>
+                  <div>
+                    <h4 class="text-sm font-semibold text-brown mb-1">{{ $opt['title'] }}</h4>
+                    <p class="text-xs text-brown/60 leading-relaxed">{{ $opt['desc'] }}</p>
+                  </div>
+                </div>
+              </div>
+              @endforeach
+            </div>
+            <div class="mt-6 flex flex-wrap gap-3">
+              <a href="{{ route('public.submit.create') }}"
+                 class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand text-white text-sm font-medium rounded-full hover:opacity-90 transition">
+                <i class="fas fa-plus-circle"></i> Ajukan Sekarang
+              </a>
+              <a href="{{ route('tracking.public') }}"
+                 class="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-brand border border-brown/20 text-sm font-medium rounded-full hover:bg-brown/5 transition">
+                <i class="fas fa-search"></i> Lacak Pengajuan
+              </a>
+              <a href="{{ route('tentang') }}"
+                 class="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-brown/70 border border-brown/10 text-sm font-medium rounded-full hover:bg-brown/5 transition">
+                Tentang SiPadu
+              </a>
+            </div>
+          </div>
         </div>
-        <h3 class="text-base font-semibold mb-2">OCR Dokumen</h3>
-        <p class="text-sm text-brown/60 leading-relaxed mb-5">
-          Scan dan ekstrak data secara otomatis dari dokumen putusan pengadilan menggunakan Optical Character Recognition.
-        </p>
-        <a href="{{ route('tentang') }}" class="text-xs font-semibold text-brand inline-flex items-center gap-1 hover:gap-2 transition-all">
-          Selengkapnya <i class="fas fa-arrow-right text-[10px]"></i>
-        </a>
       </div>
-
-      {{-- Card 2 --}}
-      <div class="bg-white rounded-2xl p-7 card-lift observe-fade fade-up fade-up-delay-1">
-        <div class="w-12 h-12 bg-green-sm/20 rounded-xl flex items-center justify-center mb-5">
-          <svg class="w-6 h-6 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-        </div>
-        <h3 class="text-base font-semibold mb-2">Pelacakan Real-time</h3>
-        <p class="text-sm text-brown/60 leading-relaxed mb-5">
-          Lacak status pengajuan Anda secara real-time. Dapatkan notifikasi setiap kali ada pembaruan status.
-        </p>
-        <a href="{{ route('tentang') }}" class="text-xs font-semibold text-brand inline-flex items-center gap-1 hover:gap-2 transition-all">
-          Selengkapnya <i class="fas fa-arrow-right text-[10px]"></i>
-        </a>
-      </div>
-
-      {{-- Card 3 --}}
-      <div class="bg-white rounded-2xl p-7 card-lift observe-fade fade-up fade-up-delay-2">
-        <div class="w-12 h-12 bg-coral/10 rounded-xl flex items-center justify-center mb-5">
-          <svg class="w-6 h-6 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-        </div>
-        <h3 class="text-base font-semibold mb-2">Integrasi Instansi</h3>
-        <p class="text-sm text-brown/60 leading-relaxed mb-5">
-          Data mengalir otomatis antara Pengadilan Agama dan Disdukcapil. Tidak perlu mengirim berkas secara manual.
-        </p>
-        <a href="{{ route('tentang') }}" class="text-xs font-semibold text-brand inline-flex items-center gap-1 hover:gap-2 transition-all">
-          Selengkapnya <i class="fas fa-arrow-right text-[10px]"></i>
-        </a>
-      </div>
-
+      @endforeach
     </div>
   </div>
 </section>
@@ -317,6 +385,31 @@
 {{-- ===================================================================
     SECTION 6 — STATS BANNER
     =================================================================== --}}
+@php
+  // Statistik diparse dari CMS `statistik` section.
+  // Format di field `subtitle`: tiap baris "value|label" (pisahan "|").
+  // Jika kosong, gunakan default fallback.
+  $rawStats = trim((string) ($sStatistik->subtitle ?? ''));
+  $statItems = [];
+  if ($rawStats !== '') {
+      foreach (preg_split('/\r\n|\r|\n/', $rawStats) as $line) {
+          $line = trim($line);
+          if ($line === '' || !str_contains($line, '|')) continue;
+          [$val, $lbl] = array_map('trim', explode('|', $line, 2));
+          if ($val !== '' && $lbl !== '') {
+              $statItems[] = ['value' => $val, 'label' => $lbl];
+          }
+      }
+  }
+  if (empty($statItems)) {
+      $statItems = [
+          ['value' => '200+', 'label' => 'Kasus Diproses'],
+          ['value' => '98%',  'label' => 'Tingkat Akurasi'],
+          ['value' => '24/7', 'label' => 'Layanan Aktif'],
+          ['value' => '2.5d', 'label' => 'Waktu Pemrosesan Rata-rata'],
+      ];
+  }
+@endphp
 <section class="relative py-12 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
   <div class="absolute inset-0">
     <img src="{{ asset('assets-hero.jpg') }}"
@@ -326,19 +419,12 @@
     <div class="absolute inset-0 bg-black/10"></div>
   </div>
   <div class="max-w-6xl mx-auto relative z-10">
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-6 lg:gap-y-0">
-      <div class="stat-item observe-fade fade-up">
-        <div class="stat-inner"><div class="stat-number text-cream">{{ $sStatistik->field_1 ?? '200+' }}</div><p class="stat-label">Kasus Diproses</p></div>
+    <div class="grid grid-cols-2 lg:grid-cols-{{ count($statItems) >= 4 ? '4' : (count($statItems) ?: 4) }} gap-x-6 gap-y-6 lg:gap-y-0">
+      @foreach($statItems as $idx => $stat)
+      <div class="stat-item observe-fade fade-up {{ $idx > 0 ? 'fade-up-delay-' . min($idx, 3) : '' }}">
+        <div class="stat-inner"><div class="stat-number text-cream">{{ $stat['value'] }}</div><p class="stat-label">{{ $stat['label'] }}</p></div>
       </div>
-      <div class="stat-item observe-fade fade-up fade-up-delay-1">
-        <div class="stat-inner"><div class="stat-number text-cream">{{ $sStatistik->field_2 ?? '98%' }}</div><p class="stat-label">Tingkat Akurasi</p></div>
-      </div>
-      <div class="stat-item observe-fade fade-up fade-up-delay-2">
-        <div class="stat-inner"><div class="stat-number text-cream">{{ $sStatistik->field_3 ?? '24/7' }}</div><p class="stat-label">Layanan Aktif</p></div>
-      </div>
-      <div class="stat-item observe-fade fade-up fade-up-delay-3">
-        <div class="stat-inner"><div class="stat-number text-cream">{{ $sStatistik->field_4 ?? '2.5d' }}</div><p class="stat-label">Waktu Pemrosesan Rata-rata</p></div>
-      </div>
+      @endforeach
     </div>
   </div>
 </section>
@@ -349,13 +435,6 @@
     =================================================================== --}}
 <section class="py-20 md:py-28 px-4 sm:px-6 lg:px-8 bg-brand-dk text-cream">
   <div class="max-w-6xl mx-auto">
-    <div class="flex items-center justify-between mb-10">
-      <p class="text-[10px] font-semibold uppercase tracking-widest text-cream/30">Testimoni</p>
-      <a href="{{ route('tentang') }}" class="text-xs text-cream/50 hover:text-cream transition inline-flex items-center gap-1">
-        Tentang Kami <i class="fas fa-arrow-right text-[10px]"></i>
-      </a>
-    </div>
-
     <h2 class="text-2xl md:text-4xl font-medium mb-12">
       Apa kata mereka
     </h2>
@@ -365,13 +444,13 @@
       {{-- Testimonial 1 --}}
       <div class="bg-white/5 border border-cream/10 rounded-2xl p-7 observe-fade fade-up">
         <blockquote class="text-sm text-cream/70 leading-relaxed mb-5">
-          "SiPadu sangat membantu kami dalam mempercepat proses transmisi putusan pengadilan ke Disdukcapil. Sebelumnya proses ini memakan waktu berminggu-minggu, sekarang hanya dalam hitungan hari."
+          "Kerja sama SiPadu antara Pengadilan Agama Painan dan Disdukcapil Pessel sangat membantu kami. Sebelumnya proses transmisi putusan pengadilan ke Disdukcapil memakan waktu berminggu-minggu, sekarang hanya dalam hitungan hari."
         </blockquote>
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-green-sm/30 flex items-center justify-center text-sm font-semibold text-cream">HS</div>
+          <div class="w-10 h-10 rounded-full bg-green-sm/30 flex items-center justify-center text-sm font-semibold text-cream">HM</div>
           <div>
-            <p class="text-sm font-medium">H. Ahmad Surya</p>
-            <p class="text-xs text-cream/40">Ketua PA Kota Jakarta Selatan</p>
+            <p class="text-sm font-medium">H. Mukhtar, S.Ag., M.Ag.</p>
+            <p class="text-xs text-cream/40">Ketua Pengadilan Agama Painan</p>
           </div>
         </div>
       </div>
@@ -379,13 +458,13 @@
       {{-- Testimonial 2 --}}
       <div class="bg-white/5 border border-cream/10 rounded-2xl p-7 observe-fade fade-up fade-up-delay-1">
         <blockquote class="text-sm text-cream/70 leading-relaxed mb-5">
-          "Sebagai warga yang baru mengalami perceraian, saya bisa melacak status pengajuan dokumen dari rumah tanpa harus bolak-balik kantor. Sangat memudahkan!"
+          "Sebagai warga Pessel yang baru bercerai, saya bisa mengurus pembaruan KTP dan KK tanpa harus bolak-balik ke Painan atau Punnajawa. Sangat memudahkan!"
         </blockquote>
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-coral/30 flex items-center justify-center text-sm font-semibold text-cream">DR</div>
+          <div class="w-10 h-10 rounded-full bg-coral/30 flex items-center justify-center text-sm font-semibold text-cream">SR</div>
           <div>
-            <p class="text-sm font-medium">Dewi Rahayu</p>
-            <p class="text-xs text-cream/40">Warga, Jakarta Selatan</p>
+            <p class="text-sm font-medium">Siti Rahmawati</p>
+            <p class="text-xs text-cream/40">Warga, Kabupaten Pesisir Selatan</p>
           </div>
         </div>
       </div>
@@ -459,12 +538,15 @@
     <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/15 rounded-full blur-3xl"></div>
   </div>
 
-  <div class="max-w-2xl mx-auto text-center relative z-10">
-    <h2 class="text-2xl md:text-4xl font-medium text-cream mb-4">
-      {{ $sCta->title ?: 'Siap untuk memulai?' }}
-    </h2>
-    <p class="text-sm text-cream/40 leading-relaxed mb-10">
-      {{ $sCta->subtitle ?: 'Bergabunglah dengan ribuan pengguna yang telah merasakan kemudahan proses pembaruan dokumen melalui SiPadu.' }}
+  <div class="max-w-6xl mx-auto relative z-10">
+    <div class="text-center mb-6">
+      <p class="text-[10px] font-semibold uppercase tracking-widest text-white/20 mb-3">Mulai Sekarang</p>
+      <h2 class="text-2xl md:text-4xl font-medium text-cream leading-tight">
+        {{ $sCta->title ?: 'Siap untuk memulai?' }}
+      </h2>
+    </div>
+    <p class="text-sm text-cream/40 leading-relaxed mb-10 max-w-2xl mx-auto text-center">
+      {{ $sCta->subtitle ?: 'Gunakan platform SiPadu untuk memproses pembaruan dokumen kependudukan pasca perceraian — terintegrasi, transparan, dan dapat dilacak.' }}
     </p>
     <div class="flex flex-wrap justify-center gap-3">
       <a href="{{ $sCta->cta_url ?: route('public.submit.create') }}"
@@ -502,6 +584,40 @@
 
     els.forEach(function (el) {
       observer.observe(el);
+    });
+
+    /* ── Category accordion toggle ─────────────────────────────── */
+    document.querySelectorAll('.category-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var content = this.nextElementSibling;
+        var icon    = this.querySelector('.category-icon');
+        var isOpen  = !content.classList.contains('hidden');
+
+        // Close all other open categories
+        document.querySelectorAll('.category-toggle[aria-expanded="true"]').forEach(function (otherBtn) {
+          if (otherBtn !== btn) {
+            var otherContent = otherBtn.nextElementSibling;
+            var otherIcon    = otherBtn.querySelector('.category-icon');
+            otherContent.classList.add('hidden');
+            otherIcon.classList.remove('fa-chevron-up');
+            otherIcon.classList.add('fa-chevron-down');
+            otherBtn.setAttribute('aria-expanded', 'false');
+          }
+        });
+
+        // Toggle current
+        if (isOpen) {
+          content.classList.add('hidden');
+          icon.classList.remove('fa-chevron-up');
+          icon.classList.add('fa-chevron-down');
+          this.setAttribute('aria-expanded', 'false');
+        } else {
+          content.classList.remove('hidden');
+          icon.classList.remove('fa-chevron-down');
+          icon.classList.add('fa-chevron-up');
+          this.setAttribute('aria-expanded', 'true');
+        }
+      });
     });
   });
 </script>

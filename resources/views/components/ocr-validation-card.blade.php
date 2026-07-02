@@ -4,11 +4,17 @@
     $document = $validation->document;
     
     $statusColors = [
-        'MATCH' => '#28a745',
-        'PARTIAL_MATCH' => '#ffc107',
-        'MISMATCH' => '#dc3545',
+        'SUCCESS' => '#28a745',
+        'PARTIAL' => '#ffc107',
+        'FAILED' => '#dc3545',
+    ];
+    $statusLabels = [
+        'SUCCESS' => 'Success',
+        'PARTIAL' => 'Partial',
+        'FAILED' => 'Failed',
     ];
     $bgColor = $statusColors[$validation->validation_status] ?? '#6c757d';
+    $statusLabel = $statusLabels[$validation->validation_status] ?? 'Unknown';
     
     $imageUrl = $document && $document->path ? asset('storage/' . $document->path) : 
                 ($document && $document->stored_name ? asset('documents/' . $document->stored_name) : null);
@@ -24,7 +30,7 @@
         <i class="fas fa-chevron-right" id="chevron-{{ $validation->id }}" style="transition: transform 0.3s ease; width: 16px; font-size: 12px;"></i>
         <strong style="font-size: 14px; flex: 1;">{{ $docType }}</strong>
         <span style="background: rgba(255,255,255,0.3); padding: 2px 8px; border-radius: 3px; font-size: 11px;">{{ $matchScore }}%</span>
-        <span style="font-size: 12px;">{{ ucfirst(str_replace('_', ' ', $validation->validation_status)) }}</span>
+        <span style="font-size: 12px;">{{ $statusLabel }}</span>
     </div>
 
     <!-- Detail Section -->
@@ -183,7 +189,7 @@
                         <div class="mb-2">
                             <strong style="font-size: 10px;">Status:</strong>
                             <span class="badge" style="background-color: {{ $bgColor }}; color: white; font-size: 9px;">
-                                {{ ucfirst(str_replace('_', ' ', $validation->validation_status)) }}
+                                {{ $statusLabel }}
                             </span>
                         </div>
                         <div class="mb-2">

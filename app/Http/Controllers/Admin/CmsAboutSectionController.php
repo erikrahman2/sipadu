@@ -23,8 +23,9 @@ class CmsAboutSectionController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'section_key'   => 'required|string|max:100|unique:cms_about_sections,section_key|regex:/^[a-z0-9_]+$/',
+            'content_type'   => 'required|string|max:100|unique:cms_about_sections,content_type|regex:/^[a-z0-9_]+$/',
             'title'         => 'required|string|max:255',
+            'subtitle'      => 'nullable|string|max:300',
             'content'       => 'required|string',
             'image_path'    => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'display_order' => 'nullable|integer|min:0',
@@ -53,8 +54,9 @@ class CmsAboutSectionController extends Controller
     public function update(Request $request, CmsAboutSection $about)
     {
         $data = $request->validate([
-            'section_key'   => 'required|string|max:100|unique:cms_about_sections,section_key,' . $about->id . '|regex:/^[a-z0-9_]+$/',
+            'content_type'   => 'required|string|max:100|unique:cms_about_sections,content_type,' . $about->id . '|regex:/^[a-z0-9_]+$/',
             'title'         => 'required|string|max:255',
+            'subtitle'      => 'nullable|string|max:300',
             'content'       => 'required|string',
             'image_path'    => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'display_order' => 'nullable|integer|min:0',

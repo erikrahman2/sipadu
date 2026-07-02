@@ -11,12 +11,16 @@ class CmsBlogPost extends Model
     protected $fillable = [
         'title',
         'slug',
+        'category_name',
         'excerpt',
         'content',
         'cover_image',
         'author_name',
         'status',
         'published_at',
+        'source_url',
+        'source_feed_id',
+        'synced_at',
         'author_id',
         'updated_by',
     ];
@@ -24,6 +28,7 @@ class CmsBlogPost extends Model
     protected $casts = [
         'status'       => 'string',
         'published_at' => 'datetime',
+        'synced_at'    => 'datetime',
     ];
 
     public static function boot()

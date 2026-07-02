@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
     <title>@yield('title', 'SiPadu') - Sistem Pembaruan Dokumen Pasca Perceraian</title>
+    <link rel="icon" type="image/png" href="{{ asset('assets/logo dark.png') }}" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -85,11 +86,6 @@
   <header class="sticky top-0 z-40 bg-cream/95 backdrop-blur-sm border-b border-brown/10">
     <div class="max-w-7xl mx-auto h-16 flex items-center">
 
-      {{-- Brand --}}
-      <a href="{{ route('home') }}" class="flex items-center gap-2 shrink-0 pl-4 sm:pl-6 lg:pl-8">
-        <img src="{{ asset('assets/logo white.png') }}" alt="SiPadu" class="h-10" />
-      </a>
-
       {{-- Spacing --}}
       <div class="flex-1"></div>
 
@@ -161,7 +157,7 @@
         <div>
           <img src="{{ asset('assets/logo dark.png') }}" alt="SiPadu" class="h-9" />
           <p class="text-xs text-white/60 mt-3 leading-relaxed">
-            Sistem Pembaruan Dokumen Pasca Perceraian. Terhubung antara Pengadilan Agama dan Disdukcapil.
+            Sistem Pembaruan Dokumen Pasca Perceraian. Terhubung antara Pengadilan Agama Painan dan Disdukcapil Kabupaten Pesisir Selatan.
           </p>
         </div>
 
@@ -196,7 +192,7 @@
       </div>
 
       <div class="border-t border-white/10 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-        <p class="text-xs text-white/40">&copy; 2026 SiPadu &middot; PA &amp; Disdukcapil</p>
+        <p class="text-xs text-white/40">&copy; 2026 SiPadu &middot; Pengadilan Agama Painan &amp; Disdukcapil Pessel</p>
       </div>
 
     </div>
