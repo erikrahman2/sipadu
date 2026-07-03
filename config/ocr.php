@@ -11,8 +11,14 @@ return [
     'service_url'    => env('OCR_SERVICE_URL', 'http://localhost:5001'),
     'secret_key'     => env('OCR_SECRET_KEY', ''),
     'fallback_secret_key' => env('OCR_FALLBACK_SECRET_KEY', 'change_me'),
-    'timeout'        => env('OCR_TIMEOUT', 600),
-    'fast_mode'      => env('OCR_FAST_MODE', true),
+
+    // IMPORTANT: timeout harus lebih kecil dari PHP max_execution_time (30 detik)
+    // Untuk fast_mode=true, request akan diblok sampai OCR selesai
+    'timeout'        => env('OCR_TIMEOUT', 25),
+
+    // fast_mode=true: proses OCR synchronously (memblokir request, bisa timeout)
+    // fast_mode=false: proses async via queue (direkomendasikan untuk production)
+    'fast_mode'      => env('OCR_FAST_MODE', false),
 
     /*
     |--------------------------------------------------------------------------

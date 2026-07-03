@@ -86,13 +86,18 @@
   <header class="sticky top-0 z-40 bg-cream/95 backdrop-blur-sm border-b border-brown/10">
     <div class="max-w-7xl mx-auto h-16 flex items-center">
 
-      {{-- Spacing --}}
+      {{-- Logo - links to homepage --}}
+      <a href="{{ route('home') }}" class="flex items-center px-4 sm:px-6 h-full hover:opacity-80 transition-opacity">
+        <img src="{{ asset('assets/logo white.png') }}" alt="SiPadu" class="h-9 w-auto" />
+      </a>
+
+      {{-- Spacer --}}
       <div class="flex-1"></div>
 
-      {{-- Hamburger bar --}}
-      <button id="menuToggle" type="button" class="flex items-center justify-center h-full transition hover:bg-[#70B5AE] text-white pr-4 sm:pr-6 lg:pr-8" style="background:#7FC3BC; width: 4rem;" aria-label="Menu" aria-expanded="false">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path id="menuIcon" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"/>
+      {{-- Hamburger bar - menu toggle button --}}
+      <button id="menuToggle" type="button" class="flex items-center justify-center h-full transition-colors hover:opacity-90" style="background-color: #7FC3BC; width: 4rem;" aria-label="Menu" aria-expanded="false">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path id="menuIcon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
         </svg>
       </button>
 
@@ -102,12 +107,14 @@
   {{-- Mobile Nav Overlay --}}
   <div id="mobileNav" class="fixed inset-0 z-50 bg-cream/98 backdrop-blur-md flex flex-col overflow-hidden" style="transform: translateX(100%); transition: transform 0.3s ease; visibility: hidden;">
 
-    {{-- Top Bar --}}
-    <div class="flex items-center justify-between px-4 sm:px-6 h-16 shrink-0">
-      <span class="text-brown text-lg font-bold tracking-tight">Menu</span>
+    {{-- Top Bar with Logo --}}
+    <div class="flex items-center justify-between px-4 sm:px-6 h-16 shrink-0 border-b border-brown/10">
+      <a href="{{ route('home') }}" class="flex items-center">
+        <img src="{{ asset('assets/logo white.png') }}" alt="SiPadu" class="h-8 w-auto" />
+      </a>
       <button type="button" id="menuClose" class="w-10 h-10 flex items-center justify-center text-brown/70 hover:text-brown transition-shrink-0 rounded" aria-label="Tutup">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
         </svg>
       </button>
     </div>
@@ -115,9 +122,9 @@
     {{-- Links --}}
     <div class="flex-1 overflow-y-auto px-4 sm:px-6 py-6">
       <nav class="flex flex-col gap-2 max-w-sm mx-auto">
-        <a href="{{ route('services') }}" class="block px-4 py-3 text-lg font-medium text-brown/80 hover:text-brown hover:bg-brown/5 rounded-lg transition nav-desktop-link {{ request()->routeIs('services') ? '!text-brand bg-brand/5 font-semibold' : '' }}">Layanan</a>
-        <a href="{{ route('tentang') }}" class="block px-4 py-3 text-lg font-medium text-brown/80 hover:text-brown hover:bg-brown/5 rounded-lg transition nav-desktop-link {{ request()->routeIs('tentang') ? '!text-brand bg-brand/5 font-semibold' : '' }}">Tentang</a>
-        <a href="{{ route('berita') }}" class="block px-4 py-3 text-lg font-medium text-brown/80 hover:text-brown hover:bg-brown/5 rounded-lg transition nav-desktop-link {{ request()->routeIs('berita') ? '!text-brand bg-brand/5 font-semibold' : '' }}">Berita</a>
+        <a href="{{ route('services') }}" class="block px-4 py-3 text-lg font-medium text-brown/80 hover:text-brown hover:bg-brown/5 rounded-lg transition">Layanan</a>
+        <a href="{{ route('tentang') }}" class="block px-4 py-3 text-lg font-medium text-brown/80 hover:text-brown hover:bg-brown/5 rounded-lg transition">Tentang</a>
+        <a href="{{ route('berita') }}" class="block px-4 py-3 text-lg font-medium text-brown/80 hover:text-brown hover:bg-brown/5 rounded-lg transition">Berita</a>
         <a href="{{ route('tracking.public') }}" class="block px-4 py-3 text-lg font-medium text-brown/80 hover:text-brown hover:bg-brown/5 rounded-lg transition">Lacak Pengajuan</a>
       </nav>
     </div>

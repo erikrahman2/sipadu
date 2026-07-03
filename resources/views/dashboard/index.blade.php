@@ -581,37 +581,74 @@
           <svg viewBox="0 0 200 200" class="w-40 h-40">
             @php
               $match = $stats['ocr_match'] ?? 0;
+              $partial = $stats['ocr_partial'] ?? 0;
               $mismatch = $stats['ocr_mismatch'] ?? 0;
-              $total = $match + $mismatch;
-              $matchPercent = $total > 0 ? ($match / $total) * 100 : 0;
-              $mismatchPercent = $total > 0 ? ($mismatch / $total) * 100 : 0;
-              
-              // Hitung SVG donut chart
-              $circumference = 2 * pi() * 90;
+              $totalData = $match + $partial + $mismatch;
+
+              $circumference = 2 * pi() * 90; // r=90
+
+              // Percentages (as fraction of 1)
+              $matchPct = $totalData > 0 ? $match / $totalData : 0;
+              $partialPct = $totalData > 0 ? $partial / $totalData : 0;
+              $mismatchPct = $totalData > 0 ? $mismatch / $totalData : 0;
+
+              // SVG arc math:
+              // dasharray = "segment_length gap"
+              // dashoffset = 0 (starts at path beginning = top)
+              // Segments stack sequentially: match → partial → mismatch
+              // gap of each segment = circumference - segment_length
+
+              // Match: starts at 0, length = matchPct * circumference
+              $matchLen = $matchPct * $circumference;
+              $matchGap = $circumference - $matchLen;
+
+              // Partial: starts after match, length = partialPct * circumference
+              $partialLen = $partialPct * $circumference;
+              $partialGap = $circumference - $partialLen;
+
+              // Mismatch: starts after match+partial, length = mismatchPct * circumference
+              $mismatchLen = $mismatchPct * $circumference;
+              $mismatchGap = $circumference - $mismatchLen;
             @endphp
-            
-            <!-- Background circle -->
-            <circle cx="100" cy="100" r="90" fill="none" stroke="#e5e7eb" stroke-width="20" />
-            
-            <!-- Match segment (green) -->
-            <circle cx="100" cy="100" r="90" fill="none" stroke="#10b981" stroke-width="20" 
-                    stroke-dasharray="{{ $circumference * ($matchPercent / 100) }} {{ $circumference }}"
-                    stroke-linecap="round" 
-                    transform="rotate(-90 100 100)"/>
-            
-            <!-- Mismatch segment (red) -->
-            <circle cx="100" cy="100" r="90" fill="none" stroke="#ef4444" stroke-width="20" 
-                    stroke-dasharray="{{ $circumference * ($mismatchPercent / 100) }} {{ $circumference }}"
-                    stroke-linecap="round" 
-                    stroke-dashoffset="{{ $circumference * ($matchPercent / 100) }}"
-                    transform="rotate(-90 100 100)"/>
-            
-            <!-- Center text -->
-            <text x="100" y="95" text-anchor="middle" font-size="32" font-weight="bold" fill="#1f2937">{{ $total }}</text>
-            <text x="100" y="115" text-anchor="middle" font-size="14" fill="#6b7280">Total Data</text>
+
+            @if($totalData == 0)
+              <!-- Empty state: gray circle with centered message -->
+              <circle cx="100" cy="100" r="90" fill="none" stroke="#e5e7eb" stroke-width="20" />
+              <text x="100" y="97" text-anchor="middle" font-size="20" font-weight="bold" fill="#9ca3af">0</text>
+              <text x="100" y="115" text-anchor="middle" font-size="11" fill="#9ca3af">Belum ada data</text>
+            @else
+              <!-- Donut segments: each segment fills its portion, gap hides the rest -->
+              <!-- Match (green) -->
+              @if($match > 0)
+              <circle cx="100" cy="100" r="90" fill="none" stroke="#10b981" stroke-width="20"
+                      stroke-dasharray="{{ $matchLen }} {{ $matchGap }}"
+                      stroke-linecap="butt"
+                      transform="rotate(-90 100 100)"/>
+              @endif
+
+              <!-- Partial (yellow) -->
+              @if($partial > 0)
+              <circle cx="100" cy="100" r="90" fill="none" stroke="#f59e0b" stroke-width="20"
+                      stroke-dasharray="{{ $partialLen }} {{ $partialGap }}"
+                      stroke-linecap="butt"
+                      transform="rotate({{ -90 + ($matchPct * 360) }} 100 100)"/>
+              @endif
+
+              <!-- Mismatch (red) -->
+              @if($mismatch > 0)
+              <circle cx="100" cy="100" r="90" fill="none" stroke="#ef4444" stroke-width="20"
+                      stroke-dasharray="{{ $mismatchLen }} {{ $mismatchGap }}"
+                      stroke-linecap="butt"
+                      transform="rotate({{ -90 + (($matchPct + $partialPct) * 360) }} 100 100)"/>
+              @endif
+
+              <!-- Center text -->
+              <text x="100" y="97" text-anchor="middle" font-size="28" font-weight="bold" fill="#1f2937">{{ $totalData }}</text>
+              <text x="100" y="115" text-anchor="middle" font-size="11" fill="#6b7280">Total</text>
+            @endif
           </svg>
         </div>
-        
+
         {{-- Stats --}}
         <div class="md:col-span-2 space-y-4">
           <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
@@ -624,9 +661,22 @@
                 <i class="fas fa-check-circle text-green-600 text-2xl"></i>
               </div>
             </div>
-            <div class="mt-2 text-xs text-green-600">{{ $total > 0 ? round($matchPercent, 1) : 0 }}% dari total</div>
+            <div class="mt-2 text-xs text-green-600">{{ $totalData > 0 ? round($matchPct * 100, 1) : 0 }}% dari total</div>
           </div>
-          
+
+          <div class="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg p-4 border border-yellow-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-yellow-700 font-medium">Data Partial Match</p>
+                <p class="text-3xl font-bold text-yellow-600 mt-1">{{ $partial }}</p>
+              </div>
+              <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-exclamation-triangle text-yellow-600 text-2xl"></i>
+              </div>
+            </div>
+            <div class="mt-2 text-xs text-yellow-600">{{ $totalData > 0 ? round($partialPct * 100, 1) : 0 }}% dari total</div>
+          </div>
+
           <div class="bg-gradient-to-br from-red-50 to-rose-50 rounded-lg p-4 border border-red-200">
             <div class="flex items-center justify-between">
               <div>
@@ -637,7 +687,7 @@
                 <i class="fas fa-exclamation-circle text-red-600 text-2xl"></i>
               </div>
             </div>
-            <div class="mt-2 text-xs text-red-600">{{ $total > 0 ? round($mismatchPercent, 1) : 0 }}% dari total</div>
+            <div class="mt-2 text-xs text-red-600">{{ $totalData > 0 ? round($mismatchPct * 100, 1) : 0 }}% dari total</div>
           </div>
         </div>
       </div>

@@ -74,11 +74,6 @@ class OCRJob implements ShouldQueue
 
     public function failed(\Throwable $exception): void
     {
-        $this->document->ocrJob?->update([
-            'status'        => 'FAILED',
-            'error_message' => $exception->getMessage(),
-            'finished_at'   => now(),
-        ]);
         $this->document->update(['status' => 'REJECTED']);
 
         Log::channel('ocr')->critical('OCRJob permanently failed', [

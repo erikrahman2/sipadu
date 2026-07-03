@@ -51,14 +51,17 @@ class DashboardController extends Controller
         
         // Gunakan schema yang sama (CaseModel) untuk internal + public, bedanya hanya source_type.
         // Disdukcapil staff hanya lihat DISDUKCAPIL_VALIDATION cases
+        // PA Management & Super Admin melihat SEMUA cases (untuk review)
         $recentItemsQuery = CaseModel::with('institution:id,name', 'submitter:id,name')
             ->selectRaw('id, case_number, tracking_token, petitioner_name, status, institution_id, submitter_id, source_type, created_at, updated_at, completed_at');
 
         if ($user->hasRole('disdukcapil_staff')) {
             $recentItemsQuery->where('status', 'DISDUKCAPIL_VALIDATION');
-        } else {
+        } elseif (!$user->hasRole('pa_management') && !$user->hasRole('super_admin')) {
+            // PA Assistant, PA Staff: filter by institution
             $recentItemsQuery->forUser($user);
         }
+        // PA Management & Super Admin: no filter (see all cases)
 
         $recentItems = $recentItemsQuery->orderByDesc('updated_at')
             ->limit(8)
@@ -1675,41 +1678,58 @@ class DashboardController extends Controller
         // For Disdukcapil staff, base query is ONLY DISDUKCAPIL_VALIDATION cases
         if ($user->hasRole('disdukcapil_staff')) {
             $q = CaseModel::where('status', 'DISDUKCAPIL_VALIDATION');
+        } elseif ($user->hasRole('pa_management') || $user->hasRole('super_admin')) {
+            // PA Management & Super Admin: see ALL cases from ALL institutions (for review)
+            $q = CaseModel::query();
         } else {
             $q = CaseModel::forUser($user);
         }
-        
-        $publicPending = PublicSubmission::whereIn('status', ['SUBMITTED', 'APPROVED'])->count();
-        
+
+        // Count public submissions relevant to this user's institution
+        // For non-disdukcapil: count public submissions with matching institution or all if PA management
+        if ($user->hasRole('disdukcapil_staff')) {
+            $publicPending = 0;
+        } elseif ($user->hasRole('pa_management') || $user->hasRole('super_admin')) {
+            $publicPending = PublicSubmission::whereIn('status', ['SUBMITTED', 'APPROVED'])->count();
+        } else {
+            $publicPending = PublicSubmission::whereIn('status', ['SUBMITTED', 'APPROVED'])->count();
+        }
+
         // Calculate public submissions and internal cases for PA Assistant
         $publicSubmissionsCount = PublicSubmission::count();
         $internalCasesCount = (clone $q)->count();
-        
+
         // Calculate match/mismatch for PA Management - ALL KTP_SUAMI + KTP_ISTRI documents (public + internal)
         $ocrValidations = \App\Models\OcrValidation::whereHas('document', function ($q) {
-            $q->whereIn('document_type', ['KTP_SUAMI', 'KTP_ISTRI']);
+            $q->whereIn('document_type', ['KTP_SUAMI', 'KTP_ISTRI', 'KTP']);
         })->get();
-        $matchCount = $ocrValidations->where('validation_status', 'MATCH')->count();
-        $partialCount = $ocrValidations->where('validation_status', 'PARTIAL_MATCH')->count();
-        $mismatchCount = $ocrValidations->where('validation_status', 'MISMATCH')->count();
-        
+        $matchCount = $ocrValidations->whereIn('validation_status', ['MATCH', 'SUCCESS'])->count();
+        $partialCount = $ocrValidations->whereIn('validation_status', ['PARTIAL_MATCH', 'PARTIAL'])->count();
+        $mismatchCount = $ocrValidations->whereIn('validation_status', ['MISMATCH', 'FAILED'])->count();
+
         // Calculate stats for Disdukcapil Staff - show assigned + all pending validation
         if ($user->hasRole('disdukcapil_staff')) {
             $disdukcapilValidation = (clone $q)->count();  // All DISDUKCAPIL_VALIDATION cases
             $disdukcapilCompleted = CaseModel::where('status', 'COMPLETED')->count();
             $disdukcapilRejected = CaseModel::where('status', 'REJECTED')->count();
+        } elseif ($user->hasRole('pa_management') || $user->hasRole('super_admin')) {
+            // PA Management & Super Admin: ALL cases (no institution filter)
+            $allQ = CaseModel::query();
+            $disdukcapilValidation = (clone $allQ)->where('status', 'DISDUKCAPIL_VALIDATION')->count();
+            $disdukcapilCompleted = (clone $allQ)->where('status', 'COMPLETED')->count();
+            $disdukcapilRejected = (clone $allQ)->where('status', 'REJECTED')->count();
         } else {
             $disdukcapilValidation = (clone $q)->where('status', 'DISDUKCAPIL_VALIDATION')->count();
             $disdukcapilCompleted = (clone $q)->where('status', 'COMPLETED')->count();
             $disdukcapilRejected = (clone $q)->where('status', 'REJECTED')->count();
         }
-        
+
         return [
-            'total'       => (clone $q)->count() + ($user->hasRole('disdukcapil_staff') ? 0 : $publicPending),
+            'total'       => (clone $q)->count(),
             'draft'       => $user->hasRole('disdukcapil_staff') ? 0 : (clone $q)->byStatus('DRAFT')->count(),
-            'in_progress' => $user->hasRole('disdukcapil_staff') ? (clone $q)->count() : ((clone $q)->whereNotIn('status', ['DRAFT','COMPLETED','ARCHIVED','REJECTED'])->count() + $publicPending),
+            'in_progress' => $user->hasRole('disdukcapil_staff') ? (clone $q)->count() : ((clone $q)->whereNotIn('status', ['DRAFT','COMPLETED','ARCHIVED','REJECTED'])->count()),
             'completed'   => $user->hasRole('disdukcapil_staff') ? 0 : (clone $q)->byStatus('COMPLETED')->count(),
-            'rejected'    => $user->hasRole('disdukcapil_staff') ? 0 : ((clone $q)->byStatus('REJECTED')->count() + PublicSubmission::where('status', 'REJECTED')->count()),
+            'rejected'    => $user->hasRole('disdukcapil_staff') ? 0 : ((clone $q)->byStatus('REJECTED')->count()),
             'public_submissions' => $user->hasRole('disdukcapil_staff') ? 0 : $publicSubmissionsCount,
             'internal_cases' => $internalCasesCount,
             'ocr_match' => $matchCount,

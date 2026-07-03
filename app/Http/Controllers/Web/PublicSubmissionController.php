@@ -142,9 +142,19 @@ class PublicSubmissionController extends Controller
             $requiredDocs = $this->documentsForCeraiType($ceraiType);
             $rules['documents'] = 'required|array|min:' . count($requiredDocs);
 
-            foreach ($requiredDocs as $documentType) {
+            // Get required doc types for this cerai type
+            $requiredDocTypes = $ceraiOptions[$ceraiType]['required'] ?? $requiredDocs;
+
+            // Only required documents are mandatory
+            foreach ($requiredDocTypes as $documentType) {
                 $rules['documents.' . $documentType] = 'required|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte;
                 $messages['documents.' . $documentType . '.required'] = 'Dokumen ' . ($ceraiOptions[$ceraiType]['docs'][$documentType] ?? $documentType) . ' wajib diunggah.';
+            }
+            // Optional documents are... optional (nullable)
+            foreach ($ceraiOptions[$ceraiType]['docs'] as $docKey => $docLabel) {
+                if (!in_array($docKey, $requiredDocTypes)) {
+                    $rules['documents.' . $docKey] = 'nullable|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte;
+                }
             }
         } else {
             $rules['documents'] = 'required|array|min:2';
@@ -160,7 +170,19 @@ class PublicSubmissionController extends Controller
             $messages['documents.KTP_ISTRI.required'] = 'Dokumen KTP Istri wajib diunggah.';
         }
 
+        // DEBUG: Log what was received
+        Log::info('[DEBUG] Documents received', [
+            'cerai_type' => $request->input('cerai_type'),
+            'isGroupedFlow' => $isGroupedFlow,
+            'files_keys' => array_keys($request->file('documents', [])),
+            'files_count' => count($request->file('documents', [])),
+        ]);
+
         $validated = $request->validate($rules, $messages);
+
+        Log::info('[DEBUG] Validation passed', [
+            'validated_docs' => array_keys($validated['documents'] ?? []),
+        ]);
 
         if (! $isGroupedFlow) {
             $validated['cerai_type'] = null;
@@ -211,49 +233,61 @@ class PublicSubmissionController extends Controller
 
     private function ceraiOptions(): array
     {
-        $baseDocs = [
-            'KTP_SUAMI' => 'Upload KTP Suami',
-            'KTP_ISTRI' => 'Upload KTP Istri',
-            'KK'        => 'Upload Kartu Keluarga',
-            'PUTUSAN_PA' => 'Upload Putusan Pengadilan',
-            'AKTA_CERAI' => 'Upload Akta Cerai',
-            'AKTA_NIKAH' => 'Upload Akta Kawin / Buku Nikah',
+        // Required documents - wajib diupload (hanya KTP)
+        $requiredDocs = [
+            'KTP_SUAMI'   => 'Upload KTP Suami',
+            'KTP_ISTRI'   => 'Upload KTP Istri',
         ];
+
+        // Optional documents - opsional, boleh kosong
+        $optionalDocs = [
+            'KK'          => 'Upload Kartu Keluarga (KK)',
+            'PUTUSAN_PA'  => 'Upload Putusan Pengadilan',
+            'AKTA_CERAI'  => 'Upload Akta Cerai',
+            'AKTA_NIKAH'  => 'Upload Akta Kawin / Buku Nikah',
+        ];
+
+        $allDocs = $requiredDocs + $optionalDocs;
 
         return [
             'cerai_normal' => [
-                'label' => 'Cerai Normal',
+                'label'       => 'Cerai Normal',
                 'description' => 'Untuk pembaruan dokumen standar setelah putusan cerai.',
-                'docs' => $baseDocs,
+                'docs'        => $allDocs,
+                'required'    => array_keys($requiredDocs),
             ],
             'cerai_mati' => [
-                'label' => 'Cerai Mati',
+                'label'       => 'Cerai Mati',
                 'description' => 'Untuk pembaruan dokumen ketika pasangan meninggal dunia.',
-                'docs' => $baseDocs + [
-                    'AKTA_KEMATIAN' => 'Upload Akta Kematian',
+                'docs'        => $allDocs + [
+                    'AKTA_KEMATIAN'                => 'Upload Akta Kematian',
                     'SURAT_KETERANGAN_AHLI_WARIS' => 'Upload Surat Keterangan Ahli Waris',
                 ],
+                'required' => array_keys($requiredDocs),
             ],
             'cerai_pindah' => [
-                'label' => 'Cerai Pindah',
+                'label'       => 'Cerai Pindah',
                 'description' => 'Untuk pembaruan dokumen ketika ada perubahan domisili disertai surat pindah.',
-                'docs' => $baseDocs + [
+                'docs'        => $allDocs + [
                     'SURAT_PINDAH' => 'Upload Surat Pindah',
                 ],
+                'required' => array_keys($requiredDocs),
             ],
             'cerai_ghaib' => [
-                'label' => 'Cerai Ghaib (Kehilangan)',
+                'label'       => 'Cerai Ghaib (Kehilangan)',
                 'description' => 'Untuk pembaruan dokumen ketika pasangan tidak diketahui keberadaannya.',
-                'docs' => $baseDocs + [
+                'docs'        => $allDocs + [
                     'SURAT_KETERANGAN_GHAIB' => 'Upload Surat Keterangan Ghaib',
                 ],
+                'required' => array_keys($requiredDocs),
             ],
             'cerai_hak_asuh' => [
-                'label' => 'Cerai Terkait Hak Asuh Anak',
+                'label'       => 'Cerai Terkait Hak Asuh Anak',
                 'description' => 'Untuk pembaruan dokumen yang berkaitan dengan penetapan hak asuh anak.',
-                'docs' => $baseDocs + [
+                'docs'        => $allDocs + [
                     'AKTA_KELAHIRAN_ANAK' => 'Upload Akta Kelahiran Anak',
                 ],
+                'required' => array_keys($requiredDocs),
             ],
         ];
     }
@@ -262,6 +296,8 @@ class PublicSubmissionController extends Controller
     {
         $options = $this->ceraiOptions();
 
-        return array_keys($options[$ceraiType]['docs'] ?? $options['cerai_normal']['docs']);
+        // Return required docs only (not all docs)
+        return $options[$ceraiType]['required']
+            ?? array_keys($options['cerai_normal']['docs'] ?? []);
     }
 }

@@ -33,7 +33,12 @@
 
   @if($errors->any())
     <div class="mb-6 bg-red-50 border border-red-200 rounded-xl px-5 py-3 text-[#31110F] text-sm">
-      Terdapat kesalahan pada form. Mohon periksa kembali.
+      <strong>Terdapat kesalahan pada form:</strong>
+      <ul class="mt-2 list-disc list-inside text-xs">
+        @foreach($errors->all() as $error)
+          <li>{{ $error }}</li>
+        @endforeach
+      </ul>
     </div>
   @endif
 
@@ -252,10 +257,20 @@
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @foreach($option['docs'] as $docKey => $docLabel)
-                  @php $inputId = $key . '-' . $docKey; @endphp
+                  @php
+                    $inputId = $key . '-' . $docKey;
+                    $isRequired = in_array($docKey, $option['required'] ?? []);
+                  @endphp
                   <div>
-                    <label for="file-{{ $inputId }}" class="block text-sm text-[#31110F] mb-1">{{ $docLabel }}</label>
-                    <div class="doc-upload-area" id="area-{{ $inputId }}" onclick="document.getElementById('file-{{ $inputId }}').click()">
+                    <label for="file-{{ $inputId }}" class="block text-sm text-[#31110F] mb-1">
+                      {{ $docLabel }}
+                      @if($isRequired)
+                        <span class="text-red-500">*</span>
+                      @else
+                        <span class="text-gray-400 text-xs">(opsional)</span>
+                      @endif
+                    </label>
+                    <div class="doc-upload-area @if($isRequired) required-upload @endif" id="area-{{ $inputId }}" onclick="document.getElementById('file-{{ $inputId }}').click()">
                       <input type="file" name="documents[{{ $docKey }}]" id="file-{{ $inputId }}" class="hidden" accept=".jpg,.jpeg,.png,.pdf"
                         onchange="handleFileSelect(this, '{{ $inputId }}')">
                       <div id="placeholder-{{ $inputId }}">
@@ -266,7 +281,7 @@
                         <p class="text-xs text-[#31110F]" id="filesize-{{ $inputId }}"></p>
                       </div>
                     </div>
-                    @error('documents.' . $docKey) <p class="mt-1 text-xs text-[#31110F]">{{ $message }}</p> @enderror
+                    @error('documents.' . $docKey) <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                   </div>
                 @endforeach
               </div>
@@ -364,6 +379,12 @@ function syncCeraiPanels() {
   document.querySelectorAll('[data-cerai-panel]').forEach(function(panel) {
     const isActive = panel.dataset.ceraiPanel === activeType;
     panel.classList.toggle('hidden', !isActive);
+
+    // Disable inputs in hidden panels, enable inputs in active panel
+    const inputs = panel.querySelectorAll('input[type="file"]');
+    inputs.forEach(function(input) {
+      input.disabled = !isActive;
+    });
   });
 }
 
@@ -411,44 +432,49 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Form submission - validate documents and refresh CSRF token
+  // Form submission - validate required documents manually
   const form = document.getElementById('submissionForm');
   const btn = document.getElementById('submitBtn');
 
   if (form) {
     form.addEventListener('submit', function(e) {
+      // Sync panel state first - disable hidden inputs
+      syncCeraiPanels();
+
+      // Get current active cerai type
       const select = document.getElementById('cerai-type-select');
       const activeType = select ? select.value : 'cerai_normal';
 
-      const requiredDocs = {
-        'cerai_normal': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'SURAT_NIKAH', 'KTP_Saksi1', 'KTP_Saksi2'],
-        'cerai_mati': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'SURAT_NIKAH', 'KTP_Saksi1', 'KTP_Saksi2', 'AKTA_KEMATIAN'],
-        'cerai_pindah': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'SURAT_NIKAH', 'KTP_Saksi1', 'KTP_Saksi2', 'SURAT_PINDAH'],
-        'cerai_ghaib': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'SURAT_NIKAH', 'KTP_Saksi1', 'KTP_Saksi2', 'SURAT_KETERANGAN_GHAIB'],
-      };
+      // Get required docs from ceraiOptions (passed from controller via PHP)
+      const ceraiOptionsData = @json($ceraiOptions);
+      const requiredDocKeys = ceraiOptionsData[activeType]?.required ?? [];
 
-      const docs = requiredDocs[activeType] || requiredDocs['cerai_normal'];
-      const missing = docs.filter(docType => {
+      // Check each required document
+      const missing = [];
+      requiredDocKeys.forEach(docType => {
         const input = document.getElementById('file-' + activeType + '-' + docType);
-        return !input || !input.files || !input.files[0];
+        if (!input || !input.files || !input.files[0]) {
+          missing.push(docType);
+        }
       });
 
       if (missing.length > 0) {
         e.preventDefault();
-        btn.disabled = false;
-        btn.innerHTML = 'Kirim Pengajuan';
-        alert('Dokumen belum lengkap! Upload dulu: ' + missing.join(', '));
+        // Show error message
+        const docLabels = missing.map(dt => {
+          const docs = ceraiOptionsData[activeType]?.docs ?? {};
+          return docs[dt] ?? dt;
+        });
+        alert('Dokumen wajib belum diupload:\n' + docLabels.join('\n'));
         return;
       }
 
-      // Valid - refresh token first, then submit
-      e.preventDefault();
+      // Documents are valid - show loading state and submit
       btn.disabled = true;
-      btn.innerHTML = 'Mengirim...';
+      btn.innerHTML = '<span class="animate-spin inline-block mr-2">⟳</span> Mengirim...';
 
-      refreshCsrfToken().then(() => {
-        form.submit();
-      });
+      // Submit the form directly
+      form.submit();
     });
   }
 });
