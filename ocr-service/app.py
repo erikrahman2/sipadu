@@ -35,12 +35,17 @@ except ImportError:
         PDF_LIBRARY = "pdf2image"
     except ImportError:
         PDF_LIBRARY = None
-        
+
 from PIL import Image
 from dotenv import load_dotenv
 
 # Load local .env for standalone runs (non-Docker) so secret and paths are consistent.
 load_dotenv(dotenv_path=Path(__file__).with_name('.env'))
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Valid Indonesia Province Codes
+# ─────────────────────────────────────────────────────────────────────────────
+VALID_PROVINCE_CODES = set(str(i).zfill(2) for i in range(1, 35))
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Configuration
@@ -53,7 +58,7 @@ app.config.update(
     TESSERACT_CMD      = os.getenv("TESSERACT_CMD", "tesseract"),
     TESSDATA_PREFIX    = os.getenv("TESSDATA_PREFIX", ""),
     OCR_LANG           = os.getenv("OCR_LANG", "ind+eng"),
-    OCR_PSM_CANDIDATES = os.getenv("OCR_PSM_CANDIDATES", "6,11"),  # PSM 6 primary, PSM 11 fallback
+    OCR_PSM_CANDIDATES = os.getenv("OCR_PSM_CANDIDATES", "6,4,11,8,13"),  # PSM 6 primary, expanded modes
     UPLOAD_DPI         = int(os.getenv("UPLOAD_DPI", "300")),
     LOG_LEVEL          = os.getenv("LOG_LEVEL", "INFO"),
 )
@@ -206,12 +211,12 @@ class Preprocessor:
         return img
 
     def build_variants(self, pil_image: Image.Image, fast_only: bool = False) -> list[tuple[str, np.ndarray]]:
-        """Build preprocessing variants - FOCUSED on blur/noise/color issues.
-        
+        """Build preprocessing variants - OPTIMIZED for low-quality KTP images.
+
         Order: Fast variants first (early stopping if good), slow ones only if needed.
-        Includes: strong denoising for blur, morphology for digit robustness, 
-        color handling for dominan backgrounds
-        
+        Includes: strong denoising for blur, morphology for digit robustness,
+        color handling for dominant backgrounds, and ULTRA variants for failed scans.
+
         Args:
             pil_image: Input PIL image
             fast_only: If True, only use fast variants (for PDF optimization)
@@ -226,7 +231,7 @@ class Preprocessor:
         # Variant 1: Default adaptive pipeline
         variants.append(("adaptive", self.process(pil_image)))
 
-        # Variant 4: High-contrast variant (fast, effective)
+        # Variant 2: High-contrast variant (fast, effective for most cases)
         alpha = 1.5
         beta = 10
         contrast_img = cv2.convertScaleAbs(gray, alpha=alpha, beta=beta)
@@ -247,8 +252,8 @@ class Preprocessor:
             logger.info("Variant generation: fast_only=True, using 3 variants only")
             return variants
 
-        # MEDIUM VARIANTS (only for JPG/PNG)
-        # Variant 2: Aggressive CLAHE + Morphology for digit robustness
+        # MEDIUM VARIANTS (for JPG/PNG with quality issues)
+        # Variant 4: Aggressive CLAHE + Morphology for digit robustness
         clahe_agg = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(6, 6))
         clahe_img = clahe_agg.apply(gray)
         kernel_close = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
@@ -261,27 +266,41 @@ class Preprocessor:
         eq = cv2.equalizeHist(gray)
         eq_clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8)).apply(eq)
         variants.append(("equalized_clahe", eq_clahe))
-        
-        # SLOW VARIANTS (only if early stopping didn't trigger)
-        # Variant 2.5: STRONG DENOISE variant for blur images - h=35 ULTRA (SLOW, use only if needed)
-        strong_denoised = cv2.fastNlMeansDenoising(gray, h=35, templateWindowSize=7, searchWindowSize=21)
-        clahe_denoise = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8)).apply(strong_denoised)
-        clahe_denoise = cv2.morphologyEx(clahe_denoise, cv2.MORPH_CLOSE, kernel_close)
-        variants.append(("denoise_strong", clahe_denoise))
 
-        # Variant 6: ROI crop with aggressive cleaning + LEFT PADDING (slow)
+        # ULTRA VARIANTS - For failed/partial scans (KTP_SUAMI, low quality images)
+        # Variant 6: STRONG DENOISE + heavy CLAHE (for blur/noise)
+        strong_denoised = cv2.fastNlMeansDenoising(gray, h=35, templateWindowSize=7, searchWindowSize=21)
+        clahe_strong = cv2.createCLAHE(clipLimit=5.0, tileGridSize=(4, 4)).apply(strong_denoised)
+        clahe_strong = cv2.morphologyEx(clahe_strong, cv2.MORPH_CLOSE, kernel_close)
+        variants.append(("ultra_denoise_clahe", clahe_strong))
+
+        # Variant 7: Super contrast + OTSU (for faded text)
+        super_contrast = cv2.convertScaleAbs(gray, alpha=2.0, beta=20)
+        _, super_binary = cv2.threshold(super_contrast, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        # Connect broken characters
+        kernel_dilate = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
+        super_binary = cv2.dilate(super_binary, kernel_dilate, iterations=1)
+        variants.append(("ultra_contrast_otsu", super_binary))
+
+        # Variant 8: Upscaled image (for small text)
         h, w = gray.shape[:2]
-        roi_y_start = int(h * 0.1)
-        roi_y_end = int(h * 0.95)
-        # Add 50px padding to LEFT to prevent cutting off first digit
-        roi_x_start = max(0, -50)  
-        roi_x_end = w
-        roi = gray[roi_y_start:roi_y_end, roi_x_start:roi_x_end]
-        if roi.size > 100:
-            roi_clahe = cv2.createCLAHE(clipLimit=5.0, tileGridSize=(5, 5)).apply(roi)
-            roi_clahe = cv2.filter2D(roi_clahe, -1, kernel_sharp)
-            roi_clahe = np.clip(roi_clahe, 0, 255).astype(np.uint8)
-            variants.append(("roi_sharp", roi_clahe))
+        if h < 800 or w < 800:
+            upscaled = cv2.resize(gray, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_CUBIC)
+            upscaled = cv2.fastNlMeansDenoising(upscaled, h=15)
+            upscaled = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8)).apply(upscaled)
+            _, upscaled_binary = cv2.threshold(upscaled, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            variants.append(("upscaled_otsu", upscaled_binary))
+
+        # Variant 9: Bilateral filter + high-threshold binarization (preserve edges)
+        bilateral = cv2.bilateralFilter(gray, 9, 75, 75)
+        _, bilateral_binary = cv2.threshold(bilateral, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        variants.append(("bilateral_otsu", bilateral_binary))
+
+        # Variant 10: Blackhat morphology for dark text on light background
+        kernel_blackhat = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 5))
+        blackhat = cv2.morphologyEx(gray, cv2.MORPH_BLACKHAT, kernel_blackhat)
+        _, blackhat_binary = cv2.threshold(blackhat, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        variants.append(("blackhat_otsu", blackhat_binary))
 
         return variants
 
@@ -409,12 +428,77 @@ class OCREngine:
         # Bonus for text volume (sign of good extraction)
         raw_len = len((result.get("raw_text") or {}).get("full") or "")
         score += min(raw_len / 500.0, 1.0)
-        
+
         # Bonus: If extracted ANY critical field successfully, boost score
         critical_count = sum(1 for f in ["nik", "nama", "tgl_lahir"] if result.get(f))
         score += critical_count * 0.5
 
+        # NIK VALIDATION BOOST: +2.0 for structurally valid NIK (province code + valid date)
+        nik = result.get("nik", "")
+        if nik and re.match(r"^\d{16}$", str(nik)):
+            nik_valid, nik_boost = OCREngine._validate_nik_structure(str(nik))
+            score += nik_boost
+            if nik_valid:
+                logger.debug(f"NIK validation boost: +{nik_boost:.2f} for valid NIK structure")
+
         return score
+
+    @staticmethod
+    def _validate_nik_structure(nik: str) -> tuple[bool, float]:
+        """
+        Validate NIK structure using Indonesian rules.
+        Returns (is_valid, confidence_boost)
+        """
+        if not nik or len(nik) != 16:
+            return False, 0.0
+
+        boost = 0.0
+        valid = True
+
+        # Check 1: Valid province code (first 2 digits: 01-34)
+        province_code = nik[:2]
+        if province_code not in VALID_PROVINCE_CODES:
+            valid = False
+        else:
+            boost += 0.7  # +0.7 for valid province
+
+        # Check 2: Valid birth date (digits 6-11: YYMMDD)
+        try:
+            year = int(nik[6:8])
+            month = int(nik[8:10])
+            day = int(nik[10:12])
+
+            # Handle female date adjustment (+40, +60)
+            check_day = day
+            if day > 40:
+                check_day = day - 40
+            elif day > 60:
+                check_day = day - 60
+
+            if not (1 <= month <= 12):
+                valid = False
+            elif not (1 <= check_day <= 31):
+                valid = False
+            else:
+                boost += 0.7  # +0.7 for valid birth date
+        except:
+            valid = False
+
+        # Check 3: Valid serial number (last 6 digits: 000001-999999)
+        try:
+            serial = int(nik[10:16])
+            if serial <= 0 or serial > 999999:
+                valid = False
+            else:
+                boost += 0.6  # +0.6 for valid serial
+        except:
+            valid = False
+
+        # Only give full boost if ALL checks pass
+        if valid:
+            return True, 2.0  # +2.0 for fully valid NIK
+        else:
+            return False, boost * 0.3  # Partial boost for partially valid
 
     def _parse_fields(self, raw_text: str, tess_data: dict) -> tuple[dict, dict]:
         lines  = [l.strip() for l in raw_text.splitlines() if l.strip()]
@@ -782,39 +866,59 @@ class OCREngine:
 # Singletons
 # ─────────────────────────────────────────────────────────────────────────────
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Singletons
-# ─────────────────────────────────────────────────────────────────────────────
-
 def get_preprocessor_config(document_type: str = "default") -> dict:
     """Get preprocessor configuration for the given document type.
-    
-    AGGRESSIVE approach: Better NIK extraction with more preprocessing
+
+    ULTRA-AGGRESSIVE approach for failed/partial scans:
+    - KTP_SUAMI: Often has lower quality, needs extra preprocessing
+    - KTP_ISTRI: Similar treatment, also needs stronger denoising
     """
-    # AGGRESSIVE profile - enable more preprocessing for KTP with difficult images
-    aggressive_profile = {
+    # Base configuration from environment
+    target_dpi = app.config["UPLOAD_DPI"]
+    contrast_boost = float(os.getenv("OCR_CONTRAST_BOOST", "0.5"))
+    denoise_strength = int(os.getenv("OCR_DENOISE_STRENGTH", "8"))
+
+    # ULTRA-AGGRESSIVE profile for problematic images (KTP_SUAMI, low quality scans)
+    ultra_profile = {
         'grayscale': True,
         'binarize': True,
-        'denoise': True,      # Full denoising
-        'deskew': True,       # ENABLE deskew for angled KTP
-        'target_dpi': app.config["UPLOAD_DPI"],
-        'contrast_boost': 0.5,     # MODERATE: 50% boost
-        'adaptive_denoise_strength': 8,      # MODERATE: 8 (was 5)
+        'denoise': True,
+        'deskew': True,
+        'target_dpi': target_dpi,
+        'contrast_boost': contrast_boost + 0.3,  # Extra +30% boost
+        'adaptive_denoise_strength': denoise_strength + 5,  # Extra denoise
         'enable_variants': True,
-        'extra_upscale': 1.0,  # NO upscaling - preserve quality
+        'extra_upscale': 1.3,  # Slight upscale for small text
+        'bilateral_filter': True,  # Better edge preservation
+    }
+
+    # Standard aggressive profile for normal images
+    standard_profile = {
+        'grayscale': True,
+        'binarize': True,
+        'denoise': True,
+        'deskew': True,
+        'target_dpi': target_dpi,
+        'contrast_boost': contrast_boost,
+        'adaptive_denoise_strength': denoise_strength,
+        'enable_variants': True,
+        'extra_upscale': 1.0,
         'bilateral_filter': False,
     }
 
-    # Define document-specific profiles
+    # Document-specific profiles - use ultra for both KTP types to improve success rate
     profiles = {
-        'KTP_ISTRI': aggressive_profile,
-        'KTP_SUAMI': aggressive_profile,
-        'KTP': aggressive_profile,
-        'KK': aggressive_profile,
-        'default': aggressive_profile,
+        'KTP_SUAMI': ultra_profile,    # Ultra aggressive for husband KTP (often partial)
+        'KTP_ISTRI': ultra_profile,    # Ultra aggressive for wife KTP
+        'KTP': ultra_profile,          # Ultra aggressive for generic KTP
+        'KK': standard_profile,
+        'default': ultra_profile,      # Default to ultra for better coverage
     }
-    
-    return profiles.get(document_type, profiles['default'])
+
+    selected = profiles.get(document_type, profiles['default'])
+    logger.info(f"Using preprocessor profile '{document_type}' -> {'ultra' if selected == ultra_profile else 'standard'}")
+
+    return selected
 
 preprocessor = Preprocessor(
     grayscale=True,
@@ -894,24 +998,27 @@ def ocr_process():
             "file_mime": mime,
         })
         
-        # PDF optimization: Use only PSM 6 for faster processing (4x speedup)
+        # Use full PSM modes for better quality on all document types
         if mime == "application/pdf":
-            psm_candidates = ["6"]  # PDF: single PSM only
-            logger.info("PDF detected: Using optimized PSM mode (6 only)")
-        else:
+            # PDF: Use all PSM modes but fewer variants for speed
             psm_candidates = [
-                p.strip() for p in str(app.config.get("OCR_PSM_CANDIDATES", "6,11")).split(",")
+                p.strip() for p in str(app.config.get("OCR_PSM_CANDIDATES", "6,4,11,8,13")).split(",")
                 if p.strip().isdigit()
             ] or ["6"]
+            use_fast_variants_only = False  # But test more variants for quality
+        else:
+            psm_candidates = [
+                p.strip() for p in str(app.config.get("OCR_PSM_CANDIDATES", "6,4,11,8,13")).split(",")
+                if p.strip().isdigit()
+            ] or ["6"]
+            use_fast_variants_only = False  # Full variants for images
 
         # Process all pages; merge results (primary = first page)
-        results = []
-        
-        # PDF optimization: Use only fast variants
-        use_fast_variants_only = (mime == "application/pdf")
+        results: list[dict] = []
 
         for pil_img in images:
             candidates: list[dict] = []
+            found_good_result = False
 
             for variant_name, processed in doc_preprocessor.build_variants(pil_img, fast_only=use_fast_variants_only):
                 for psm in psm_candidates:
@@ -920,11 +1027,36 @@ def ocr_process():
                     result["_variant"] = variant_name
                     result["_psm"] = psm
                     candidates.append(result)
-                    # NO EARLY STOPPING - TEST ALL VARIANTS
+
+                    # EARLY STOPPING: If we found a result with valid NIK and good score, stop testing
+                    # This significantly speeds up processing for good images
+                    if result.get("nik") and re.match(r"^\d{16}$", str(result.get("nik"))):
+                        score = engine.score_result(result)
+                        if score >= 10.0:  # Good enough score with valid NIK
+                            logger.info(f"Early stopping: Found good result with variant={variant_name}, psm={psm}, score={score:.2f}")
+                            found_good_result = True
+                            break
+                if found_good_result:
+                    break
+
+            # Find best result and log which variant/PSM won
+            best_score = -1
+            best_variant = None
+            best_psm = None
+            for c in candidates:
+                s = engine.score_result(c)
+                if s > best_score:
+                    best_score = s
+                    best_variant = c.get("_variant")
+                    best_psm = c.get("_psm")
 
             best = max(candidates, key=engine.score_result)
             best.pop("_variant", None)
             best.pop("_psm", None)
+
+            # Log which combination won
+            logger.info(f"Best variant: {best_variant}, PSM: {best_psm}, score: {best_score:.2f}, NIK: {best.get('nik', 'NONE')}, candidates tested: {len(candidates)}")
+
             results.append(best)
 
         merged = _merge_results(results)

@@ -90,6 +90,14 @@
     {{-- Dashboard (semua role) --}}
     <x-admin-nav-item route="dashboard.index" icon="fa-gauge-high" label="Dashboard" />
 
+    {{-- ── PA Management ─────────────────────────────────── --}}
+    @role('pa_management')
+      <div class="pt-4 pb-1 px-3">
+        <p class="text-xs font-semibold text-earth-muted uppercase tracking-wider">Semua Data</p>
+      </div>
+      <x-admin-nav-item route="dashboard.review.all_data" icon="fa-database" label="Semua Data" />
+    @endrole
+
     {{-- ── PA Staff ─────────────────────────────────────────── --}}
     @role('pa_staff')
       <div class="pt-4 pb-1 px-3">
@@ -98,8 +106,8 @@
       <x-admin-nav-item route="dashboard.cases" icon="fa-folder" label="Daftar Kasus" />
     @endrole
 
-    {{-- ── PA Staff/PA Management ───────────────────────────── --}}
-    @role('pa_staff|pa_management')
+    {{-- ── PA Staff ─────────────────────────────────────────── --}}
+    @role('pa_staff')
       <div class="pt-4 pb-1 px-3">
         <p class="text-xs font-semibold text-earth-muted uppercase tracking-wider">Kelola Konten</p>
       </div>

@@ -87,7 +87,7 @@
       <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
         <span class="step-badge">1</span>
         <h2 class="font-semibold text-gray-800">Data Pasangan</h2>
-        <span class="text-xs text-gray-400 ml-auto">Maks. 5 MB per file - JPG, PNG, PDF</span>
+        <span class="text-xs text-gray-400 ml-auto">Maks. 10 MB per file - JPG, PNG, PDF</span>
       </div>
       <div class="p-6 space-y-6">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -254,7 +254,7 @@
       <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
         <span class="step-badge">4</span>
         <h2 class="font-semibold text-gray-800">Dokumen Pendukung</h2>
-        <span class="text-xs text-gray-400 ml-auto">Maks. 5 MB per file - JPG, PNG, PDF</span>
+        <span class="text-xs text-gray-400 ml-auto">Maks. 10 MB per file - JPG, PNG, PDF</span>
       </div>
       <div class="p-6 space-y-6">
         {{-- Dokumen yang sudah ada --}}
@@ -314,31 +314,25 @@
                     $isUploaded = in_array($normalizedDocType, $uploadedDocTypes);
                   @endphp
                   <div>
-                    @if($isUploaded)
-                      {{-- Tampilkan info dokumen yang sudah diupload --}}
-                      <label class="block text-sm text-gray-700 mb-1">{{ $docLabel }}</label>
-                      <div class="doc-upload-area has-file" style="cursor: default;">
-                        <div>
-                          <i class="fas fa-check-circle text-emerald-500 text-2xl mb-1"></i>
-                          <p class="text-sm font-medium text-emerald-700">Sudah diupload</p>
-                          <p class="text-xs text-emerald-600">Dokumen tersimpan di sistem</p>
-                        </div>
+                    <label class="block text-sm text-gray-700 mb-1">{{ $docLabel }}</label>
+                    {{-- Upload area is ALWAYS clickable regardless of upload status --}}
+                    <label for="file-{{ $inputId }}" class="doc-upload-area @if($isUploaded) has-file @endif" id="area-{{ $inputId }}">
+                      <div id="placeholder-{{ $inputId }}" @if($isUploaded) class="hidden" @endif>
+                        <i class="fas fa-cloud-upload-alt text-gray-400 text-2xl mb-1"></i>
+                        <p class="text-sm text-gray-500">Klik untuk pilih file</p>
                       </div>
-                    @else
-                      {{-- Tampilkan form upload --}}
-                      <label for="file-{{ $inputId }}" class="block text-sm text-gray-700 mb-1">{{ $docLabel }}</label>
-                      <div class="doc-upload-area" id="area-{{ $inputId }}" onclick="document.getElementById('file-{{ $inputId }}').click()">
-                        <div id="placeholder-{{ $inputId }}">
-                          <i class="fas fa-cloud-upload-alt text-gray-400 text-2xl mb-1"></i>
-                          <p class="text-sm text-gray-500">Klik untuk pilih file</p>
-                        </div>
-                        <div id="selected-{{ $inputId }}" class="hidden">
-                          <i class="fas fa-file text-emerald-500 text-2xl mb-1"></i>
-                          <p class="text-sm font-medium text-emerald-700" id="filename-{{ $inputId }}"></p>
-                          <p class="text-xs text-emerald-600" id="filesize-{{ $inputId }}"></p>
-                        </div>
+                      <div id="selected-{{ $inputId }}">
+                        <i class="fas fa-check-circle text-emerald-500 text-2xl mb-1"></i>
+                        <p class="text-sm font-medium text-emerald-700">@if($isUploaded) Sudah diupload @else<span id="filename-{{ $inputId }}"></span>@endif</p>
+                        <p class="text-xs text-emerald-600" id="filesize-{{ $inputId }}">
+                          @if($isUploaded)
+                            Dokumen tersimpan - klik untuk ganti
+                          @else
+                            <span id="size-display-{{ $inputId }}"></span>
+                          @endif
+                        </p>
                       </div>
-                    @endif
+                    </label>
                   </div>
                 @endforeach
               </div>
@@ -383,9 +377,7 @@
 
 @push('scripts')
 <script>
-// Debug: log uploaded document types from server
 const uploadedDocTypes = {{ Js::from($uploadedDocTypes) }};
-console.log('Uploaded doc types from server:', uploadedDocTypes);
 
 function handleFileSelect(input, key) {
   const area  = document.getElementById('area-' + key);
@@ -393,13 +385,15 @@ function handleFileSelect(input, key) {
   const sel   = document.getElementById('selected-' + key);
   const fname = document.getElementById('filename-' + key);
   const fsize = document.getElementById('filesize-' + key);
+  const disp  = document.getElementById('size-display-' + key);
 
   if (input.files && input.files[0]) {
     const f = input.files[0];
     const size = f.size < 1048576 ? (f.size / 1024).toFixed(1) + ' KB' : (f.size / 1048576).toFixed(2) + ' MB';
 
     fname.textContent = f.name;
-    fsize.textContent = size;
+    if (fsize) fsize.textContent = size;
+    if (disp) disp.textContent = size;
     ph.classList.add('hidden');
     sel.classList.remove('hidden');
     area.classList.add('has-file');
@@ -428,6 +422,9 @@ function saveDraft() {
   btn.innerHTML = 'Menyimpan...';
 
   const formData = new FormData(form);
+
+  // Remove _method field that causes PATCH conflict - use POST for submit
+  formData.delete('_method');
 
   // Explicitly append all file inputs to FormData (handles inputs outside form or in hidden divs)
   const ceraiOptions = ['cerai_normal', 'cerai_mati', 'cerai_pindah', 'cerai_ghaib', 'cerai_hak_asuh'];
@@ -499,14 +496,6 @@ function submitDraft(e) {
   const select = document.getElementById('cerai-type-select');
   const activeType = select ? select.value : 'cerai_normal';
 
-  const requiredDocs = {
-    'cerai_normal': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'PUTUSAN_PA', 'AKTA_CERAI', 'AKTA_NIKAH'],
-    'cerai_mati': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'PUTUSAN_PA', 'AKTA_CERAI', 'AKTA_NIKAH', 'AKTA_KEMATIAN', 'SURAT_KETERANGAN_AHLI_WARIS'],
-    'cerai_pindah': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'PUTUSAN_PA', 'AKTA_CERAI', 'AKTA_NIKAH', 'SURAT_PINDAH'],
-    'cerai_ghaib': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'PUTUSAN_PA', 'AKTA_CERAI', 'AKTA_NIKAH', 'SURAT_KETERANGAN_GHAIB'],
-    'cerai_hak_asuh': ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'PUTUSAN_PA', 'AKTA_CERAI', 'AKTA_NIKAH', 'AKTA_KELAHIRAN_ANAK'],
-  };
-
   // Skip document validation - let server handle it
 
   const agreementCheckbox = form.querySelector('input[name="agreement"]');
@@ -521,6 +510,9 @@ function submitDraft(e) {
   btn.innerHTML = 'Mengirim...';
 
   const formData = new FormData(form);
+
+  // Remove _method field that causes PATCH conflict - use POST for submit
+  formData.delete('_method');
 
   // Explicitly append all file inputs to FormData
   const ceraiOptions = ['cerai_normal', 'cerai_mati', 'cerai_pindah', 'cerai_ghaib', 'cerai_hak_asuh'];
@@ -553,32 +545,55 @@ function submitDraft(e) {
     credentials: 'same-origin'
   })
   .then(res => {
+    console.log('Response status:', res.status, 'statusText:', res.statusText);
+    console.log('Content-Type:', res.headers.get('content-type'));
+    console.log('Redirected:', res.redirected);
     if (res.redirected) {
+      console.log('Redirected to:', res.url);
       window.location.href = res.url;
       return null;
     }
-    return res.json().catch(() => null);
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      return res.json().catch(() => ({ success: false, errors: ['Invalid JSON response from server'] }));
+    } else {
+      return res.text().then(text => {
+        console.log('Non-JSON response preview:', text.substring(0, 1000));
+        if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+          return { success: false, errors: ['Server error (HTTP ' + res.status + '). Cek console untuk detail.'] };
+        }
+        return { success: false, errors: [text.substring(0, 500)] };
+      }).catch(() => ({ success: false, errors: ['Unknown error parsing response'] }));
+    }
   })
   .then(data => {
-    if (!data) return;
+    console.log('Response data:', JSON.stringify(data));
+    if (!data) {
+      btn.disabled = false;
+      btn.innerHTML = 'Kirim Pengajuan';
+      alert('Terjadi kesalahan: Response tidak valid dari server');
+      return;
+    }
     if (data.success) {
       window.location.href = data.redirect || '{{ route("dashboard.cases.show", $case->id) }}';
     } else if (data.errors) {
       btn.disabled = false;
       btn.innerHTML = 'Kirim Pengajuan';
-      const errMsg = Object.values(data.errors).flat().join('\n');
+      const errMsg = Array.isArray(data.errors) ? data.errors.join('\n') : Object.values(data.errors).flat().join('\n');
       alert('Error:\n' + errMsg);
     } else if (data.redirect) {
       window.location.href = data.redirect;
     } else {
-      window.location.reload();
+      btn.disabled = false;
+      btn.innerHTML = 'Kirim Pengajuan';
+      alert('Terjadi kesalahan: ' + (data.message || 'Unknown error'));
     }
   })
   .catch(err => {
     console.error('Submit error:', err);
     btn.disabled = false;
     btn.innerHTML = 'Kirim Pengajuan';
-    alert('Gagal mengirim pengajuan');
+    alert('Gagal mengirim pengajuan: ' + err.message);
   });
 }
 

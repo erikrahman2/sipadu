@@ -19,6 +19,7 @@ class DocumentTypeMapper
             'KTP_ISTRI',
             'KK',
             'AKTA_CERAI',
+            'AKTA_NIKAH',
             'PUTUSAN_PA',
             'AKTA_KEMATIAN',
             'SURAT_KETERANGAN_AHLI_WARIS',

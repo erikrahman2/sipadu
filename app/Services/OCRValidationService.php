@@ -869,6 +869,48 @@ class OCRValidationService
     }
 
     /**
+     * RT/RW similarity - handles "001/002" format
+     */
+    private function calculateRtRwSimilarity(string $rtRw1, string $rtRw2): float
+    {
+        // Normalize: remove spaces, handle both "/" and separate formats
+        $rtRw1 = preg_replace('/\s+/', '', trim($rtRw1));
+        $rtRw2 = preg_replace('/\s+/', '', trim($rtRw2));
+
+        if ($rtRw1 === '' && $rtRw2 === '') {
+            return 1.0;
+        }
+
+        if ($rtRw1 === '' || $rtRw2 === '') {
+            return 0.0;
+        }
+
+        // Exact match
+        if ($rtRw1 === $rtRw2) {
+            return 1.0;
+        }
+
+        // Split into RT and RW parts
+        $parts1 = preg_split('/[\/]/', $rtRw1);
+        $parts2 = preg_split('/[\/]/', $rtRw2);
+
+        if (count($parts1) !== 2 || count($parts2) !== 2) {
+            // Fallback: treat as single field comparison
+            return $this->calculateGenericSimilarity($rtRw1, $rtRw2);
+        }
+
+        $rt1 = $parts1[0];
+        $rw1 = $parts1[1];
+        $rt2 = $parts2[0];
+        $rw2 = $parts2[1];
+
+        $rtSim = ($rt1 === $rt2) ? 1.0 : 0.0;
+        $rwSim = ($rw1 === $rw2) ? 1.0 : 0.0;
+
+        return ($rtSim + $rwSim) / 2;
+    }
+
+    /**
      * Generic similarity using multiple algorithms
      */
     private function calculateGenericSimilarity(string $str1, string $str2): float

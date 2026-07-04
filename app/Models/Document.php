@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class Document extends Model
 {
@@ -52,8 +53,21 @@ class Document extends Model
             ]);
         });
 
-        // Document deleted → remove from Neo4j
+        // Document deleted → remove file from storage and Neo4j
         static::deleting(function ($model) {
+            // Delete the actual file from storage
+            try {
+                if ($model->disk && $model->path) {
+                    Storage::disk($model->disk)->delete($model->path);
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Failed to delete document file: ' . $e->getMessage(), [
+                    'document_id' => $model->id,
+                    'disk' => $model->disk,
+                    'path' => $model->path,
+                ]);
+            }
+
             if ($model->forceDeleting) {
                 IntegrationQueue::create([
                     'aggregate_type' => 'Document',

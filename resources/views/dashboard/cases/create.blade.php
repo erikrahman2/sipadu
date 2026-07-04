@@ -39,10 +39,13 @@
     <p class="text-gray-500 text-sm mt-1">Lengkapi data di bawah ini untuk membuat kasus baru.</p>
   </div>
 
-  @if($errors->any() && !$errors->has('suami_nik') && !$errors->has('istri_nik'))
+  @if($errors->any())
     <div class="mb-6 bg-red-50 border border-red-200 rounded-xl px-5 py-3 text-red-700 text-sm">
       <i class="fas fa-exclamation-circle mr-1"></i>
       Terdapat kesalahan pada form. Mohon periksa kembali.
+      @if($errors->first())
+        <div class="mt-2 text-xs">{{ $errors->first() }}</div>
+      @endif
     </div>
   @endif
 
@@ -61,7 +64,7 @@
       <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
         <span class="step-badge">1</span>
         <h2 class="font-semibold text-gray-800">Input Data Pasangan</h2>
-        <span class="text-xs text-gray-400 ml-auto">Maks. 5 MB per file - JPG, PNG, PDF</span>
+        <span class="text-xs text-gray-400 ml-auto">Maks. 10 MB per file - JPG, PNG, PDF</span>
       </div>
       <div class="p-6 space-y-6">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -238,7 +241,7 @@
       <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
         <span class="step-badge">4</span>
         <h2 class="font-semibold text-gray-800">Upload Dokumen</h2>
-        <span class="text-xs text-gray-400 ml-auto">Maks. 5 MB per file - JPG, PNG, PDF</span>
+        <span class="text-xs text-gray-400 ml-auto">Maks. 10 MB per file - JPG, PNG, PDF</span>
       </div>
       <div class="p-6 space-y-6">
         @foreach($ceraiOptions as $key => $option)
@@ -261,7 +264,7 @@
                   <div>
                     <label for="file-{{ $inputId }}" class="block text-sm text-gray-700 mb-1">{{ $docLabel }}</label>
                     <div class="doc-upload-area" id="area-{{ $inputId }}" onclick="document.getElementById('file-{{ $inputId }}').click()">
-                      <input type="file" name="documents[{{ $docKey }}]" id="file-{{ $inputId }}" class="hidden" accept=".jpg,.jpeg,.png,.pdf"
+                      <input type="file" name="documents[{{ $key }}][{{ $docKey }}]" id="file-{{ $inputId }}" class="hidden" accept=".jpg,.jpeg,.png,.pdf"
                         onchange="handleFileSelect(this, '{{ $inputId }}')">
                       <div id="placeholder-{{ $inputId }}">
                         <i class="fas fa-cloud-upload-alt text-gray-400 text-2xl mb-1"></i>
@@ -273,7 +276,7 @@
                         <p class="text-xs text-emerald-600" id="filesize-{{ $inputId }}"></p>
                       </div>
                     </div>
-                    @error('documents.' . $docKey) <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    @error('documents.' . $key . '.' . $docKey) <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                   </div>
                 @endforeach
               </div>
@@ -382,6 +385,7 @@ document.getElementById('caseForm').addEventListener('submit', function (e) {
 
   const docs = requiredDocs[activeType] || requiredDocs['cerai_normal'];
   const missing = docs.filter(docType => {
+    // Check file with cerai type prefix: file-cerai_normal-KTP_SUAMI
     const input = document.getElementById('file-' + activeType + '-' + docType);
     return !input || !input.files || !input.files[0];
   });

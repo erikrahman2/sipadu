@@ -161,7 +161,7 @@ class DashboardController extends Controller
 
     public function storeCase(Request $request)
     {
-        $maxSizeByte = 5120;
+        $maxSizeByte = 10240;
         $ceraiOptions = $this->ceraiOptions();
         $ceraiType = $request->input('cerai_type');
         $isGroupedFlow = is_string($ceraiType) && array_key_exists($ceraiType, $ceraiOptions);
@@ -194,7 +194,8 @@ class DashboardController extends Controller
             'notes'          => 'nullable|string|max:1000',
             'agreement'      => 'required|accepted',
             'documents'      => 'nullable|array',
-            'documents.*'    => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'remove_documents' => 'nullable|array',
+            'remove_documents.*' => 'nullable|exists:documents,id',
         ];
 
         $messages = [
@@ -221,23 +222,26 @@ class DashboardController extends Controller
             'agreement.required'     => 'Anda harus menyetujui pernyataan kebenaran data.',
             'agreement.accepted'     => 'Anda harus menyetujui pernyataan kebenaran data.',
             'documents.*.mimes'      => 'Format file harus JPG, PNG, atau PDF.',
-            'documents.*.max'        => 'Ukuran file maksimal 5 MB.',
+            'documents.*.max'        => 'Ukuran file maksimal 10 MB.',
         ];
 
         if ($isGroupedFlow) {
             $rules['cerai_type'] = 'required|in:' . implode(',', array_keys($ceraiOptions));
             $requiredDocs = $this->documentsForCeraiType($ceraiType);
-            $rules['documents'] = 'required|array|min:' . count($requiredDocs);
+
+            // Gunakan nullable untuk documents - validasi menggunakan struktur documents[CERAI_TYPE][DOC_TYPE]
+            $rules['documents'] = 'nullable|array';
 
             foreach ($requiredDocs as $documentType) {
-                $rules['documents.' . $documentType] = 'required|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte;
-                $messages['documents.' . $documentType . '.required'] = 'Dokumen ' . ($ceraiOptions[$ceraiType]['docs'][$documentType] ?? $documentType) . ' wajib diunggah.';
+                $rules['documents.' . $ceraiType . '.' . $documentType] = 'required|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte;
+                $messages['documents.' . $ceraiType . '.' . $documentType . '.required'] = 'Dokumen ' . ($ceraiOptions[$ceraiType]['docs'][$documentType] ?? $documentType) . ' wajib diunggah.';
             }
         } else {
-            $rules['documents.KTP_SUAMI'] = 'required|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte;
-            $rules['documents.KTP_ISTRI'] = 'required|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte;
-            $messages['documents.KTP_SUAMI.required'] = 'Dokumen KTP suami wajib diunggah.';
-            $messages['documents.KTP_ISTRI.required'] = 'Dokumen KTP istri wajib diunggah.';
+            $rules['documents'] = 'nullable|array';
+            $rules['documents.cerai_normal.KTP_SUAMI'] = 'required|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte;
+            $rules['documents.cerai_normal.KTP_ISTRI'] = 'required|file|mimes:jpg,jpeg,png,pdf|max:' . $maxSizeByte;
+            $messages['documents.cerai_normal.KTP_SUAMI.required'] = 'Dokumen KTP suami wajib diunggah.';
+            $messages['documents.cerai_normal.KTP_ISTRI.required'] = 'Dokumen KTP istri wajib diunggah.';
         }
 
         $validated = $request->validate($rules, $messages);
@@ -287,18 +291,20 @@ class DashboardController extends Controller
 
         $user = auth()->user();
 
-        // Normalize document type aliases
-        $allowedDocumentTypes = array_keys($ceraiOptions['cerai_normal']['docs'])
-            + ['AKTA_KEMATIAN', 'SURAT_KETERANGAN_AHLI_WARIS', 'SURAT_PINDAH', 'SURAT_KETERANGAN_GHAIB', 'AKTA_KELAHIRAN_ANAK', 'OTHER'];
+        // Normalize document type aliases - use ceraiType to get correct document types
+        // Fallback to cerai_normal if ceraiType is not set
+        $effectiveCeraiType = $ceraiType ?: 'cerai_normal';
+        $selectedDocs = $ceraiOptions[$effectiveCeraiType]['docs'] ?? $ceraiOptions['cerai_normal']['docs'];
+        $allowedDocumentTypes = array_keys($selectedDocs);
 
-        if ($request->hasFile('documents')) {
-            foreach (array_keys($request->file('documents')) as $docTypeKey) {
-                $normalizedType = DocumentTypeMapper::toCaseType($docTypeKey);
-                if (!in_array($normalizedType, $allowedDocumentTypes, true)) {
-                    return back()->withErrors([
-                        'documents' => "Jenis dokumen {$docTypeKey} tidak didukung.",
-                    ])->withInput();
-                }
+        // Validate documents with structure documents[CERAI_TYPE][DOC_TYPE]
+        $docFiles = $request->file('documents.' . $effectiveCeraiType) ?: [];
+        foreach (array_keys($docFiles) as $docTypeKey) {
+            $normalizedType = DocumentTypeMapper::toCaseType($docTypeKey);
+            if (!in_array($normalizedType, $allowedDocumentTypes, true)) {
+                return back()->withErrors([
+                    'documents' => "Jenis dokumen {$docTypeKey} tidak didukung.",
+                ])->withInput();
             }
         }
 
@@ -346,32 +352,33 @@ class DashboardController extends Controller
                 ]);
             }
 
-            // Handle document uploads
-            if ($request->hasFile('documents')) {
-                foreach ($request->file('documents') as $docType => $file) {
-                    $normalizedDocType = DocumentTypeMapper::toCaseType($docType);
+            // Handle document uploads - structure: documents[CERAI_TYPE][DOC_TYPE]
+            $docFiles = $request->file('documents.' . $ceraiType) ?: [];
+            foreach ($docFiles as $docType => $file) {
+                if (!$file || !$file->isValid()) continue;
 
-                    $storedName = Str::uuid() . '.' . $file->getClientOriginalExtension();
-                    $path = $file->storeAs("cases/{$case->id}", $storedName, 'public');
-                    $checksum = hash_file('sha256', $file->getPathname());
-                    
-                    $document = \App\Models\Document::create([
-                        'case_id'       => $case->id,
-                        'uploaded_by'   => $user->id,
-                        'original_name' => $file->getClientOriginalName(),
-                        'stored_name'   => $storedName,
-                        'disk'          => 'public',
-                        'path'          => $path,
-                        'mime_type'     => $file->getMimeType(),
-                        'size_bytes'    => $file->getSize(),
-                        'document_type' => $normalizedDocType,
-                        'checksum'      => $checksum,
-                        // status default: PENDING (from migration)
-                    ]);
-                    
-                    // Dispatch DocumentUploaded event for OCR processing
-                    event(new \App\Events\DocumentUploaded($document));
-                }
+                $normalizedDocType = DocumentTypeMapper::toCaseType($docType);
+
+                $storedName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs("cases/{$case->id}", $storedName, 'public');
+                $checksum = hash_file('sha256', $file->getPathname());
+
+                $document = \App\Models\Document::create([
+                    'case_id'       => $case->id,
+                    'uploaded_by'   => $user->id,
+                    'original_name' => $file->getClientOriginalName(),
+                    'stored_name'   => $storedName,
+                    'disk'          => 'public',
+                    'path'          => $path,
+                    'mime_type'     => $file->getMimeType(),
+                    'size_bytes'    => $file->getSize(),
+                    'document_type' => $normalizedDocType,
+                    'checksum'      => $checksum,
+                    // status default: PENDING (from migration)
+                ]);
+
+                // Dispatch DocumentUploaded event for OCR processing
+                event(new \App\Events\DocumentUploaded($document));
             }
 
             // Outbox event
@@ -479,7 +486,8 @@ class DashboardController extends Controller
             'verdict_number' => 'nullable|string|max:100',
             'notes'          => 'nullable|string|max:1000',
             'documents'      => 'nullable|array',
-            'documents.*'    => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'remove_documents' => 'nullable|array',
+            'remove_documents.*' => 'nullable|exists:documents,id',
         ];
 
         $messages = [
@@ -503,7 +511,7 @@ class DashboardController extends Controller
             'phone_wa.regex'         => 'Format nomor WhatsApp tidak valid (gunakan angka saja, 9-15 digit).',
             'institution_id.required' => 'Institusi wajib dipilih.',
             'documents.*.mimes'      => 'Format file harus JPG, PNG, atau PDF.',
-            'documents.*.max'        => 'Ukuran file maksimal 5 MB.',
+            'documents.*.max'        => 'Ukuran file maksimal 10 MB.',
         ];
 
         if ($isGroupedFlow) {
@@ -563,30 +571,35 @@ class DashboardController extends Controller
             ]);
 
             // Handle document uploads jika ada
-            if ($request->hasFile('documents')) {
-                foreach ($request->file('documents') as $docType => $file) {
-                    if (!$file) continue; // Skip jika file tidak ada
+            // Form mengirim documents[CERAI_TYPE][DOC_TYPE]
+            $docFiles = $request->file('documents.' . $ceraiType) ?: [];
+            foreach ($docFiles as $docType => $file) {
+                if (!$file || !$file->isValid()) continue; // Skip jika file tidak ada
 
-                    $normalizedDocType = DocumentTypeMapper::toCaseType($docType);
+                $normalizedDocType = DocumentTypeMapper::toCaseType($docType);
 
-                    $storedName = Str::uuid() . '.' . $file->getClientOriginalExtension();
-                    $path = $file->storeAs("cases/{$case->id}", $storedName, 'public');
-                    $checksum = hash_file('sha256', $file->getPathname());
-                    
-                    \App\Models\Document::create([
-                        'case_id'       => $case->id,
-                        'uploaded_by'   => $user->id,
-                        'original_name' => $file->getClientOriginalName(),
-                        'stored_name'   => $storedName,
-                        'disk'          => 'public',
-                        'path'          => $path,
-                        'mime_type'     => $file->getMimeType(),
-                        'size_bytes'    => $file->getSize(),
-                        'document_type' => $normalizedDocType,
-                        'checksum'      => $checksum,
-                        'status'        => 'PENDING', // OCR tidak diproses untuk draft
-                    ]);
-                }
+                // Delete existing document of the same type (force delete to remove from DB completely)
+                Document::where('case_id', $case->id)
+                    ->where('document_type', $normalizedDocType)
+                    ->forceDelete();
+
+                $storedName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs("cases/{$case->id}", $storedName, 'public');
+                $checksum = hash_file('sha256', $file->getPathname());
+
+                \App\Models\Document::create([
+                    'case_id'       => $case->id,
+                    'uploaded_by'   => $user->id,
+                    'original_name' => $file->getClientOriginalName(),
+                    'stored_name'   => $storedName,
+                    'disk'          => 'public',
+                    'path'          => $path,
+                    'mime_type'     => $file->getMimeType(),
+                    'size_bytes'    => $file->getSize(),
+                    'document_type' => $normalizedDocType,
+                    'checksum'      => $checksum,
+                    'status'        => 'PENDING', // OCR tidak diproses untuk draft
+                ]);
             }
 
             return $case;
@@ -704,7 +717,6 @@ class DashboardController extends Controller
             'verdict_number' => 'nullable|string|max:100',
             'notes'          => 'nullable|string|max:1000',
             'documents'      => 'nullable|array',
-            'documents.*'    => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'remove_documents' => 'nullable|array',
             'remove_documents.*' => 'nullable|exists:documents,id',
         ];
@@ -730,7 +742,7 @@ class DashboardController extends Controller
             'phone_wa.regex'         => 'Format nomor WhatsApp tidak valid (gunakan angka saja, 9-15 digit).',
             'institution_id.required' => 'Institusi wajib dipilih.',
             'documents.*.mimes'      => 'Format file harus JPG, PNG, atau PDF.',
-            'documents.*.max'        => 'Ukuran file maksimal 5 MB.',
+            'documents.*.max'        => 'Ukuran file maksimal 10 MB.',
         ];
 
         if ($isGroupedFlow) {
@@ -742,7 +754,7 @@ class DashboardController extends Controller
         $petitionerNik = $request->suami_nik;
         $spouseNik = $request->istri_nik;
 
-        // Validasi: NIK pemohon ≠ NIK pasangan
+        // Validasi: NIK pemohon (salah satu pasangan yang memohon) tidak boleh sama dengan NIK pasangan
         if (\App\Models\PublicSubmission::isSameNik($petitionerNik, $spouseNik)) {
             if ($request->expectsJson()) {
                 return response()->json(['success' => false, 'errors' => ['istri_nik' => ['NIK suami tidak boleh sama dengan NIK istri.']]], 422);
@@ -784,23 +796,22 @@ class DashboardController extends Controller
                     ->delete();
             }
 
-            // Tambah dokumen baru - access files using dot notation for each doc type
+            // Tambah dokumen baru - access files using structure documents[CERAI_TYPE][DOC_TYPE]
+            $docFiles = $request->file('documents.' . $ceraiType) ?: [];
             $docTypes = ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'PUTUSAN_PA', 'AKTA_CERAI', 'AKTA_NIKAH',
                          'AKTA_KEMATIAN', 'SURAT_KETERANGAN_AHLI_WARIS', 'SURAT_PINDAH',
                          'SURAT_KETERANGAN_GHAIB', 'AKTA_KELAHIRAN_ANAK'];
 
-            $docFiles = [];
             foreach ($docTypes as $docType) {
-                $file = $request->file('documents.' . $docType);
-                if ($file && $file->isValid()) {
-                    $docFiles[$docType] = $file;
-                }
-            }
+                $file = $docFiles[$docType] ?? null;
+                if (!$file || !$file->isValid()) continue;
 
-            \Log::info('=== Document Processing ===', ['docFiles_count' => count($docFiles), 'docFiles_keys' => array_keys($docFiles)]);
-
-            foreach ($docFiles as $docType => $file) {
                 $normalizedDocType = DocumentTypeMapper::toCaseType($docType);
+
+                // Delete existing document of the same type (force delete to remove from DB completely)
+                Document::where('case_id', $case->id)
+                    ->where('document_type', $normalizedDocType)
+                    ->forceDelete();
 
                 $storedName = Str::uuid() . '.' . $file->getClientOriginalExtension();
                 $path = $file->storeAs("cases/{$case->id}", $storedName, 'public');
@@ -902,6 +913,10 @@ class DashboardController extends Controller
         $ceraiType = $request->input('cerai_type') ?: $case->cerai_type;
         $isGroupedFlow = is_string($ceraiType) && array_key_exists($ceraiType, $ceraiOptions);
 
+        // Get required documents for this cerai type
+        $requiredDocs = $ceraiOptions[$ceraiType]['docs'] ?? $ceraiOptions['cerai_normal']['docs'];
+        $requiredDocKeys = array_keys($requiredDocs);
+
         // Validasi form
         $rules = [
             'suami_nik'      => 'required|digits:16',
@@ -923,7 +938,8 @@ class DashboardController extends Controller
             'verdict_number' => 'nullable|string|max:100',
             'notes'          => 'nullable|string|max:1000',
             'documents'      => 'nullable|array',
-            'documents.*'    => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'remove_documents' => 'nullable|array',
+            'remove_documents.*' => 'nullable|exists:documents,id',
         ];
 
         $messages = [
@@ -956,6 +972,7 @@ class DashboardController extends Controller
             'doc_KTP_SUAMI' => $request->hasFile('documents.KTP_SUAMI'),
             'doc_KTP_ISTRI' => $request->hasFile('documents.KTP_ISTRI'),
             'doc_KK' => $request->hasFile('documents.KK'),
+            'all_files' => array_keys($request->file('documents') ?: []),
         ]);
 
         $user = auth()->user();
@@ -990,17 +1007,34 @@ class DashboardController extends Controller
                     'notes'             => $request->notes,
                 ]);
 
-                // Upload documents - use dot notation for array inputs
+                // Remove documents marked for deletion (force delete to remove from DB completely)
+                if ($request->filled('remove_documents')) {
+                    Document::whereIn('id', $request->remove_documents)
+                        ->where('case_id', $case->id)
+                        ->forceDelete();
+                }
+
+                // Upload documents - access files from structure documents[CERAI_TYPE][DOC_TYPE]
+                $docFiles = $request->file('documents.' . $ceraiType) ?: [];
                 $docTypes = ['KTP_SUAMI', 'KTP_ISTRI', 'KK', 'PUTUSAN_PA', 'AKTA_CERAI', 'AKTA_NIKAH',
                              'AKTA_KEMATIAN', 'SURAT_KETERANGAN_AHLI_WARIS', 'SURAT_PINDAH',
                              'SURAT_KETERANGAN_GHAIB', 'AKTA_KELAHIRAN_ANAK'];
 
                 $uploadedCount = 0;
                 foreach ($docTypes as $docType) {
-                    $file = $request->file('documents.' . $docType);
-                    if (!$file || !$file->isValid()) continue;
+                    $file = $docFiles[$docType] ?? null;
+                    if (!$file || !$file->isValid()) {
+                        // If no new file, skip (keep existing document in DB)
+                        continue;
+                    }
 
                     $normalizedDocType = DocumentTypeMapper::toCaseType($docType);
+
+                    // Delete existing document of the same type (force delete to remove from DB completely)
+                    Document::where('case_id', $case->id)
+                        ->where('document_type', $normalizedDocType)
+                        ->forceDelete();
+
                     $storedName = Str::uuid() . '.' . $file->getClientOriginalExtension();
                     $path = $file->storeAs("cases/{$case->id}", $storedName, 'public');
                     $checksum = hash_file('sha256', $file->getPathname());
@@ -1021,7 +1055,7 @@ class DashboardController extends Controller
                     $uploadedCount++;
                     \Log::info('Document uploaded via submit', ['type' => $normalizedDocType]);
                 }
-                \Log::info('SubmitDraft uploaded documents count', ['count' => $uploadedCount]);
+                \Log::info('SubmitDraft uploaded documents count', ['count' => $uploadedCount, 'files_received' => array_keys($docFiles)]);
 
                 // Check required documents
                 $requiredDocTypes = array_keys($this->ceraiOptions()[$ceraiType]['docs'] ?? $this->ceraiOptions()['cerai_normal']['docs']);
@@ -1074,9 +1108,18 @@ class DashboardController extends Controller
                 ]);
             });
         } catch (\Exception $e) {
-            \Log::error('Submit draft failed', ['error' => $e->getMessage()]);
+            \Log::error('Submit draft failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'case_id' => $id,
+                'user_id' => auth()->id(),
+            ]);
             if ($isAjax) {
-                return response()->json(['success' => false, 'errors' => [$e->getMessage()]], 422);
+                return response()->json([
+                    'success' => false,
+                    'errors' => [$e->getMessage()],
+                    'debug' => config('app.debug') ? $e->getTraceAsString() : null,
+                ], 422);
             }
             return back()->withErrors($e->getMessage());
         }
@@ -1624,12 +1667,15 @@ class DashboardController extends Controller
             $months[] = $date;
             $labels[] = $date->format('M Y');
 
-            // Public submissions (dari pengajuan publik)
-            $publicCount = PublicSubmission::whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
+            // Public submissions (dari pengajuan publik) - filter by institution
+            $publicCount = PublicSubmission::where('institution_id', $user->institution_id)
+                ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                ->count();
             $publicData[] = $publicCount;
 
-            // Internal cases = ALL cases for user's institution (matches buildStats logic)
+            // Internal cases = source_type 'internal' created by PA Assistant
             $internalCount = CaseModel::forUser($user)
+                ->where('source_type', 'internal')
                 ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
                 ->count();
             $internalData[] = $internalCount;
@@ -1695,9 +1741,9 @@ class DashboardController extends Controller
             $publicPending = PublicSubmission::whereIn('status', ['SUBMITTED', 'APPROVED'])->count();
         }
 
-        // Calculate public submissions and internal cases for PA Assistant
-        $publicSubmissionsCount = PublicSubmission::count();
-        $internalCasesCount = (clone $q)->count();
+        // For PA Assistant: public submissions relevant to their institution, internal cases = source_type='internal'
+        $publicSubmissionsCount = PublicSubmission::where('institution_id', $user->institution_id)->count();
+        $internalCasesCount = (clone $q)->where('source_type', 'internal')->count();
 
         // Calculate match/mismatch for PA Management - ALL KTP_SUAMI + KTP_ISTRI documents (public + internal)
         $ocrValidations = \App\Models\OcrValidation::whereHas('document', function ($q) {

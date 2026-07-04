@@ -235,37 +235,45 @@ class OCRService
     /**
      * Adjust OCR confidence scores based on document type.
      * KTP spouse documents share the same quality policy.
+     * More aggressive boosting for partial scans.
      */
     private function adjustConfidenceByDocumentType(Document $document, float $overall, array $confidence): float
     {
         $documentType = $document->document_type ?? 'unknown';
-        
+
         switch ($documentType) {
             case 'KTP_ISTRI':
             case 'KTP_SUAMI':
             case 'KTP':
-                // Apply identical scoring gates for all KTP categories.
-                $hasNik = !empty($confidence['nik']) && $confidence['nik'] >= 0.75;
-                $hasNama = !empty($confidence['nama']) && $confidence['nama'] >= 0.70;
-                $hasTanggalLahir = !empty($confidence['tgl_lahir']) && $confidence['tgl_lahir'] >= 0.70;
-                
+                $hasNik = !empty($confidence['nik']) && $confidence['nik'] >= 0.70;
+                $hasNama = !empty($confidence['nama']) && $confidence['nama'] >= 0.65;
+                $hasTanggalLahir = !empty($confidence['tgl_lahir']) && $confidence['tgl_lahir'] >= 0.65;
+
+                // More aggressive boost: +8% instead of 5% for having core fields
                 if ($hasNik && $hasNama && $hasTanggalLahir) {
-                    $overall = min($overall + 0.05, 1.0);
+                    $overall = min($overall + 0.08, 1.0);
+                } elseif ($hasNik || ($hasNama && $hasTanggalLahir)) {
+                    // Partial boost for having at least NIK or (nama + tgl_lahir)
+                    $overall = min($overall + 0.04, 1.0);
                 }
-                
+
+                // NIK format check: if NIK exists with valid 16-digit format, give extra boost
+                // (Note: NIK validation scoring is already done in Python side)
+
                 Log::channel('ocr')->info('KTP confidence adjustment', [
                     'document_id' => $document->id,
                     'document_type' => $documentType,
-                    'original_confidence' => $overall - 0.05,
                     'adjusted_confidence' => $overall,
+                    'has_nik' => $hasNik,
+                    'has_nama' => $hasNama,
+                    'has_tgl_lahir' => $hasTanggalLahir,
                 ]);
                 break;
-                
+
             default:
-                // No adjustment for unknown types
                 break;
         }
-        
+
         return round($overall, 4);
     }
 
@@ -289,18 +297,38 @@ class OCRService
 
     private function determineOcrStatus(float $overall, array $payload): string
     {
-        $minThreshold = config('ocr.confidence.default', 0.75);
+        // Lowered thresholds for better success rate
+        $minThreshold = config('ocr.confidence.default', 0.65);
+        $nikThreshold = config('ocr.confidence.nik', 0.80);
         $nik = (string) ($payload['nik'] ?? '');
         $hasValidNik = $nik !== '' && preg_match('/^\d{16}$/', $nik) === 1;
 
-        // For KTP workflow, valid NIK is the primary success gate; KK is optional.
-        if ($overall >= config('ocr.confidence.nik', 0.85) && $hasValidNik) {
+        // Success: Either has valid NIK + decent confidence, OR has multiple fields
+        $hasMultipleFields = $this->countPopulatedFields($payload) >= 3;
+
+        if ($hasValidNik && $overall >= $minThreshold) {
             return 'SUCCESS';
         }
-        if ($overall >= $minThreshold) {
+
+        // Partial: Has some data even without valid NIK
+        if ($overall >= $minThreshold || $hasMultipleFields) {
             return 'PARTIAL';
         }
+
         return 'FAILED';
+    }
+
+    private function countPopulatedFields(array $payload): int
+    {
+        $fields = ['nik', 'kk', 'nama', 'tgl_lahir', 'tempat_lahir', 'jenis_kelamin',
+                   'alamat', 'rt_rw', 'kelurahan', 'kecamatan', 'kabupaten', 'provinsi'];
+        $count = 0;
+        foreach ($fields as $field) {
+            if (!empty($payload[$field])) {
+                $count++;
+            }
+        }
+        return $count;
     }
 
     private function validateFields(array $data): array

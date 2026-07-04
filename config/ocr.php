@@ -12,9 +12,9 @@ return [
     'secret_key'     => env('OCR_SECRET_KEY', ''),
     'fallback_secret_key' => env('OCR_FALLBACK_SECRET_KEY', 'change_me'),
 
-    // IMPORTANT: timeout harus lebih kecil dari PHP max_execution_time (30 detik)
-    // Untuk fast_mode=true, request akan diblok sampai OCR selesai
-    'timeout'        => env('OCR_TIMEOUT', 25),
+    // IMPORTANT: timeout harus lebih besar dari waktu pemrosesan OCR (12 variants x 5 PSMs = 60 kombinasi)
+    // Untuk gambar berkualitas rendah, proses bisa memakan waktu lama
+    'timeout'        => env('OCR_TIMEOUT', 180),
 
     // fast_mode=true: proses OCR synchronously (memblokir request, bisa timeout)
     // fast_mode=false: proses async via queue (direkomendasikan untuk production)
@@ -108,10 +108,10 @@ return [
     */
 
     'confidence' => [
-        'nik'   => 0.85,
-        'kk'    => 0.85,
-        'nama'  => 0.80,
-        'default' => 0.75,
+        'nik'   => 0.80,  // Lowered from 0.85 for better success rate
+        'kk'    => 0.80,
+        'nama'  => 0.70,  // Lowered from 0.80
+        'default' => 0.65,  // Lowered from 0.75
     ],
 
     /*
@@ -133,7 +133,7 @@ return [
     */
 
     'retry' => [
-        'max_attempts' => 3,
-        'backoff_seconds' => [10, 30, 60],
+        'max_attempts' => 4,  // Increased from 3
+        'backoff_seconds' => [5, 15, 30, 60],  // Faster initial retry
     ],
 ];

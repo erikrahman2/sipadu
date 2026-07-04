@@ -152,10 +152,11 @@
               $validationStatus = $ocrValidation?->validation_status ?? 'UNKNOWN';
               
               $statusColor = match($validationStatus) {
-                'SUCCESS' => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'icon' => 'fa-check'],
-                'PARTIAL' => ['bg' => 'bg-amber-100', 'text' => 'text-amber-700', 'icon' => 'fa-exclamation'],
-                'FAILED' => ['bg' => 'bg-red-100', 'text' => 'text-red-700', 'icon' => 'fa-times'],
-                default => ['bg' => 'bg-gray-100', 'text' => 'text-gray-700', 'icon' => 'fa-question'],
+                'MATCH' => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'icon' => 'fa-check-circle'],
+                'PARTIAL_MATCH' => ['bg' => 'bg-amber-100', 'text' => 'text-amber-700', 'icon' => 'fa-exclamation-circle'],
+                'MISMATCH' => ['bg' => 'bg-red-100', 'text' => 'text-red-700', 'icon' => 'fa-times-circle'],
+                'PENDING' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'icon' => 'fa-clock'],
+                default => ['bg' => 'bg-gray-100', 'text' => 'text-gray-700', 'icon' => 'fa-question-circle'],
               };
 
               $caseStatusColor = match($case->status) {

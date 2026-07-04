@@ -4,14 +4,16 @@
     $document = $validation->document;
     
     $statusColors = [
-        'SUCCESS' => '#28a745',
-        'PARTIAL' => '#ffc107',
-        'FAILED' => '#dc3545',
+        'MATCH' => '#28a745',
+        'PARTIAL_MATCH' => '#ffc107',
+        'MISMATCH' => '#dc3545',
+        'PENDING' => '#0d6efd',
     ];
     $statusLabels = [
-        'SUCCESS' => 'Success',
-        'PARTIAL' => 'Partial',
-        'FAILED' => 'Failed',
+        'MATCH' => 'Match',
+        'PARTIAL_MATCH' => 'Partial Match',
+        'MISMATCH' => 'Mismatch',
+        'PENDING' => 'Pending',
     ];
     $bgColor = $statusColors[$validation->validation_status] ?? '#6c757d';
     $statusLabel = $statusLabels[$validation->validation_status] ?? 'Unknown';
