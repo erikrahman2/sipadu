@@ -669,18 +669,63 @@ class DashboardController extends Controller
     }
 
     /**
+     * Edit rejected case - PA Assistant can fix and resubmit
+     */
+    public function editRejectedCase(int $id): View|\Illuminate\Http\RedirectResponse
+    {
+        $case = CaseModel::with('documents')->findOrFail($id);
+
+        // PA Assistant only can edit rejected cases
+        if (!auth()->user()->hasRole('pa_assistant')) {
+            return back()->withErrors('Anda tidak memiliki akses untuk mengedit kasus ini');
+        }
+
+        // Only REJECTED status can be edited as rejected
+        if ($case->status !== 'REJECTED') {
+            return back()->withErrors('Hanya kasus dengan status DITOLAK yang dapat diedit');
+        }
+
+        // Transition REJECTED -> DRAFT first
+        $case->update(['status' => 'DRAFT']);
+
+        $institutions = \App\Models\Institution::active()->get(['id', 'name', 'type']);
+        $ceraiOptions = $this->ceraiOptions();
+
+        // Create array of uploaded document types for this case (normalized to form types)
+        $uploadedDocTypes = $case->documents->map(function($doc) {
+            $type = $doc->document_type;
+            if (in_array($type, ['AKTA_NIKAH', 'SURAT_NIKAH', 'AKTA_KAWIN'])) {
+                return 'AKTA_NIKAH';
+            }
+            if ($type === 'SURAT_PENGANTAR') {
+                return 'SURAT_PENGANTAR';
+            }
+            if (in_array($type, ['KTP', 'FOTO_DIRI', 'LAINNYA'])) {
+                return 'OTHER';
+            }
+            return $type;
+        })->toArray();
+
+        // Set a flag for the view to show rejected info
+        $isRejectedEdit = true;
+
+        return view('dashboard.cases.edit-draft', compact('case', 'institutions', 'ceraiOptions', 'uploadedDocTypes', 'isRejectedEdit'));
+    }
+
+    /**
      * Update draft case
      */
     public function updateDraftCase(Request $request, int $id)
     {
         $case = CaseModel::with('documents')->findOrFail($id);
 
-        // Hanya submitter atau admin yang bisa update
-        if ($case->submitter_id !== auth()->id() && !auth()->user()->hasRole('super_admin')) {
+        // Submitter, admin, or PA Assistant (for rejected cases) can update
+        $isPaAssistant = auth()->user()->hasRole('pa_assistant');
+        if ($case->submitter_id !== auth()->id() && !auth()->user()->hasRole('super_admin') && !$isPaAssistant) {
             return back()->withErrors('Anda tidak memiliki akses');
         }
 
-        // Hanya status DRAFT yang bisa diupdate
+        // Only DRAFT status can be updated (PA Assistant edits rejected cases after they're transitioned to DRAFT)
         if ($case->status !== 'DRAFT') {
             return back()->withErrors('Hanya draft yang belum dikirim dapat diubah');
         }
@@ -893,15 +938,17 @@ class DashboardController extends Controller
 
         $case = CaseModel::with('documents')->findOrFail($id);
 
-        // Only owner or admin dapat submit
-        if ($case->submitter_id !== auth()->id() && !auth()->user()->hasRole('super_admin')) {
+        // Only owner or admin or pa_assistant with REJECTED->DRAFT transition can submit
+        // PA Assistant can submit cases that were REJECTED (they've been transitioned to DRAFT)
+        $isPaAssistantWithRejected = auth()->user()->hasRole('pa_assistant');
+        if ($case->submitter_id !== auth()->id() && !auth()->user()->hasRole('super_admin') && !$isPaAssistantWithRejected) {
             if ($isAjax) {
                 return response()->json(['success' => false, 'errors' => ['Akses ditolak']], 403);
             }
             return back()->withErrors('Anda tidak memiliki akses');
         }
 
-        // Only DRAFT status dapat disubmit
+        // Only DRAFT status can be submitted (new drafts or rejected cases already transitioned to DRAFT)
         if ($case->status !== 'DRAFT') {
             if ($isAjax) {
                 return response()->json(['success' => false, 'errors' => ['Hanya draft dapat dikirim']], 400);
@@ -1774,7 +1821,7 @@ class DashboardController extends Controller
             'total'       => (clone $q)->count(),
             'draft'       => $user->hasRole('disdukcapil_staff') ? 0 : (clone $q)->byStatus('DRAFT')->count(),
             'in_progress' => $user->hasRole('disdukcapil_staff') ? (clone $q)->count() : ((clone $q)->whereNotIn('status', ['DRAFT','COMPLETED','ARCHIVED','REJECTED'])->count()),
-            'completed'   => $user->hasRole('disdukcapil_staff') ? 0 : (clone $q)->byStatus('COMPLETED')->count(),
+            'completed'   => $user->hasRole('disdukcapil_staff') ? $disdukcapilCompleted : (clone $q)->byStatus('COMPLETED')->count(),
             'rejected'    => $user->hasRole('disdukcapil_staff') ? 0 : ((clone $q)->byStatus('REJECTED')->count()),
             'public_submissions' => $user->hasRole('disdukcapil_staff') ? 0 : $publicSubmissionsCount,
             'internal_cases' => $internalCasesCount,

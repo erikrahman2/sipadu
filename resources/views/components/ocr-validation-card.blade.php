@@ -2,7 +2,7 @@
     $docType = strtoupper(str_replace('_', ' ', $validation->document->document_type ?? 'DOC'));
     $matchScore = number_format($validation->overall_match_score ?? 0, 1);
     $document = $validation->document;
-    
+
     $statusColors = [
         'MATCH' => '#28a745',
         'PARTIAL_MATCH' => '#ffc107',
@@ -17,8 +17,8 @@
     ];
     $bgColor = $statusColors[$validation->validation_status] ?? '#6c757d';
     $statusLabel = $statusLabels[$validation->validation_status] ?? 'Unknown';
-    
-    $imageUrl = $document && $document->path ? asset('storage/' . $document->path) : 
+
+    $imageUrl = $document && $document->path ? asset('storage/' . $document->path) :
                 ($document && $document->stored_name ? asset('documents/' . $document->stored_name) : null);
 @endphp
 
@@ -169,7 +169,7 @@
 function toggleDetail(detailId, chevronId) {
     const detail = document.getElementById(detailId);
     const chevron = document.getElementById(chevronId);
-    
+
     detail.classList.toggle('d-none');
     if (detail.classList.contains('d-none')) {
         chevron.style.transform = 'rotate(0deg)';
@@ -182,9 +182,9 @@ function makeEditable(cellElement, validationId, fieldKey, target = 'ocr') {
     const spanSelector = target === 'manual' ? 'span.manual-field-value' : 'span.field-value';
     const span = cellElement.querySelector(spanSelector);
     if (!span) return;
-    
+
     const currentValue = (span.getAttribute('data-value') || '').trim();
-    
+
     // Create input field
     const input = document.createElement('input');
     input.type = 'text';
@@ -192,32 +192,32 @@ function makeEditable(cellElement, validationId, fieldKey, target = 'ocr') {
     input.value = currentValue;
     input.style.width = '100%';
     input.style.padding = '4px 8px';
-    
+
     // Replace span with input
     span.replaceWith(input);
     input.focus();
     input.select();
-    
+
     // Handle blur and Enter key
     const saveChange = () => {
         const newValue = input.value.trim();
         const displayValue = newValue === '' ? '-' : newValue;
-        
+
         // Create new span
         const newSpan = document.createElement('span');
         newSpan.className = target === 'manual' ? 'manual-field-value' : 'field-value';
         newSpan.setAttribute('data-value', newValue);
         newSpan.textContent = displayValue;
-        
+
         // Replace input with span
         input.replaceWith(newSpan);
-        
+
         // If value changed, save to backend
         if (newValue !== currentValue) {
             saveOcrCorrection(validationId, fieldKey, newValue, target);
         }
     };
-    
+
     input.addEventListener('blur', saveChange);
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
@@ -237,7 +237,7 @@ function saveOcrCorrection(validationId, fieldKey, newValue, target = 'ocr') {
     // Get case ID from URL: /dashboard/review/cases/{id}
     const pathParts = window.location.pathname.split('/');
     const caseId = pathParts[pathParts.length - 1];
-    
+
     const fieldMap = target === 'manual' ? {
         'nik': 'input_nik',
         'nama': 'input_nama',
@@ -259,19 +259,19 @@ function saveOcrCorrection(validationId, fieldKey, newValue, target = 'ocr') {
         'kecamatan': 'ocr_kecamatan',
         'no_kk': 'ocr_no_kk',
     };
-    
+
     const fieldName = fieldMap[fieldKey];
     if (!fieldName) {
         console.error('Unknown field key:', fieldKey);
         return;
     }
-    
+
     const formData = new FormData();
     formData.append('validation_id', validationId);
     formData.append('target', target);
     formData.append(fieldName, newValue);
     formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
-    
+
     fetch(`/dashboard/review/cases/${caseId}/correct`, {
         method: 'POST',
         body: formData,
@@ -290,79 +290,6 @@ function saveOcrCorrection(validationId, fieldKey, newValue, target = 'ocr') {
     .catch(error => {
         console.error('Error saving correction:', error);
         alert('Gagal menyimpan koreksi. Silakan coba lagi.');
-    });
-}
-
-function approveValidation(validationId) {
-    // Get case ID from URL: /dashboard/review/cases/{id}
-    const pathParts = window.location.pathname.split('/');
-    const caseId = pathParts[pathParts.length - 1];
-    
-    if (!confirm('Yakin ingin menyetujui validasi OCR ini?')) {
-        return;
-    }
-    
-    const formData = new FormData();
-    formData.append('validation_id', validationId);
-    formData.append('action', 'approve');
-    formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
-    
-    fetch(`/dashboard/review/cases/${caseId}/validate`, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => {
-        if (!response.ok) throw new Error('Network response was not ok');
-        return response.json();
-    })
-    .then(data => {
-        alert('Validasi OCR disetujui!');
-        location.reload();
-    })
-    .catch(error => {
-        console.error('Error approving validation:', error);
-        alert('Gagal menyetujui validasi. Silakan coba lagi.');
-    });
-}
-
-function rejectValidation(validationId) {
-    // Get case ID from URL: /dashboard/review/cases/{id}
-    const pathParts = window.location.pathname.split('/');
-    const caseId = pathParts[pathParts.length - 1];
-    
-    const notes = prompt('Masukkan alasan penolakan (opsional):');
-    
-    if (notes === null) {
-        return; // User cancelled
-    }
-    
-    const formData = new FormData();
-    formData.append('validation_id', validationId);
-    formData.append('action', 'reject');
-    formData.append('notes', notes);
-    formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
-    
-    fetch(`/dashboard/review/cases/${caseId}/validate`, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => {
-        if (!response.ok) throw new Error('Network response was not ok');
-        return response.json();
-    })
-    .then(data => {
-        alert('Validasi OCR ditolak!');
-        location.reload();
-    })
-    .catch(error => {
-        console.error('Error rejecting validation:', error);
-        alert('Gagal menolak validasi. Silakan coba lagi.');
     });
 }
 </script>

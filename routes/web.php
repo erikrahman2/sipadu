@@ -129,6 +129,11 @@ Route::middleware(['auth', 'security.headers', 'access.log', 'track.activity'])-
         Route::post('/cases/from-public/{publicSubmission}', [DashboardController::class, 'createFromPublicSubmission'])->name('cases.from-public');
     });
 
+    // Edit draft juga bisa untuk REJECTED (oleh PA Assistant)
+    Route::middleware('role:pa_assistant')
+         ->get('/cases/{id}/edit-rejected', [DashboardController::class, 'editRejectedCase'])
+         ->name('cases.edit-rejected');
+
     Route::middleware('role:pa_assistant|pa_management|pa_staff|disdukcapil_staff')
          ->get('/cases/{id}', [DashboardController::class, 'showCase'])->name('cases.show');
 
@@ -275,6 +280,9 @@ Route::middleware(['auth', 'security.headers', 'access.log', 'track.activity'])-
              Route::get('/cases/{id}',               [\App\Http\Controllers\Web\DisdukcapilController::class, 'show'])->name('show');
              Route::get('/cases/{id}/process',      [\App\Http\Controllers\Web\DisdukcapilController::class, 'showProcess'])->name('process.show');
              Route::post('/cases/{id}/process',     [\App\Http\Controllers\Web\DisdukcapilController::class, 'submitProcess'])->name('process.submit');
+             Route::post('/cases/{id}/send-to-pa',  [\App\Http\Controllers\Web\DisdukcapilController::class, 'sendToPa'])->name('send_to_pa');
+             Route::get('/cases/{id}/documents/{docId}/download', [\App\Http\Controllers\Web\DisdukcapilController::class, 'downloadDocument'])->name('document.download');
+             Route::get('/archive',                 [\App\Http\Controllers\Web\DisdukcapilController::class, 'archive'])->name('archive');
          });
 });
 

@@ -169,10 +169,17 @@
             <div class="text-gray-400">{{ $case->created_at->diffForHumans() }}</div>
           </td>
           <td class="px-4 py-3">
-            <a href="{{ auth()->user()->hasAnyRole(['pa_management', 'super_admin']) ? route('dashboard.review.show', $case->id) : route('dashboard.cases.show', $case->id) }}"
-               class="text-primary hover:underline text-xs font-medium">
-              <i class="fas fa-eye mr-1"></i>Detail
-            </a>
+            @if(auth()->user()->hasRole('pa_assistant') && $case->status === 'REJECTED')
+              <a href="{{ route('dashboard.cases.edit-rejected', $case->id) }}"
+                 class="text-red-600 hover:underline text-xs font-medium inline-flex items-center gap-1">
+                <i class="fas fa-edit"></i>Edit & Kirim Ulang
+              </a>
+            @else
+              <a href="{{ auth()->user()->hasAnyRole(['pa_management', 'super_admin']) ? route('dashboard.review.show', $case->id) : route('dashboard.cases.show', $case->id) }}"
+                 class="text-primary hover:underline text-xs font-medium">
+                <i class="fas fa-eye mr-1"></i>Detail
+              </a>
+            @endif
           </td>
         </tr>
         @empty

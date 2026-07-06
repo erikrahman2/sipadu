@@ -15,7 +15,7 @@
   @role('disdukcapil_staff')
     {{-- Welcome Banner --}}
     <div class="bg-gradient-to-r from-primary-dark to-primary rounded-2xl p-6 text-white shadow-lg">
-      <h1 class="text-2xl font-bold">Selamat datang, {{ auth()->user()->name }} 👋</h1>
+      <h1 class="text-2xl font-bold">Selamat datang, {{ auth()->user()->name }} </h1>
       <p class="text-blue-200 mt-1">
         {{ auth()->user()->institution?->name ?? 'Sistem SiPadu' }}
         &nbsp;·&nbsp;
@@ -104,12 +104,21 @@
           </thead>
           <tbody class="divide-y divide-gray-100">
             @php
-              $validationCases = \App\Models\CaseModel::forUser(auth()->user())
-                ->byStatus('DISDUKCAPIL_VALIDATION')
-                ->with('submitter:id,name')
-                ->orderByDesc('updated_at')
-                ->limit(10)
-                ->get();
+              // Disdukcapil staff: query langsung tanpa forUser (mereka lihat semua kasus DISDUKCAPIL_VALIDATION)
+              if(auth()->user()->hasRole('disdukcapil_staff')) {
+                $validationCases = \App\Models\CaseModel::byStatus('DISDUKCAPIL_VALIDATION')
+                  ->with('submitter:id,name')
+                  ->orderByDesc('updated_at')
+                  ->limit(10)
+                  ->get();
+              } else {
+                $validationCases = \App\Models\CaseModel::forUser(auth()->user())
+                  ->byStatus('DISDUKCAPIL_VALIDATION')
+                  ->with('submitter:id,name')
+                  ->orderByDesc('updated_at')
+                  ->limit(10)
+                  ->get();
+              }
             @endphp
             @forelse($validationCases as $case)
               <tr class="hover:bg-gray-50 transition">
@@ -141,8 +150,8 @@
                 </td>
                 <td class="px-6 py-4">
                   <div class="flex items-center justify-center gap-2">
-                    <a href="{{ route('dashboard.cases.show', $case->id) }}" 
-                       class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition" 
+                    <a href="{{ auth()->user()->hasRole('disdukcapil_staff') ? route('dashboard.disdukcapil.show', $case->id) : route('dashboard.cases.show', $case->id) }}"
+                       class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition"
                        title="Lihat Detail">
                       <i class="fas fa-eye text-sm"></i>
                     </a>
@@ -165,56 +174,50 @@
     {{-- Workflow Information & Guidelines --}}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {{-- Workflow Steps --}}
-      <div class="bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200 rounded-2xl p-6">
+      <div class="bg-white p-6">
         <div class="flex items-start gap-4 mb-4">
-          <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-            <i class="fas fa-tasks text-emerald-600"></i>
-          </div>
-          <h4 class="font-semibold text-emerald-900">Alur Validasi Disdukcapil</h4>
+          <h4 class="font-semibold text-black">Alur Validasi Disdukcapil</h4>
         </div>
-        <ol class="space-y-3 text-sm text-emerald-800">
+        <ol class="space-y-3 text-sm text-black">
           <li class="flex items-start gap-3">
-            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-bold flex-shrink-0">1</span>
+            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-black text-white text-xs font-bold flex-shrink-0">1</span>
             <span>Kasus dikirim dari <strong>PA Management</strong> setelah review dan persetujuan</span>
           </li>
           <li class="flex items-start gap-3">
-            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-bold flex-shrink-0">2</span>
+            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-black text-white text-xs font-bold flex-shrink-0">2</span>
             <span>Status kasus berubah menjadi <strong>Validasi Disdukcapil</strong></span>
           </li>
           <li class="flex items-start gap-3">
-            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-bold flex-shrink-0">3</span>
+            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-black text-white text-xs font-bold flex-shrink-0">3</span>
             <span>Periksa dokumen dan data untuk <strong>validasi akhir</strong></span>
           </li>
           <li class="flex items-start gap-3">
-            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-bold flex-shrink-0">4</span>
+            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-black text-white text-xs font-bold flex-shrink-0">4</span>
             <span>Validasi (selesai) atau Tolak (kembali ke PA)</span>
           </li>
         </ol>
       </div>
 
       {{-- Status Information --}}
-      <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-6">
+      <div class="bg-white p-6">
         <div class="flex items-start gap-4 mb-4">
-          <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-            <i class="fas fa-info-circle text-blue-600"></i>
-          </div>
-          <h4 class="font-semibold text-blue-900">Data Transfer dari PA Management</h4>
+          <h4 class="font-semibold text-black">Data Transfer dari PA Management</h4>
         </div>
-        <div class="space-y-3 text-sm text-blue-800">
+        <div class="space-y-3 text-sm text-gray">
           <div class="flex items-start gap-2">
-            <i class="fas fa-check-circle text-blue-600 mt-0.5"></i>
+            <i class="fas fa-check-circle text-black mt-0.5"></i>
             <span>Kasus yang ditampilkan adalah yang <strong>disetujui oleh PA Management</strong></span>
           </div>
           <div class="flex items-start gap-2">
-            <i class="fas fa-check-circle text-blue-600 mt-0.5"></i>
+            <i class="fas fa-check-circle text-black mt-0.5"></i>
             <span>Data sudah melewati <strong>review OCR</strong> dan <strong>validasi manual PA</strong></span>
           </div>
           <div class="flex items-start gap-2">
-            <i class="fas fa-check-circle text-blue-600 mt-0.5"></i>
+            <i class="fas fa-check-circle text-black mt-0.5"></i>
             <span>Dokumen rekam medis sudah <strong>tersedia dan verified</strong></span>
           </div>
           <div class="flex items-start gap-2">
-            <i class="fas fa-check-circle text-blue-600 mt-0.5"></i>
+            <i class="fas fa-check-circle text-black mt-0.5"></i>
             <span>Validasi akhir adalah tanggung jawab <strong>Disdukcapil Staff</strong></span>
           </div>
         </div>
@@ -226,7 +229,7 @@
   {{-- Welcome Banner --}}
   @unless(auth()->user()->hasRole('pa_assistant') || auth()->user()->hasRole('pa_management') || auth()->user()->hasRole('pa_staff'))
   <div class="bg-gradient-to-r from-primary-dark to-primary rounded-2xl p-6 text-white shadow-lg">
-    <h1 class="text-2xl font-bold">Selamat datang, {{ auth()->user()->name }} 👋</h1>
+    <h1 class="text-2xl font-bold">Selamat datang, {{ auth()->user()->name }} </h1>
     <p class="text-blue-200 mt-1">
       {{ auth()->user()->institution?->name ?? 'Sistem SiPadu' }}
       &nbsp;·&nbsp;
@@ -573,7 +576,7 @@
     @role('pa_management')
     <div class="lg:col-span-3 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
       <h3 class="text-lg font-semibold text-gray-800 mb-6">
-        <i class="fas fa-chart-pie text-primary mr-2"></i>Statistik Validasi OCR
+        Statistik Validasi OCR
       </h3>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
         {{-- Chart Donut --}}

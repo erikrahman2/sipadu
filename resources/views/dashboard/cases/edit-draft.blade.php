@@ -1,14 +1,14 @@
 @extends('layouts.admin')
 
-@section('title', 'Edit Draft Kasus')
-@section('page-title', 'Edit Draft Kasus')
+@section('title', $isRejectedEdit ?? false ? 'Perbaiki Kasus Ditolak' : 'Edit Draft Kasus')
+@section('page-title', $isRejectedEdit ?? false ? 'Perbaiki Kasus Ditolak' : 'Edit Draft Kasus')
 
 @section('breadcrumb')
   <a href="{{ route('dashboard.index') }}" class="hover:text-primary"><i class="fas fa-home"></i></a>
   <i class="fas fa-chevron-right text-xs"></i>
   <a href="{{ route('dashboard.cases') }}" class="hover:text-primary">Kasus</a>
   <i class="fas fa-chevron-right text-xs"></i>
-  <span class="text-gray-800 font-medium">Edit Draft</span>
+  <span class="text-gray-800 font-medium">{{ $isRejectedEdit ?? false ? 'Perbaiki Ditolak' : 'Edit Draft' }}</span>
 @endsection
 
 @push('styles')
@@ -42,6 +42,19 @@
 <div class="max-w-4xl mx-auto">
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+    @if($isRejectedEdit ?? false)
+    <div class="bg-red-50 border border-red-200 rounded-2xl p-6">
+      <div class="flex items-start gap-3">
+        <div class="mt-1">
+          <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+        </div>
+        <div>
+          <h3 class="font-semibold text-red-800 mb-1">Status: PERBAIKAN DITOLAK</h3>
+          <p class="text-sm text-red-700">Kasus ini ditolak oleh PA Management. Silakan perbaiki data dan dokumen, lalu kirim ulang.</p>
+        </div>
+      </div>
+    </div>
+    @else
     <div class="bg-amber-50 border border-amber-200 rounded-2xl p-6">
       <div class="flex items-start gap-3">
         <div class="mt-1">
@@ -53,6 +66,7 @@
         </div>
       </div>
     </div>
+    @endif
 
     <div class="bg-blue-50 border border-blue-200 rounded-2xl p-6">
       <div class="flex items-start gap-3">

@@ -43,8 +43,8 @@
 {{-- ══════════════════════════════════════════════════════════════════════
      MOBILE OVERLAY
 ══════════════════════════════════════════════════════════════════════ --}}
-<!-- Mobile overlay — hanya untuk role yang pakai sidebar fixed (bukan admin CMS biasa) -->
-@if(auth()->user()->hasRole('pa_assistant') || auth()->user()->hasRole('pa_management') || auth()->user()->hasRole('pa_staff'))
+<!-- Mobile overlay — hanya untuk role yang pakai sidebar fixed -->
+@if(auth()->user()->hasRole(['pa_assistant', 'pa_management', 'pa_staff', 'disdukcapil_staff']))
 <div x-show="sidebarOpen"
      x-transition:enter="transition-opacity ease-linear duration-300"
      x-transition:enter-start="opacity-0"
@@ -61,7 +61,7 @@
      SIDEBAR
 ══════════════════════════════════════════════════════════════════════ --}}
 <aside id="sidebar"
-       @if(!auth()->user()->hasRole(['pa_assistant', 'pa_management', 'pa_staff']))
+       @if(!auth()->user()->hasRole(['pa_assistant', 'pa_management', 'pa_staff', 'disdukcapil_staff']))
           class="lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 w-64 bg-sidebar flex flex-col flex-shrink-0"
        @else
           :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
@@ -76,8 +76,8 @@
       <p class="text-white font-bold text-sm truncate">SiPadu</p>
       <p class="text-earth-muted text-xs truncate">Sistem Integrasi PA-Diskcapil</p>
     </div>
-    {{-- Close button mobile — hanya pa_staff/manajemen --}}
-    @if(auth()->user()->hasRole(['pa_assistant', 'pa_management', 'pa_staff']))
+    {{-- Close button mobile --}}
+    @if(auth()->user()->hasRole(['pa_assistant', 'pa_management', 'pa_staff', 'disdukcapil_staff']))
     <button @click="sidebarOpen = false" class="ml-auto text-earth-muted hover:text-white lg:hidden flex-shrink-0">
       <i class="fas fa-times"></i>
     </button>
@@ -96,6 +96,14 @@
         <p class="text-xs font-semibold text-earth-muted uppercase tracking-wider">Semua Data</p>
       </div>
       <x-admin-nav-item route="dashboard.review.all_data" icon="fa-database" label="Semua Data" />
+    @endrole
+
+    {{-- ── Disdukcapil Staff ───────────────────────────────── --}}
+    @role('disdukcapil_staff')
+      <div class="pt-4 pb-1 px-3">
+        <p class="text-xs font-semibold text-earth-muted uppercase tracking-wider">Validasi</p>
+      </div>
+      <x-admin-nav-item route="dashboard.cases" icon="fa-clipboard-check" label="Validasi Kasus" />
     @endrole
 
     {{-- ── PA Staff ─────────────────────────────────────────── --}}
@@ -178,8 +186,8 @@
   <header class="sticky top-0 z-30 bg-white border-b border-cream shadow-sm lg:hidden">
     <div class="flex items-center gap-4 px-4 sm:px-6 h-14">
 
-      {{-- Hamburger — hanya pa_staff/manajemen --}}
-      @if(auth()->user()->hasRole(['pa_assistant', 'pa_management', 'pa_staff']))
+      {{-- Hamburger menu button --}}
+      @if(auth()->user()->hasRole(['pa_assistant', 'pa_management', 'pa_staff', 'disdukcapil_staff']))
       <button @click="sidebarOpen = true"
               class="lg:hidden -ml-1 p-2 rounded-lg text-earth-muted hover:bg-earth-bg transition">
         <i class="fas fa-bars"></i>
@@ -353,7 +361,7 @@
   </div>
 
   {{-- ─── MAIN CONTENT ────────────────────────────────────────────────── --}}
-  <main class="flex-1 px-4 sm:px-6 py-6 @if(auth()->user()->hasRole(['pa_assistant', 'pa_management', 'pa_staff'])) lg:pl-[18rem] lg:pr-6 @endif">
+  <main class="flex-1 px-4 sm:px-6 py-6 @if(auth()->user()->hasRole(['pa_assistant', 'pa_management', 'pa_staff', 'disdukcapil_staff'])) lg:pl-[18rem] lg:pr-6 @endif">
     @yield('content')
   </main>
 

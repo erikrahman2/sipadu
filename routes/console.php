@@ -18,3 +18,18 @@ Schedule::command('ocr:reprocess-failed --fix-missing')
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/ocr-fix-scheduler.log'));
+
+// ── OCR Backup: Daily backup at midnight ─────────────────────────────────────────
+Schedule::command('ocr:backup')
+    ->dailyAt('00:00')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/ocr-backup-scheduler.log'));
+
+// ── OCR Backup: Weekly backup on Sunday at 2 AM ───────────────────────────────────
+// Keep one week's worth of daily backups + monthly retention
+Schedule::command('ocr:backup')
+    ->weeklyOn(0, '02:00')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/ocr-backup-weekly.log'));

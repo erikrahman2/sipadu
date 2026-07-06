@@ -56,6 +56,63 @@
                                 <strong>{{ $validationStats['mismatch'] }}</strong>
                             </div>
                         </div>
+
+                        <!-- Approve / Reject / Send to Disdukcapil Buttons -->
+                        @php
+                            $hasUnreviewed = $case->ocrValidations->contains('is_reviewed', false);
+                            $allReviewed = $case->ocrValidations->every('is_reviewed', true);
+                            $allApproved = $allReviewed && $case->ocrValidations->every('is_approved', true);
+                            $anyRejected = $case->ocrValidations->where('is_reviewed', true)->where('is_approved', false)->count() > 0;
+                        @endphp
+
+                        <!-- Tombol Aksi Utama - Berdasarkan Status -->
+                        @php
+                            $isDisdukcapil = $case->status === 'DISDUKCAPIL_VALIDATION';
+                            $isRejected = $case->status === 'REJECTED';
+                        @endphp
+
+                        @if($isDisdukcapil)
+                        <div class="mt-4 pt-3 border-top">
+                            <div class="text-center">
+                                <i class="fas fa-check-circle text-success" style="font-size: 48px;"></i>
+                                <h5 class="mt-2 mb-1 text-success">Terkirim ke Disdukcapil</h5>
+                                <p class="text-muted small mb-0">Kasus sedang diproses oleh Disdukcapil Staff</p>
+                            </div>
+                        </div>
+                        @elseif($isRejected)
+                        <div class="mt-4 pt-3 border-top">
+                            <div class="text-center">
+                                <i class="fas fa-times-circle text-danger" style="font-size: 48px;"></i>
+                                <h5 class="mt-2 mb-1 text-danger">Ditolak</h5>
+                                <p class="text-muted small mb-0">Menunggu perbaikan dari PA Assistant</p>
+                            </div>
+                        </div>
+                        @elseif(!$allApproved)
+                        <div class="d-flex flex-column gap-2 mt-4 pt-3 border-top">
+                            <button type="button" onclick="approveAllValidations()"
+                                    class="btn btn-sm w-100"
+                                    style="background-color: #28a745; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600;">
+                                <i class="fas fa-paper-plane mr-1"></i> Approve & Kirim ke Disdukcapil
+                            </button>
+                            <button type="button" onclick="rejectAllValidations()"
+                                    class="btn btn-sm w-100"
+                                    style="background-color: #dc3545; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600;">
+                                <i class="fas fa-times-circle mr-1"></i> Tolak & Kembalikan ke PA
+                            </button>
+                        </div>
+                        @else
+                        <div class="d-flex flex-column gap-2 mt-4 pt-3 border-top">
+                            <div class="text-center py-2">
+                                <i class="fas fa-check-circle text-success"></i>
+                                <span class="ms-2 fw-semibold text-success">Semua Disetujui</span>
+                            </div>
+                            <button type="button" onclick="approveAllValidations()"
+                                    class="btn btn-sm w-100"
+                                    style="background-color: #06a8d9; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600;">
+                                <i class="fas fa-paper-plane mr-1"></i> Kirim ke Disdukcapil
+                            </button>
+                        </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -199,6 +256,91 @@
 </div>
 
 <script>
+function approveAllValidations() {
+    const caseId = {{ $case->id }};
+    const allValidationIds = @json($case->ocrValidations->pluck('id'));
 
+    if (!confirm(`Yakin ingin MENYETUJUI dan MENGIRIM ke DISDUKCAPIL STAFF?\n\nTotal: ${allValidationIds.length} validasi`)) {
+        return;
+    }
 
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Memproses...';
+
+    Promise.all(allValidationIds.map(id => {
+        const formData = new FormData();
+        formData.append('validation_id', id);
+        formData.append('action', 'approve');
+        formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+        return fetch(`/dashboard/review/cases/${caseId}/validate`, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+    }))
+    .then(responses => {
+        btn.innerHTML = '<i class="fas fa-paper-plane mr-1"></i>Mengirim...';
+
+        const formData2 = new FormData();
+        formData2.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+
+        return fetch(`/dashboard/review/cases/${caseId}/send-to-disdukcapil`, {
+            method: 'POST',
+            body: formData2,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert('Berhasil! Kasus dikirim ke DISDUKCAPIL STAFF.');
+        location.reload();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> Approve & Kirim ke Disdukcapil';
+        alert('Gagal memproses.');
+    });
+}
+
+function rejectAllValidations() {
+    const caseId = {{ $case->id }};
+    const allValidationIds = @json($case->ocrValidations->pluck('id'));
+    const reason = prompt('Masukkan alasan penolakan (akan dikirim ke PA Assistant):');
+
+    if (!reason) return;
+
+    if (!confirm(`Yakin ingin MENOLAK semua validasi?\nKasus akan dikembalikan ke PA ASSISTANT.`)) {
+        return;
+    }
+
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Memproses...';
+
+    Promise.all(allValidationIds.map(id => {
+        const formData = new FormData();
+        formData.append('validation_id', id);
+        formData.append('action', 'reject');
+        formData.append('notes', reason);
+        formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+        return fetch(`/dashboard/review/cases/${caseId}/validate`, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+    }))
+    .then(responses => {
+        alert('Berhasil! Kasus dikembalikan ke PA ASSISTANT.');
+        location.reload();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-times-circle mr-1"></i> Tolak & Kembalikan ke PA';
+        alert('Gagal memproses.');
+    });
+}
+</script>
 @endsection

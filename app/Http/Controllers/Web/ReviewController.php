@@ -195,6 +195,7 @@ class ReviewController extends Controller
         // Update validation record
         $validation->update([
             'is_reviewed' => true,
+            'is_approved' => $request->action === 'approve',
             'review_action' => $request->action,
             'reviewed_by' => auth()->id(),
             'reviewed_at' => now(),
@@ -256,42 +257,48 @@ class ReviewController extends Controller
         }
         
         if ($request->action === 'reject') {
-            // 1. Update case status untuk PA Assistant dashboard
-            $case->update(['status' => 'NEEDS_REVISION']);
-            
+            // 1. Update case status using workflow service
+            $this->workflow->transition(
+                $case,
+                'REJECTED',
+                auth()->user(),
+                'Ditolak oleh PA Management. Alasan: ' . ($request->notes ?? 'Tidak ada alasan'),
+                [
+                    'validation_id' => $validation->id,
+                    'reject_reason' => $request->notes,
+                ]
+            );
+
             // 2. Update public submission status untuk tracking page (pemohon notifikasi)
             if ($case->publicSubmission) {
                 $case->publicSubmission->update(['status' => 'REJECTED']);
             }
-            
+
             // 3. Log activity dengan detail lengkap (untuk audit trail)
             $this->logActivitySafely(
-                'OCR validation rejected - dual notification sent',
+                'OCR validation rejected by PA Management',
                 $case,
                 [
                     'validation_id' => $validation->id,
                     'reason' => $request->notes,
                     'tracking_token' => $case->publicSubmission?->tracking_token,
-                    'workflow_target' => 'tracking_page_and_pa_dashboard',
+                    'workflow_target' => 'pa_assistant_for_revision',
                     'notification_status' => 'pending',
                 ]
             );
-            
+
             if ($request->wantsJson() || $request->expectsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Validasi OCR ditolak. Pemohon akan diminta mengunggah ulang dokumen melalui halaman tracking. PA Assistant diberitahu.',
+                    'message' => 'Validasi OCR ditolak. Data dikembalikan ke PA Assistant untuk diperbaiki.',
                     'status' => 'rejected',
-                    'notification_targets' => [
-                        'tracking_page' => true,
-                        'pa_dashboard' => true
-                    ]
+                    'case_status' => $case->refresh()->status,
                 ]);
             }
-            
+
             return redirect()
                 ->route('dashboard.review.show', $id)
-                ->with('warning', 'Validasi OCR ditolak. Notifikasi dikirim ke:\n• Halaman Tracking (pemohon bisa reupload dokumen)\n• PA Assistant Dashboard (internal follow-up)');
+                ->with('warning', 'Validasi OCR ditolak. Data dikembalikan ke PA Assistant untuk diperbaiki.');
         }
         
         // request_correction

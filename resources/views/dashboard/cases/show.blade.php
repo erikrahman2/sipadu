@@ -1,6 +1,14 @@
 @extends('layouts.admin')
 
 @section('title', 'Detail Kasus ' . $case->case_number)
+@section('page-title', 'Detail Kasus')
+@section('breadcrumb')
+  <a href="{{ route('dashboard.index') }}" class="hover:text-primary"><i class="fas fa-home"></i></a>
+  <i class="fas fa-chevron-right text-xs"></i>
+  <a href="{{ route('dashboard.cases') }}" class="hover:text-primary">Kasus</a>
+  <i class="fas fa-chevron-right text-xs"></i>
+  <span class="text-gray-800 font-medium">Detail</span>
+@endsection
 
 @section('content')
 <div class="max-w-6xl mx-auto" x-data="caseDetail({{ $case->id }})">
@@ -210,36 +218,118 @@
       <h3 class="font-semibold text-gray-800 text-sm">Dokumen Diunggah ({{ $case->documents->count() }})</h3>
     </div>
     <div class="p-3">
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-        @foreach($case->documents as $doc)
-        @php
-          $isImage = in_array($doc->mime_type, ['image/jpeg', 'image/png', 'image/tiff', 'image/webp']);
-          $storageUrl = asset('storage/' . $doc->path);
-        @endphp
-        <div class="rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition cursor-pointer group"
-             onclick="openDocPreview('{{ $doc->id }}', '{{ $doc->document_type }}', '{{ $storageUrl }}')">
-          @if($isImage)
-          <div class="w-full h-32 bg-gray-100 overflow-hidden">
-            <img src="{{ $storageUrl }}" alt="{{ $doc->document_type }}" 
-                 class="w-full h-full object-cover group-hover:scale-105 transition">
+      {{-- BAST Document --}}
+      @php
+        $bastDocs = $case->documents->where('document_type', 'BAST');
+        $digitalDocs = $case->documents->where('document_type', 'DIGITAL_COPY');
+        $otherDocs = $case->documents->whereNotIn('document_type', ['BAST', 'DIGITAL_COPY']);
+      @endphp
+
+      {{-- BAST Section --}}
+      @if($bastDocs->isNotEmpty())
+      <div class="mb-4">
+        <h4 class="text-xs font-semibold text-red-700 uppercase tracking-wide mb-2 flex items-center gap-1">
+          <i class="fas fa-file-signature"></i> BAST (Berita Acara Serah Terima)
+        </h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          @foreach($bastDocs as $doc)
+          <div class="rounded-lg border-2 border-red-200 bg-red-50 overflow-hidden hover:shadow-md transition">
+            <div class="flex items-center gap-3 p-3">
+              <div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-file-pdf text-red-500 text-xl"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="font-medium text-gray-900 text-sm truncate">{{ $doc->original_name ?? 'BAST' }}</div>
+                <div class="text-xs text-gray-500">{{ number_format($doc->size_bytes / 1024, 1) }} KB</div>
+              </div>
+              <a href="{{ asset('storage/' . $doc->path) }}" target="_blank"
+                 class="flex-shrink-0 px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-xs font-medium">
+                <i class="fas fa-download mr-1"></i>Download
+              </a>
+            </div>
           </div>
-          @else
-          <div class="w-full h-32 bg-gradient-to-br from-red-100 to-red-50 flex items-center justify-center">
-            <i class="fas fa-file-pdf text-red-500 text-4xl"></i>
-          </div>
-          @endif
-          <div class="p-2 bg-white">
-            <div class="font-medium text-gray-900 text-xs truncate">{{ $doc->document_type }}</div>
-            <div class="text-gray-500 text-xs">{{ number_format($doc->size_bytes / 1024, 1) }}KB</div>
-            <a href="{{ $storageUrl }}" target="_blank" 
-               class="text-xs text-emerald-600 hover:underline mt-1 inline-block"
-               onclick="event.stopPropagation()">
-              <i class="fas fa-download mr-1"></i>Download
-            </a>
-          </div>
+          @endforeach
         </div>
-        @endforeach
       </div>
+      @endif
+
+      {{-- Digital Documents Section --}}
+      @if($digitalDocs->isNotEmpty())
+      <div class="mb-4">
+        <h4 class="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-2 flex items-center gap-1">
+          <i class="fas fa-file-alt"></i> Dokumen Digital (Scan Asli)
+        </h4>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          @foreach($digitalDocs as $doc)
+          @php
+            $isImage = in_array($doc->mime_type, ['image/jpeg', 'image/png', 'image/tiff', 'image/webp']);
+            $storageUrl = asset('storage/' . $doc->path);
+          @endphp
+          <div class="rounded-lg border-2 border-blue-200 bg-blue-50 overflow-hidden hover:shadow-md transition cursor-pointer group"
+               onclick="openDocPreview('{{ $doc->id }}', '{{ $doc->document_type }}', '{{ $storageUrl }}')">
+            @if($isImage)
+            <div class="w-full h-24 bg-gray-100 overflow-hidden">
+              <img src="{{ $storageUrl }}" alt="{{ $doc->document_type }}"
+                   class="w-full h-full object-cover group-hover:scale-105 transition">
+            </div>
+            @else
+            <div class="w-full h-24 bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center">
+              <i class="fas fa-file-pdf text-blue-500 text-3xl"></i>
+            </div>
+            @endif
+            <div class="p-2 bg-white">
+              <div class="font-medium text-gray-900 text-xs truncate">{{ $doc->original_name ?? 'Dokumen' }}</div>
+              <div class="text-xs text-gray-500">{{ number_format($doc->size_bytes / 1024, 1) }}KB</div>
+              <a href="{{ $storageUrl }}" target="_blank"
+                 class="text-xs text-blue-600 hover:underline mt-1 inline-block"
+                 onclick="event.stopPropagation()">
+                <i class="fas fa-download mr-1"></i>Download
+              </a>
+            </div>
+          </div>
+          @endforeach
+        </div>
+      </div>
+      @endif
+
+      {{-- Other Documents --}}
+      @if($otherDocs->isNotEmpty())
+      <div>
+        <h4 class="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2 flex items-center gap-1">
+          <i class="fas fa-paperclip"></i> Dokumen Pendukung Lainnya
+        </h4>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          @foreach($otherDocs as $doc)
+          @php
+            $isImage = in_array($doc->mime_type, ['image/jpeg', 'image/png', 'image/tiff', 'image/webp']);
+            $storageUrl = asset('storage/' . $doc->path);
+          @endphp
+          <div class="rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition cursor-pointer group"
+               onclick="openDocPreview('{{ $doc->id }}', '{{ $doc->document_type }}', '{{ $storageUrl }}')">
+            @if($isImage)
+            <div class="w-full h-24 bg-gray-100 overflow-hidden">
+              <img src="{{ $storageUrl }}" alt="{{ $doc->document_type }}"
+                   class="w-full h-full object-cover group-hover:scale-105 transition">
+            </div>
+            @else
+            <div class="w-full h-24 bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center">
+              <i class="fas fa-file-alt text-gray-400 text-3xl"></i>
+            </div>
+            @endif
+            <div class="p-2 bg-white">
+              <div class="font-medium text-gray-900 text-xs truncate">{{ $doc->document_type }}</div>
+              <div class="text-xs text-gray-500">{{ number_format($doc->size_bytes / 1024, 1) }}KB</div>
+              <a href="{{ $storageUrl }}" target="_blank"
+                 class="text-xs text-emerald-600 hover:underline mt-1 inline-block"
+                 onclick="event.stopPropagation()">
+                <i class="fas fa-download mr-1"></i>Download
+              </a>
+            </div>
+          </div>
+          @endforeach
+        </div>
+      </div>
+      @endif
     </div>
   </div>
 

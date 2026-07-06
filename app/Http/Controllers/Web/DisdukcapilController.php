@@ -136,12 +136,12 @@ class DisdukcapilController extends Controller
             ]);
 
             $successMessage = 'Proses validasi Disdukcapil selesai. Data dikirim ke PA Management.';
-            
+
             if ($request->wantsJson() || $request->expectsJson()) {
                 return response()->json(['message' => $successMessage], 200);
             }
-            
-            return redirect()->route('dashboard.index')
+
+            return redirect()->route('dashboard.disdukcapil.index')
                 ->with('success', $successMessage);
 
         } catch (\Exception $e) {
@@ -170,7 +170,7 @@ class DisdukcapilController extends Controller
         $existing = Document::where('case_id', $case->id)
             ->where('document_type', 'BAST')
             ->first();
-        
+
         if ($existing) {
             Storage::disk('local')->delete($existing->path);
             $existing->delete();
@@ -227,5 +227,115 @@ class DisdukcapilController extends Controller
             'case_id' => $case->id,
             'count' => count($files),
         ]);
+    }
+
+    /**
+     * Kirim kasus kembali ke PA Management (Reject)
+     * POST /dashboard/disdukcapil/cases/{id}/send-to-pa
+     */
+    public function sendToPa(int $id, Request $request)
+    {
+        $case = CaseModel::findOrFail($id);
+        $user = auth()->user();
+
+        if ($case->status !== 'DISDUKCAPIL_VALIDATION') {
+            $message = 'Case tidak dalam status DISDUKCAPIL_VALIDATION';
+            if ($request->wantsJson() || $request->expectsJson()) {
+                return response()->json(['message' => $message], 422);
+            }
+            return redirect()->back()->with('error', $message);
+        }
+
+        $validated = $request->validate([
+            'reject_reason' => 'required|string|max:1000',
+        ]);
+
+        try {
+            // Transition case to REJECTED status
+            // PA Assistant dapat mengajukan ulang dari status REJECTED -> DRAFT -> SUBMITTED
+            $case = $this->workflow->transition(
+                $case,
+                'REJECTED',
+                $user,
+                'Ditolak oleh Disdukcapil: ' . $validated['reject_reason'],
+                [
+                    'action' => 'disdukcapil_rejected',
+                    'reject_reason' => $validated['reject_reason'],
+                    'rejected_by' => $user->id,
+                ]
+            );
+
+            Log::channel('workflow')->info('Disdukcapil rejected case - sent back to PA', [
+                'case_id' => $case->id,
+                'rejected_by' => $user->id,
+                'reason' => $validated['reject_reason'],
+            ]);
+
+            $successMessage = 'Kasus berhasil dikembalikan ke PA Management. PA Assistant dapat mengajukan ulang setelah perbaikan.';
+
+            if ($request->wantsJson() || $request->expectsJson()) {
+                return response()->json([
+                    'message' => $successMessage,
+                    'case_id' => $case->id,
+                    'status' => $case->status,
+                ]);
+            }
+
+            return redirect()->route('dashboard.disdukcapil.index')
+                ->with('success', $successMessage);
+
+        } catch (\Exception $e) {
+            Log::error('Disdukcapil reject error', [
+                'case_id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+
+            $errorMessage = 'Gagal mengirim kasus kembali: ' . $e->getMessage();
+
+            if ($request->wantsJson() || $request->expectsJson()) {
+                return response()->json(['message' => $errorMessage], 500);
+            }
+
+            return redirect()->back()
+                ->with('error', $errorMessage);
+        }
+    }
+
+    /**
+     * Download document from case
+     * GET /dashboard/disdukcapil/cases/{id}/documents/{docId}/download
+     */
+    public function downloadDocument(int $caseId, int $docId)
+    {
+        $case = CaseModel::findOrFail($caseId);
+        $document = Document::where('case_id', $caseId)
+            ->where('id', $docId)
+            ->firstOrFail();
+
+        $disk = Storage::disk($document->disk ?? 'local');
+        $path = $document->path ?? $document->stored_path ?? '';
+
+        if (!$disk->exists($path)) {
+            abort(404, 'File tidak ditemukan');
+        }
+
+        return $disk->download($path, $document->original_name ?? 'document');
+    }
+
+    /**
+     * Get completed cases for archive view
+     * GET /dashboard/disdukcapil/archive
+     */
+    public function archive()
+    {
+        $cases = CaseModel::where('status', 'COMPLETED')
+            ->whereHas('documents', function ($q) {
+                $q->whereIn('document_type', ['BAST', 'DIGITAL_COPY']);
+            })
+            ->with(['publicSubmission', 'documents', 'assignedDisdukcapilUser'])
+            ->orderBy('updated_at', 'desc')
+            ->paginate(20);
+
+        return view('dashboard.disdukcapil.archive', compact('cases'));
     }
 }

@@ -145,21 +145,32 @@ class ReBACService
     {
         // Fallback: check MySQL directly if Neo4j unavailable (development mode)
         $case = \App\Models\CaseModel::find($caseId);
-        if ($case && $user->hasRole('disdukcapil_staff') && $case->status === 'DISDUKCAPIL_VALIDATION') {
+        if (!$case) {
+            return false;
+        }
+
+        // Disdukcapil Staff: can view cases in DISDUKCAPIL_VALIDATION status
+        if ($user->hasRole('disdukcapil_staff') && $case->status === 'DISDUKCAPIL_VALIDATION') {
             return true;
         }
 
-        if ($case && $case->submitter_id === $user->id) {
+        // PA Staff: can view cases with COMPLETED or ARCHIVED status
+        if ($user->hasRole('pa_staff') && in_array($case->status, ['COMPLETED', 'ARCHIVED'])) {
+            return true;
+        }
+
+        // Submitter can view their own cases
+        if ($case->submitter_id === $user->id) {
             return true;
         }
 
         // Check if user is assigned as operator (PA or Disdukcapil)
-        if ($case && ($case->assigned_pa_user_id === $user->id || $case->assigned_disdukcapil_user_id === $user->id)) {
+        if ($case->assigned_pa_user_id === $user->id || $case->assigned_disdukcapil_user_id === $user->id) {
             return true;
         }
 
         // Check if user works at same institution (both must be non-null)
-        if ($case && $case->institution_id !== null && $user->institution_id !== null && $case->institution_id === $user->institution_id) {
+        if ($case->institution_id !== null && $user->institution_id !== null && $case->institution_id === $user->institution_id) {
             return true;
         }
 
