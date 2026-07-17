@@ -135,21 +135,6 @@
         <p class="text-xs font-semibold text-earth-muted uppercase tracking-wider">Kelola Konten</p>
       </div>
       <x-admin-nav-item route="dashboard.admin.cms.kelola-konten.index" icon="fa-layer-group" label="Kelola Konten" />
-      <div class="pt-2 pb-1 px-3">
-        <p class="text-xs font-semibold text-earth-muted uppercase tracking-wider">Monitoring OCR</p>
-      </div>
-      @php try { $pendingValidations = \App\Models\OcrValidation::where('is_reviewed', false)->count(); } catch(\Exception $e) { $pendingValidations = 0; } @endphp
-      <a href="{{ route('dashboard.review.cases') }}"
-         class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('dashboard.review*') ? 'bg-sidebar-active text-white font-medium' : 'text-slate-300 hover:bg-sidebar-hover hover:text-white' }}">
-        <i class="fas fa-microscope w-5 text-center"></i>
-        <span class="flex-1">Validasi OCR</span>
-        @if($pendingValidations > 0)
-          <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-bold bg-yellow-500 text-white">
-            {{ $pendingValidations }}
-          </span>
-        @endif
-      </a>
-      <x-admin-nav-item route="dashboard.review.statistics" icon="fa-chart-bar" label="Statistik OCR" />
     @endrole
 
   </nav>
@@ -361,7 +346,7 @@
   </div>
 
   {{-- ─── MAIN CONTENT ────────────────────────────────────────────────── --}}
-  <main class="flex-1 px-4 sm:px-6 py-6 @if(auth()->user()->hasRole(['pa_assistant', 'pa_management', 'pa_staff', 'disdukcapil_staff'])) lg:pl-[18rem] lg:pr-6 @endif">
+  <main class="flex-1 px-4 sm:px-6 py-6 lg:pl-[17rem] lg:pr-6">
     @yield('content')
   </main>
 

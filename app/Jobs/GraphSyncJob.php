@@ -110,8 +110,16 @@ class GraphSyncJob implements ShouldQueue
             'institution_id' => $user->institution_id,
         ]);
 
+        // Link User to Institution with WORKS_AT
         if ($user->institution_id) {
             $graph->linkUserToInstitution($user->id, $user->institution_id);
+        }
+
+        // Super Admin links to BOTH institutions (PA and Disdukcapil)
+        if ($user->hasRole('super_admin')) {
+            \App\Models\Institution::all()->each(function ($inst) use ($graph, $user) {
+                $graph->linkSuperAdminToInstitution($user->id, $inst->id);
+            });
         }
 
         // Invalidate ReBAC cache when user relationships change
@@ -164,9 +172,13 @@ class GraphSyncJob implements ShouldQueue
             $graph->linkInstitutionToCase($case->institution_id, $case->id);
         }
 
-        // Link User to Case - submitter with SUBMITTED relationship
+        // Link submitter to Case based on their role
         if ($case->submitter_id) {
-            $graph->linkUserToCase($case->submitter_id, $case->id, 'SUBMITTED');
+            $submitter = \App\Models\User::find($case->submitter_id);
+            if ($submitter) {
+                $submitterRelType = $this->determineRelationshipType($submitter, $case->status, $case->source_type);
+                $this->createUserCaseRelationship($graph, $submitter, $case, $submitterRelType);
+            }
         }
 
         // ─── Link ALL users involved in case transitions ─────────────────────
@@ -187,20 +199,12 @@ class GraphSyncJob implements ShouldQueue
                 'institution_id' => $user->institution_id,
             ]);
 
-            // Determine relationship type based on role and transition
-            $relType = $this->determineRelationshipType($user, $transition->to_state);
-            
-            if ($relType === 'VERIFY_OPERATOR') {
-                $graph->linkUserAsVerifyOperator($user->id, $case->id);
-            } else {
-                $graph->linkUserToCase($user->id, $case->id, $relType);
-            }
-        }
+            // Determine relationship type based on role and case status
+            $relType = $this->determineRelationshipType($user, $case->status, $case->source_type);
 
-        // Also link all involved users with RELATED_TO relationship for access control
-        $allInvolvedUserIds->unique()->each(function($userId) use ($graph, $case) {
-            $graph->linkUserRelatedToCase($userId, $case->id);
-        });
+            // Call specific relationship method based on role
+            $this->createUserCaseRelationship($graph, $user, $case, $relType);
+        }
 
         $this->linkHandledUsersToCase($graph, $case);
 
@@ -216,36 +220,117 @@ class GraphSyncJob implements ShouldQueue
     }
 
     /**
-     * Determine relationship type based on user role and transition state
+     * Create specific relationship based on user role and case
      */
-    private function determineRelationshipType(\App\Models\User $user, string $toState): string
+    private function createUserCaseRelationship(GraphService $graph, \App\Models\User $user, \App\Models\CaseModel $case, string $relType): void
+    {
+        // PA Assistant relationships
+        if ($user->hasRole('pa_assistant')) {
+            if ($relType === 'DRAFT') {
+                $graph->linkPaAssistantDraft($user->id, $case->id);
+            } elseif ($relType === 'DITOLAK') {
+                $graph->linkPaAssistantRejected($user->id, $case->id);
+            } elseif ($relType === 'SUBMITTED') {
+                $graph->linkUserToCase($user->id, $case->id, 'SUBMITTED');
+            }
+            return;
+        }
+
+        // PA Management relationships
+        if ($user->hasRole('pa_management')) {
+            if ($relType === 'MENUNGGU_REVIEW') {
+                $graph->linkPaManagementReview($user->id, $case->id);
+            } elseif ($relType === 'PENGAJUAN_PUBLIC') {
+                $graph->linkPaManagementPublic($user->id, $case->id);
+            } elseif ($relType === 'PENGAJUAN_PA') {
+                $graph->linkPaManagementPa($user->id, $case->id);
+            } elseif ($relType === 'KIRIM_VALIDASI') {
+                // Find disdukcapil staff and link
+                $discUser = \App\Models\User::role('disdukcapil_staff')->first();
+                if ($discUser) {
+                    $graph->linkPaToDisdukcapil($user->id, $discUser->id, $case->id);
+                }
+            } else {
+                $graph->linkUserToCase($user->id, $case->id, $relType);
+            }
+            return;
+        }
+
+        // Disdukcapil Staff relationships
+        if ($user->hasRole('disdukcapil_staff')) {
+            if ($relType === 'VERIFIKASI') {
+                $graph->linkDisdukcapilVerification($user->id, $case->id);
+            } elseif ($relType === 'SELESAI') {
+                $graph->linkDisdukcapilCompleted($user->id, $case->id);
+            }
+            return;
+        }
+
+        // PA Staff relationships
+        if ($user->hasRole('pa_staff')) {
+            if ($relType === 'ARSIP') {
+                $graph->linkPaStaffArchived($user->id, $case->id);
+            }
+            return;
+        }
+
+        // Default: RELATED_TO
+        $graph->linkUserRelatedToCase($user->id, $case->id);
+    }
+
+    /**
+     * Determine relationship type based on user role and case status
+     */
+    private function determineRelationshipType(\App\Models\User $user, string $caseStatus, string $sourceType = null): string
     {
         $roles = $user->getRoleNames()->toArray();
 
-        // Disdukcapil staff verification
-        if (in_array('disdukcapil_staff', $roles) && 
-            in_array($toState, ['DISDUKCAPIL_VALIDATION', 'COMPLETED'])) {
-            return 'VERIFY_OPERATOR';
-        }
-
-        // PA Management reviewing and approving
-        if (in_array('pa_management', $roles) && 
-            in_array($toState, ['PA_REVIEW', 'COMPLETED'])) {
-            return 'WORKS_ON';
-        }
-
-        // PA Staff involved in processing
-        if (in_array('pa_staff', $roles) && 
-            in_array($toState, ['PA_REVIEW', 'COMPLETED'])) {
-            return 'WORKS_ON';
-        }
-
-        // PA Assistant processing
+        // PA Assistant - DRAFT or REJECTED cases
         if (in_array('pa_assistant', $roles)) {
-            return 'RELATED_TO';
+            if ($caseStatus === 'DRAFT') {
+                return 'DRAFT';
+            }
+            if ($caseStatus === 'REJECTED') {
+                return 'DITOLAK';
+            }
+            if (in_array($caseStatus, ['SUBMITTED', 'OCR_PROCESSED', 'PA_REVIEW'])) {
+                return 'SUBMITTED';
+            }
         }
 
-        // Default
+        // PA Management - Pengajuan Public & PA
+        if (in_array('pa_management', $roles)) {
+            if ($caseStatus === 'PA_REVIEW') {
+                return 'MENUNGGU_REVIEW';
+            }
+            if ($sourceType === 'public') {
+                return 'PENGAJUAN_PUBLIC';
+            }
+            if (in_array($sourceType, ['internal', 'manual'])) {
+                return 'PENGAJUAN_PA';
+            }
+            if ($caseStatus === 'DISDUKCAPIL_VALIDATION') {
+                return 'KIRIM_VALIDASI';
+            }
+        }
+
+        // Disdukcapil Staff - Verification
+        if (in_array('disdukcapil_staff', $roles)) {
+            if ($caseStatus === 'DISDUKCAPIL_VALIDATION') {
+                return 'VERIFIKASI';
+            }
+            if ($caseStatus === 'COMPLETED') {
+                return 'SELESAI';
+            }
+        }
+
+        // PA Staff - Archive
+        if (in_array('pa_staff', $roles)) {
+            if (in_array($caseStatus, ['COMPLETED', 'ARCHIVED'])) {
+                return 'ARSIP';
+            }
+        }
+
         return 'RELATED_TO';
     }
 
@@ -268,33 +353,39 @@ class GraphSyncJob implements ShouldQueue
             ->unique()
             ->values();
 
+        // PA Management gets MANAGES relationship for PA_REVIEW and beyond
         if (in_array($case->status, ['PA_REVIEW', 'DISDUKCAPIL_VALIDATION', 'COMPLETED', 'ARCHIVED'], true)) {
-            $handledUserIds = $handledUserIds
-                ->merge(\App\Models\User::role('pa_management')->where('status', 'active')->pluck('id'))
-                ->unique()
-                ->values();
+            \App\Models\User::role('pa_management')
+                ->where('status', 'active')
+                ->get()
+                ->each(function (\App\Models\User $user) use ($graph, $case) {
+                    $graph->linkUserToCase($user->id, $case->id, 'MANAGES');
+                });
         }
 
-        foreach ($handledUserIds as $userId) {
-            $user = \App\Models\User::find((int) $userId);
-            if ($user && $user->hasRole('pa_management')) {
-                $graph->linkUserToCase($user->id, $case->id, 'MANAGES');
-            } else {
-                $graph->linkUserRelatedToCase((int) $userId, $case->id);
-            }
+        // Disdukcapil Staff gets VERIFY relationship for DISDUKCAPIL_VALIDATION
+        if (in_array($case->status, ['DISDUKCAPIL_VALIDATION', 'COMPLETED', 'ARCHIVED'], true)) {
+            \App\Models\User::role('disdukcapil_staff')
+                ->where('status', 'active')
+                ->get()
+                ->each(function (\App\Models\User $user) use ($graph, $case) {
+                    if ($case->status === 'DISDUKCAPIL_VALIDATION') {
+                        $graph->linkDisdukcapilVerification($user->id, $case->id);
+                    } else {
+                        $graph->linkDisdukcapilCompleted($user->id, $case->id);
+                    }
+                });
         }
 
-        \App\Models\User::role('disdukcapil_staff')
-            ->where('status', 'active')
-            ->get()
-            ->each(function (\App\Models\User $user) use ($graph, $case) {
-                if (
-                    $case->assigned_disdukcapil_user_id === $user->id ||
-                    in_array($case->status, ['DISDUKCAPIL_VALIDATION', 'COMPLETED', 'ARCHIVED'], true)
-                ) {
-                    $graph->linkUserAsVerifyOperator($user->id, $case->id);
-                }
-            });
+        // PA Staff gets ARSIP relationship for COMPLETED/ARCHIVED
+        if (in_array($case->status, ['COMPLETED', 'ARCHIVED'], true)) {
+            \App\Models\User::role('pa_staff')
+                ->where('status', 'active')
+                ->get()
+                ->each(function (\App\Models\User $user) use ($graph, $case) {
+                    $graph->linkPaStaffArchived($user->id, $case->id);
+                });
+        }
     }
 
     private function syncDocument(IntegrationQueue $item, GraphService $graph, array $payload): void

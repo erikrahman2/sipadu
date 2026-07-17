@@ -189,6 +189,140 @@ class GraphService
         );
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // SiPadu Specific Relationships
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Link PA Assistant to Case as DRAFT
+     * (PA Assistant) -[:DRAFT]-> (Case)
+     */
+    public function linkPaAssistantDraft(int $userId, int $caseId): void
+    {
+        $this->run(
+            'MATCH (u:User {mysql_id: $userId}), (c:Case {mysql_id: $caseId})
+             MERGE (u)-[:DRAFT]->(c)',
+            ['userId' => $userId, 'caseId' => $caseId]
+        );
+    }
+
+    /**
+     * Link PA Assistant to Case as REJECTED (but can resubmit)
+     * (PA Assistant) -[:DITOLAK]-> (Case)
+     */
+    public function linkPaAssistantRejected(int $userId, int $caseId): void
+    {
+        $this->run(
+            'MATCH (u:User {mysql_id: $userId}), (c:Case {mysql_id: $caseId})
+             MERGE (u)-[:DITOLAK]->(c)',
+            ['userId' => $userId, 'caseId' => $caseId]
+        );
+    }
+
+    /**
+     * Link PA Management to Case for review
+     * (PA Management) -[:MENUNGGU_REVIEW]-> (Case)
+     */
+    public function linkPaManagementReview(int $userId, int $caseId): void
+    {
+        $this->run(
+            'MATCH (u:User {mysql_id: $userId}), (c:Case {mysql_id: $caseId})
+             MERGE (u)-[:MENUNGGU_REVIEW]->(c)',
+            ['userId' => $userId, 'caseId' => $caseId]
+        );
+    }
+
+    /**
+     * Link PA Management to Case as PENGADAAN_PUBLIC
+     * (PA Management) -[:PENGADAAN_PUBLIC]-> (Case)
+     */
+    public function linkPaManagementPublic(int $userId, int $caseId): void
+    {
+        $this->run(
+            'MATCH (u:User {mysql_id: $userId}), (c:Case {mysql_id: $caseId})
+             MERGE (u)-[:PENGADAAN_PUBLIC]->(c)',
+            ['userId' => $userId, 'caseId' => $caseId]
+        );
+    }
+
+    /**
+     * Link PA Management to Case as PENGADAAN_PA
+     * (PA Management) -[:PENGADAAN_PA]-> (Case)
+     */
+    public function linkPaManagementPa(int $userId, int $caseId): void
+    {
+        $this->run(
+            'MATCH (u:User {mysql_id: $userId}), (c:Case {mysql_id: $caseId})
+             MERGE (u)-[:PENGADAAN_PA]->(c)',
+            ['userId' => $userId, 'caseId' => $caseId]
+        );
+    }
+
+    /**
+     * Link PA Management to Disdukcapil Staff for validation
+     * (PA Management) -[:KIRIM_VALIDASI]-> (Disdukcapil)
+     */
+    public function linkPaToDisdukcapil(int $paUserId, int $discUserId, int $caseId): void
+    {
+        $this->run(
+            'MATCH (pa:User {mysql_id: $paUserId}), (ds:User {mysql_id: $dsUserId}), (c:Case {mysql_id: $caseId})
+             MERGE (pa)-[:KIRIM_VALIDASI {case_id: $caseId}]->(ds)',
+            ['paUserId' => $paUserId, 'dsUserId' => $discUserId, 'caseId' => $caseId]
+        );
+    }
+
+    /**
+     * Link Disdukcapil Staff to Case for verification
+     * (Disdukcapil) -[:VERIFIKASI]-> (Case)
+     */
+    public function linkDisdukcapilVerification(int $userId, int $caseId): void
+    {
+        $this->run(
+            'MATCH (u:User {mysql_id: $userId}), (c:Case {mysql_id: $caseId})
+             MERGE (u)-[:VERIFIKASI]->(c)',
+            ['userId' => $userId, 'caseId' => $caseId]
+        );
+    }
+
+    /**
+     * Link Disdukcapil Staff to Case as COMPLETED with BAST
+     * (Disdukcapil) -[:SELESAI]-> (Case)
+     */
+    public function linkDisdukcapilCompleted(int $userId, int $caseId): void
+    {
+        $this->run(
+            'MATCH (u:User {mysql_id: $userId}), (c:Case {mysql_id: $caseId})
+             MERGE (u)-[:SELESAI]->(c)',
+            ['userId' => $userId, 'caseId' => $caseId]
+        );
+    }
+
+    /**
+     * Link PA Staff to Case as ARCHIVED
+     * (PA Staff) -[:ARSIP]-> (Case)
+     */
+    public function linkPaStaffArchived(int $userId, int $caseId): void
+    {
+        $this->run(
+            'MATCH (u:User {mysql_id: $userId}), (c:Case {mysql_id: $caseId})
+             MERGE (u)-[:ARSIP]->(c)',
+            ['userId' => $userId, 'caseId' => $caseId]
+        );
+    }
+
+    /**
+     * Link Super Admin to Institution (works with both)
+     * (Super Admin) -[:SUPER_ADMIN]-> (Institution)
+     */
+    public function linkSuperAdminToInstitution(int $userId, int $institutionId): void
+    {
+        $this->run(
+            'MATCH (u:User {mysql_id: $userId}), (i:Institution {mysql_id: $instId})
+             MERGE (u)-[:SUPER_ADMIN]->(i)',
+            ['userId' => $userId, 'instId' => $institutionId]
+        );
+    }
+
     /**
      * Remove User's VERIFY_OPERATOR link from Case.
      * Called when assignment is removed.
